@@ -1,0 +1,13 @@
+---
+// src/components/brand/Wordmark.astro
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<span class:list={['font-display tracking-widest', className]}>
+  WEYL
+</span>
+

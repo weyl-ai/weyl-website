@@ -1,0 +1,37 @@
+---
+// src/components/landing/CTA.astro
+import Button from '@components/ui/Button.astro';
+---
+
+<section class="py-24 px-6 bg-bg-elevated">
+  <div class="max-w-4xl mx-auto text-center">
+    <h2 class="font-display text-headline font-semibold tracking-widest text-brand-primary mb-6">
+      START BUILDING TODAY
+    </h2>
+    
+    <p class="font-mono text-body text-text-secondary mb-8 max-w-2xl mx-auto">
+      Get started with our free tier. No credit card required. 
+      Scale to millions of requests with transparent, predictable pricing.
+    </p>
+    
+    <div class="flex flex-wrap justify-center gap-4 mb-12">
+      <Button href="/api/" variant="primary" size="lg">
+        Read Documentation
+      </Button>
+      <Button href="https://github.com/weyl-ai/examples" variant="outline" size="lg">
+        View Examples
+      </Button>
+    </div>
+    
+    <div class="p-6 bg-bg-surface border border-border rounded-md text-left max-w-2xl mx-auto">
+      <p class="font-mono text-caption text-text-subtle mb-3 uppercase tracking-wider">
+        Quick Start
+      </p>
+      <pre class="font-mono text-small text-text-primary overflow-x-auto"><code>{`curl -X POST https://api.weyl.ai/v1/generate \\
+  -H "Authorization: Bearer $WEYL_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"prompt": "a hypermodern datacenter", "model": "sdxl"}'`}</code></pre>
+    </div>
+  </div>
+</section>
+

@@ -1,0 +1,45 @@
+---
+// src/components/brand/Monotile.astro
+interface Props {
+  size?: 'micro' | 'small' | 'medium' | 'large' | 'hero';
+  variant?: 'stroke' | 'filled' | 'solid';
+  glow?: boolean;
+  class?: string;
+}
+
+const { 
+  size = 'small', 
+  variant = 'stroke',
+  glow = false,
+  class: className = ''
+} = Astro.props;
+
+const sizes = {
+  micro: 'w-8 h-[22px]',
+  small: 'w-12 h-[33px]',
+  medium: 'w-16 h-[44px]',
+  large: 'w-24 h-[66px]',
+  hero: 'w-40 h-[110px]',
+};
+
+const variants = {
+  stroke: 'fill-none stroke-brand-primary stroke-2',
+  filled: 'fill-brand-primary/10 stroke-brand-primary stroke-2',
+  solid: 'fill-brand-primary stroke-none',
+};
+---
+
+<svg
+  viewBox="0 0 96.006653 65.823639"
+  class:list={[
+    sizes[size],
+    variants[variant],
+    glow && 'drop-shadow-glow',
+    className,
+  ]}
+  aria-label="Weyl logo"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+</svg>
+

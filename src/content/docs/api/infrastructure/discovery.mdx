@@ -1,0 +1,111 @@
+---
+title: Model Discovery
+description: Get available models, capabilities, and aliases
+category: api
+---
+
+Query available models, capabilities, and configuration at runtime.
+
+## Models Endpoint**GET*
+
+* `/models`Get complete model catalog with capabilities.
+
+```bashcurl "https://sync.render.weyl.ai/models" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+```#
+
+## Response
+
+```json{  "image": {    "flux": {      "dev2": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape", "portrait-wide", "landscape-wide"],        "max_steps": 50,        "min_steps": 10,        "typical_steps": 25,        "guidance_range": [1.0, 5.0],        "recommended_guidance": {          "short_prompt": 3.5,          "detailed_prompt": 1.5        },        "samplers": ["euler", "res_2m", "res_3s"],        "schedulers": ["simple", "beta", "exponential", "sgm_uniform"],        "lora_support": true      },      "dev": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch", "tensorrt"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape", "portrait-wide", "landscape-wide"],        "typical_steps": 25,        "guidance_range": [1.0, 5.0],        "recommended_guidance": 3.5,        "lora_support": true      },      "schnell": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch", "tensorrt"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape", "portrait-wide", "landscape-wide"],        "fixed_steps": 4,        "fixed_guidance": 3.5,        "lora_support": true      }    },    "zimage": {      "turbo": {        "tasks": ["t2i"],        "backends": ["nunchaku"],        "formats": ["1024", "512", "portrait", "landscape", "portrait-wide", "landscape-wide"],        "typical_steps": 8,        "fixed_cfg": 1.0      }    }  },  "video": {    "wan": {      "default": {        "tasks": ["i2v"],        "backends": ["torch"],        "formats": ["720p", "720p-portrait", "480p", "480p-portrait", "square"],        "duration_range": [0.5, 10.0],        "default_duration": 2.0,        "cfg_range": [6.0, 9.0],        "recommended_cfg": 7.0,        "typical_steps": 20,        "samplers": ["uni_pc", "euler", "res_2m", "res_3s"],        "schedulers": ["simple", "beta", "bong_tangent"],        "lightning_support": true      }    }  }}
+
+```
+
+## Capability MatrixUse discovery response to build capability matrix:
+
+```typescriptinterface ModelCapability {  family: string;  model: string;  modality: 'image' 
+
+| 'video';  tasks: string[];  formats: string[];  backends: string[];  guidance_range?: [number, number];  fixed_guidance?: number;}function getCapabilities(modelsData: any): ModelCapability[] {  const capabilities: ModelCapability[] = [];    for (const [modality, families] of Object.entries(modelsData)) {    for (const [family, models] of Object.entries(families as any)) {      for (const [model, config] of Object.entries(models as any)) {        capabilities.push({          family,          model,          modality: modality as 'image' | 'video',          tasks: (config as any).tasks,          formats: (config as any).formats,          backends: (config as any).backends,          guidance_range: (config as any).guidance_range,          fixed_guidance: (config as any).fixed_guidance        });      }    }  }    return capabilities;}
+
+```
+
+## Model Aliases**GET*
+
+* `/models/aliases`Get HuggingFace model ID mappings.
+
+```bashcurl "https://sync.render.weyl.ai/models/aliases" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+```#
+
+## Response
+
+```json{  "aliases": {    "black-forest-labs/FLUX.1-schnell": {      "family": "flux",      "model": "schnell"    },    "black-forest-labs/FLUX.1-dev": {      "family": "flux",      "model": "dev"    },    "black-forest-labs/FLUX.2-dev": {      "family": "flux",      "model": "dev2"    },    "alibaba/Z-Image-Turbo": {      "family": "zimage",      "model": "turbo"    }  }}
+
+```
+
+## LoRA Catalog**GET*
+
+* `/models/loras`Get available LoRA adapters.
+
+```bashcurl "https://sync.render.weyl.ai/models/loras" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+```#
+
+## Response
+
+```json{  "loras": [    {      "id": "anti_blur",      "name": "Anti-Blur",      "description": "Reduces blur, sharper details",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.8,      "weight_range": [0.3, 1.0],      "tags": ["quality", "sharpness"]    },    {      "id": "realism_boost",      "name": "Realism Boost",      "description": "Enhanced photorealism",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.75,      "weight_range": [0.5, 0.9],      "tags": ["photorealism", "quality"]    },    {      "id": "amateur_snapshot",      "name": "Amateur Snapshot",      "description": "Film camera aesthetic",      "base_models": ["flux/dev"],      "recommended_weight": 0.9,      "weight_range": [0.7, 1.0],      "tags": ["style", "film"]    },    {      "id": "detail_enhance",      "name": "Detail Enhancement",      "description": "Fine-grained detail control",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.7,      "weight_range": [0.5, 0.9],      "tags": ["detail", "quality"]    }  ]}
+
+```
+
+## Dynamic ConfigurationUse discovery endpoints to configure clients dynamically:
+
+```typescriptclass WeylClient {  private capabilities: Map<string, ModelCapability>;    async initialize() {    const resp = await fetch('https://sync.render.weyl.ai/models', {      headers: { 'Authorization': `Bearer ${this.apiKey}` }    });        const models = await resp.json();    this.capabilities = this.parseCapabilities(models);  }    canHandle(family: string, model: string, task: string): boolean {    const key = `${family}/${model}`;    const cap = this.capabilities.get(key);    return cap?.tasks.includes(task) ?? false;  }    getDefaultBackend(family: string, model: string): string {    const key = `${family}/${model}`;    return this.capabilities.get(key)?.default_backend ?? 'nunchaku';  }    getSupportedFormats(family: string, model: string): string[] {    const key = `${family}/${model}`;    return this.capabilities.get(key)?.formats ?? [];  }}
+
+```
+
+## ValidationValidate requests against capabilities:
+
+```typescriptfunction validateRequest(  request: GenerateRequest,  capabilities: ModelCapability): void {  // Check task support  if (!capabilities.tasks.includes(request.task)) {    throw new Error(      `Task ${request.task} not supported by ${capabilities.family}/${capabilities.model}`    );  }    // Check format support  if (request.format && !capabilities.formats.includes(request.format)) {    throw new Error(`Format ${request.format} not supported`);  }    // Check guidance range  if (request.guidance) {    if (capabilities.fixed_guidance) {      console.warn(        `Model uses fixed guidance ${capabilities.fixed_guidance}, ignoring request value`      );    } else if (capabilities.guidance_range) {      const [min, max] = capabilities.guidance_range;      if (request.guidance < min || request.guidance > max) {        throw new Error(          `Guidance ${request.guidance} outside range [${min}, ${max}]`        );      }    }  }}
+
+```
+
+## CachingDiscovery data changes infrequently. Cache responses:
+
+```typescriptclass ModelCache {  private cache: any = null;  private lastFetch = 0;  private readonly TTL = 3600000;  // 1 hour  async getModels(apiKey: string): Promise<any> {    const now = Date.now();        if (this.cache && (now 
+
+- this.lastFetch < this.TTL)) {      return this.cache;    }        const resp = await fetch('https://sync.render.weyl.ai/models', {      headers: { 'Authorization': `Bearer ${apiKey}` }    });        this.cache = await resp.json();    this.lastFetch = now;        return this.cache;  }}
+
+```
+
+## Best Practices
+1. **Cache discovery data*
+
+* - TTL 1 hour
+2. **Validate requests*
+
+* - Check capabilities before submission
+3. **Use default backend*
+
+* - Don't override unless needed
+4. **Check task support*
+
+* - Not all models support all tasks
+5. **Respect fixed params*
+
+* - Some models have fixed guidance/steps
+6. **Filter by capability*
+
+* - Build UI based on actual capabilities
+
+## Next Steps
+
+- [Uploads](/api/infrastructure/uploads/) 
+
+- Image upload endpoint
+
+- [Models Overview](/api/models/) 
+
+- Model documentation
+
+- [Type Reference](/api/reference/types/) 
+
+- Type definitions

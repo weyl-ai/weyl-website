@@ -1,0 +1,193 @@
+---
+title: WebSocket Overview
+description: Real-time streaming protocols for sync and async tiers
+category: api
+---
+
+WebSocket connections enable real-time streaming for both sync and async tiers.
+
+## Connection
+
+```javascriptconst ws = new WebSocket('wss://sync.render.weyl.ai/ws');// orconst ws = new WebSocket('wss://async.render.weyl.ai/ws');
+
+```#
+
+## AuthenticationAuthenticate after connection opens:
+
+```javascriptws.onopen = () => {  ws.send(JSON.stringify({    type: 'auth',    token: 'wyl_sk_prod_1234567890abcdef'  }));};
+
+```
+
+## Message FormatAll messages are JSON:
+
+```typescriptinterface Message {  type: string;  [key: string]: unknown;}
+
+```
+
+## Sync Tier WebSocket**Endpoint:*
+
+* `wss://sync.render.weyl.ai/ws`Real-time generation with intermediate frames.#
+
+## Submit Generation
+
+```javascriptws.send(JSON.stringify({  type: 'generate',  id: 'req_1',  // client-provided request ID  modality: 'image',  family: 'flux',  model: 'dev',  task: 't2i',  format: '1024',  request: {    prompt: 'cyberpunk street scene',    guidance: 3.5,    seed: 42  }}));
+
+```#
+
+## Receive Updates
+
+```javascriptws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch(msg.type) {    case 'ack':      console.log('Request accepted:', msg.request_id);      break;        case 'progress':      console.log(`Progress: ${msg.progress 
+
+* 100}%`);      break;        case 'frame':      // Intermediate result      updatePreview(msg.frame);  // base64 encoded      break;        case 'complete':      console.log('Complete:', msg.output);      break;        case 'error':      console.error('Error:', msg.message);      break;  }};
+
+```
+
+## Async Tier WebSocket**Endpoint:*
+
+* `wss://async.render.weyl.ai/ws`Queue jobs and monitor progress.#
+
+## Submit to Queue
+
+```javascriptws.send(JSON.stringify({  type: 'enqueue',  modality: 'video',  family: 'wan',  model: 'default',  task: 'i2v',  format: '720p',  prompt: 'she turns to face camera',  image: 'https://example.com/portrait.jpg'}));
+
+```#
+
+## Receive Updates
+
+```javascriptws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch(msg.type) {    case 'queued':      console.log(`Job ${msg.job_id} at position ${msg.position}`);      break;        case 'started':      console.log(`Job ${msg.job_id} started`);      break;        case 'progress':      console.log(`Job ${msg.job_id}: ${msg.progress 
+
+* 100}%`);      break;        case 'complete':      console.log(`Job ${msg.job_id} complete: ${msg.output}`);      break;        case 'error':      console.error(`Job ${msg.job_id} failed: ${msg.message}`);      break;  }};
+
+```
+
+## Message Types#
+
+## Client → Server##
+
+## authAuthenticate connection:
+
+```json{  "type": "auth",  "token": "wyl_sk_prod_..."}
+
+```##
+
+## generate (Sync Tier)Submit immediate generation:
+
+```json{  "type": "generate",  "id": "req_1",  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "format": "1024",  "request": {    "prompt": "...",    "guidance": 3.5  }}
+
+```##
+
+## enqueue (Async Tier)Submit to queue:
+
+```json{  "type": "enqueue",  "modality": "video",  "family": "wan",  "model": "default",  "task": "i2v",  "prompt": "...",  "image": "..."}
+
+```##
+
+## cancel (Async Tier)Cancel queued job:
+
+```json{  "type": "cancel",  "job_id": "j_abc123"}
+
+```##
+
+## pingKeep-alive heartbeat:
+
+```json{  "type": "ping"}
+
+```#
+
+## Server → Client##
+
+## authenticatedAuth successful:
+
+```json{  "type": "authenticated",  "user_id": "u_xyz"}
+
+```##
+
+## ackRequest acknowledged:
+
+```json{  "type": "ack",  "request_id": "req_1",  "job_id": "j_abc123"  // async tier only}
+
+```##
+
+## progressGeneration progress:
+
+```json{  "type": "progress",  "request_id": "req_1",  "progress": 0.65,  "step": 20,  "eta_seconds": 3}
+
+```##
+
+## frameIntermediate frame (sync tier):
+
+```json{  "type": "frame",  "request_id": "req_1",  "frame": "data:image/jpeg;base64,/9j/4AAQ..."}
+
+```##
+
+## completeGeneration complete:
+
+```json{  "type": "complete",  "request_id": "req_1",  "job_id": "j_abc123",  "output": "https://cdn.render.weyl.ai/i/xyz.webp",  "seed": 42}
+
+```##
+
+## errorError occurred:
+
+```json{  "type": "error",  "request_id": "req_1",  "code": "validation_failed",  "message": "Invalid prompt length"}
+
+```##
+
+## pongHeartbeat response:
+
+```json{  "type": "pong"}
+
+```
+
+## Connection Management#
+
+## Keep-AliveSend ping every 30 seconds:
+
+```javascriptconst pingInterval = setInterval(() => {  if (ws.readyState === WebSocket.OPEN) {    ws.send(JSON.stringify({ type: 'ping' }));  }}, 30000);ws.onclose = () => {  clearInterval(pingInterval);};
+
+```#
+
+## ReconnectionImplement exponential backoff:
+
+```javascriptfunction connect(retries = 0) {  const ws = new WebSocket('wss://sync.render.weyl.ai/ws');    ws.onerror = () => {    if (retries < 5) {      const delay = Math.pow(2, retries) 
+
+* 1000;      setTimeout(() => connect(retries + 1), delay);    }  };    return ws;}
+
+```#
+
+## Graceful Close
+
+```javascriptws.send(JSON.stringify({ type: 'close' }));ws.close(1000, 'Client disconnect');
+
+```
+
+## Complete Examples#
+
+## Sync Tier Client
+
+```typescriptclass SyncWebSocketClient {  private ws: WebSocket;  private pendingRequests = new Map();  constructor(apiKey: string) {    this.ws = new WebSocket('wss://sync.render.weyl.ai/ws');    this.setupHandlers();        this.ws.onopen = () => {      this.authenticate(apiKey);    };  }  private authenticate(token: string) {    this.ws.send(JSON.stringify({ type: 'auth', token }));  }  private setupHandlers() {    this.ws.onmessage = (event) => {      const msg = JSON.parse(event.data);      const handler = this.pendingRequests.get(msg.request_id);            if (!handler) return;            switch (msg.type) {        case 'progress':          handler.onProgress?.(msg.progress);          break;        case 'frame':          handler.onFrame?.(msg.frame);          break;        case 'complete':          handler.onComplete(msg.output);          this.pendingRequests.delete(msg.request_id);          break;        case 'error':          handler.onError(new Error(msg.message));          this.pendingRequests.delete(msg.request_id);          break;      }    };  }  async generate(params: GenerateParams): Promise<string> {    const requestId = `req_${Date.now()}`;        return new Promise((resolve, reject) => {      this.pendingRequests.set(requestId, {        onComplete: resolve,        onError: reject,        onProgress: params.onProgress,        onFrame: params.onFrame      });            this.ws.send(JSON.stringify({        type: 'generate',        id: requestId,        ...params      }));    });  }  close() {    this.ws.close();  }}// Usageconst client = new SyncWebSocketClient(API_KEY);const outputUrl = await client.generate({  modality: 'image',  family: 'flux',  model: 'dev',  task: 't2i',  format: '1024',  request: {    prompt: 'cyberpunk street scene'  },  onProgress: (p) => console.log(`${(p 
+
+* 100).toFixed(0)}%`),  onFrame: (frame) => updatePreview(frame)});console.log(`Complete: ${outputUrl}`);client.close();
+
+```#
+
+## Async Tier Client
+
+```typescriptclass AsyncWebSocketClient {  private ws: WebSocket;  private jobs = new Map();  constructor(apiKey: string) {    this.ws = new WebSocket('wss://async.render.weyl.ai/ws');    this.setupHandlers();        this.ws.onopen = () => {      this.authenticate(apiKey);    };  }  private authenticate(token: string) {    this.ws.send(JSON.stringify({ type: 'auth', token }));  }  private setupHandlers() {    this.ws.onmessage = (event) => {      const msg = JSON.parse(event.data);      const handler = this.jobs.get(msg.job_id);            if (!handler) return;            switch (msg.type) {        case 'queued':          handler.onQueued?.(msg.position);          break;        case 'started':          handler.onStarted?.();          break;        case 'progress':          handler.onProgress?.(msg.progress);          break;        case 'complete':          handler.onComplete(msg.output);          this.jobs.delete(msg.job_id);          break;        case 'error':          handler.onError(new Error(msg.message));          this.jobs.delete(msg.job_id);          break;      }    };  }  async enqueue(params: EnqueueParams): Promise<string> {    return new Promise((resolve, reject) => {      // First wait for ack with job_id      const ackHandler = (event: MessageEvent) => {        const msg = JSON.parse(event.data);        if (msg.type === 'ack') {          this.jobs.set(msg.job_id, {            onComplete: resolve,            onError: reject,            ...params.handlers          });          this.ws.removeEventListener('message', ackHandler);        }      };            this.ws.addEventListener('message', ackHandler);            this.ws.send(JSON.stringify({        type: 'enqueue',        ...params      }));    });  }  close() {    this.ws.close();  }}// Usageconst client = new AsyncWebSocketClient(API_KEY);const outputUrl = await client.enqueue({  modality: 'video',  family: 'wan',  model: 'default',  task: 'i2v',  format: '720p',  prompt: 'she turns to face camera',  image: 'https://example.com/portrait.jpg',  handlers: {    onQueued: (pos) => console.log(`Position: ${pos}`),    onStarted: () => console.log('Started'),    onProgress: (p) => console.log(`${(p 
+
+* 100).toFixed(0)}%`)  }});console.log(`Complete: ${outputUrl}`);client.close();
+
+```
+
+## Next Steps
+
+- [Sync WebSocket](/api/websocket/sync/) 
+
+- Sync tier details
+
+- [Async WebSocket](/api/websocket/async/) 
+
+- Async tier details
+
+- [Protocol Reference](/api/websocket/protocol/) 
+
+- Complete message specs

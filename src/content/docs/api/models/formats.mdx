@@ -1,0 +1,241 @@
+---
+title: Formats Reference
+description: Video and image format specifications
+category: api
+---
+
+Complete reference for video and image output formats.
+
+## Image FormatsAll image models support these formats via `?format=` parameter.#
+
+## Square Formats##
+
+## 1024
+
+```Dimensions: 1024×1024Aspect: 1:1Use: High-resolution square
+
+```**Best for:*
+
+* Profile pictures, Instagram posts, product shots**Performance:**
+
+- FLUX Schnell: ~450ms
+
+- FLUX Dev: ~1.8s
+
+- Z-Image Turbo: ~320ms##
+
+## 512
+
+```Dimensions: 512×512Aspect: 1:1Use: Fast iteration, thumbnails
+
+```**Best for:*
+
+* Rapid prototyping, previews, icons**Performance:**
+
+- FLUX Schnell: ~180ms
+
+- FLUX Dev: ~680ms
+
+- Z-Image Turbo: ~140ms#
+
+## Portrait Formats##
+
+## portrait
+
+```Dimensions: 768×1024Aspect: 3:4Use: Standard portrait
+
+```**Best for:*
+
+* Portrait photos, character art##
+
+## portrait-wide
+
+```Dimensions: 576×1024Aspect: 9:16Use: Vertical video aspect
+
+```**Best for:*
+
+* TikTok, Instagram Stories, phone displays#
+
+## Landscape Formats##
+
+## landscape
+
+```Dimensions: 1024×768Aspect: 4:3Use: Standard landscape
+
+```**Best for:*
+
+* Landscape photos, artwork##
+
+## landscape-wide
+
+```Dimensions: 1024×576Aspect: 16:9Use: Widescreen
+
+```**Best for:*
+
+* YouTube thumbnails, desktop wallpapers, cinematic
+
+## Video FormatsVideo models (WAN) support these formats.#
+
+## Landscape Formats##
+
+## 720p
+
+```Dimensions: 1280×720Aspect: 16:9FPS: 24Use: HD landscape video
+
+```**Best for:*
+
+* YouTube, Vimeo, desktop viewing**Performance (WAN, 2s):*
+
+* ~12s##
+
+## 480p
+
+```Dimensions: 832×480Aspect: ~16:9FPS: 24Use: SD landscape, faster generation
+
+```**Best for:*
+
+* Iteration, previews, faster workflows**Performance (WAN, 2s):*
+
+* ~8s#
+
+## Portrait Formats##
+
+## 720p-portrait
+
+```Dimensions: 720×1280Aspect: 9:16FPS: 24Use: HD portrait video
+
+```**Best for:*
+
+* TikTok, Instagram Reels, mobile**Performance (WAN, 2s):*
+
+* ~12s##
+
+## 480p-portrait
+
+```Dimensions: 480×832Aspect: ~9:16FPS: 24Use: SD portrait, faster generation
+
+```**Best for:*
+
+* Fast iteration, mobile previews**Performance (WAN, 2s):*
+
+* ~8s#
+
+## Square Format##
+
+## square
+
+```Dimensions: 640×640Aspect: 1:1FPS: 24Use: Square social video
+
+```**Best for:*
+
+* Instagram posts (1:1), social media**Performance (WAN, 2s):*
+
+* ~10s
+
+## Format Selection Guide#
+
+## By Use Case
+
+| Use Case              | Recommended Format      ||-----------------------|-------------------------|| Profile picture       | `1024` (image)          || Instagram post        | `1024` (image)          || TikTok                | `720p-portrait` (video) || YouTube               | `720p` (video)          || Portrait photo        | `portrait` (image)      || Landscape photo       | `landscape` (image)     || Wallpaper             | `landscape-wide` (image)|| Fast iteration        | `512` (image)           || Character concept     | `portrait` (image)      || Cinematic frame       | `landscape-wide` (image)|#
+
+## By Platform
+
+| Platform              | Format                  ||-----------------------|-------------------------|| Instagram Post        | `1024` (1:1)            || Instagram Story       | `portrait-wide` (9:16)  || TikTok                | `720p-portrait` (9:16)  || YouTube               | `720p` or `landscape-wide` (16:9) || Twitter               | `landscape` (4:3) or `landscape-wide` (16:9) || LinkedIn              | `landscape` (4:3)       || Facebook              | `1024` (1:1) or `landscape` |#
+
+## By Speed Requirements**Fastest to Slowest (Z-Image Turbo):**
+1. `512` 
+
+- ~140ms
+2. `landscape-wide` 
+
+- ~220ms
+3. `portrait-wide` 
+
+- ~230ms
+4. `portrait` 
+
+- ~250ms
+5. `landscape` 
+
+- ~250ms
+6. `1024` 
+
+- ~320ms**General rule:*
+
+* Smaller resolution = faster generation
+
+## Output Specifications#
+
+## Image Output
+
+- **Format:*
+
+* WebP
+
+- **Quality:*
+
+* 90 (configurable)
+
+- **Color Space:*
+
+* sRGB
+
+- **Bit Depth:*
+
+* 8-bit
+
+- **Compression:*
+
+* Lossy WebP#
+
+## Video Output
+
+- **Container:*
+
+* MP4
+
+- **Codec:*
+
+* H.264
+
+- **Profile:*
+
+* High
+
+- **Bitrate:*
+
+* ~8 Mbps (720p), ~4 Mbps (480p)
+
+- **FPS:*
+
+* 24
+
+- **Color Space:*
+
+* BT.709
+
+- **Audio:*
+
+* None (silent)
+
+## Custom FormatsCustom dimensions not currently supported. Use closest standard format and crop/resize client-side if needed.
+
+## CDN URLsAll outputs are served from `cdn.render.weyl.ai` with cache-forever semantics:
+
+```https://cdn.render.weyl.ai/i/abc123.webp  # imagehttps://cdn.render.weyl.ai/v/xyz789.mp4   # video
+
+```
+
+## Next Steps
+
+- [Image Generation](/api/sync/image/) 
+
+- Image API reference
+
+- [Video Generation](/api/sync/video/) 
+
+- Video API reference
+
+- [Models Overview](/api/models/) 
+
+- Model capabilities

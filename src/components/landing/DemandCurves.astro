@@ -1,0 +1,64 @@
+---
+// src/components/landing/DemandCurves.astro
+import Card from '@components/ui/Card.astro';
+
+interface UseCaseProps {
+  title: string;
+  description: string;
+  throughput: string;
+  latency: string;
+}
+
+const useCases: UseCaseProps[] = [
+  {
+    title: 'Real-time Video',
+    description: 'Frame-by-frame generation for live streaming and interactive media',
+    throughput: '60 FPS',
+    latency: '16ms',
+  },
+  {
+    title: 'Image Generation',
+    description: 'High-resolution diffusion with SDXL and custom models',
+    throughput: '1024x1024',
+    latency: '47ms',
+  },
+  {
+    title: 'Batch Processing',
+    description: 'Massive parallel workloads with automatic scaling',
+    throughput: '10K/hour',
+    latency: 'N/A',
+  },
+];
+---
+
+<section class="py-24 px-6 bg-bg-surface">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-headline font-semibold tracking-widest text-brand-primary mb-4">
+        BUILT FOR YOUR USE CASE
+      </h2>
+      <p class="font-mono text-body text-text-secondary max-w-2xl mx-auto">
+        From real-time interactive media to massive batch workflows, 
+        optimized inference for every latency/throughput trade-off.
+      </p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {useCases.map((useCase) => (
+        <Card variant="interactive">
+          <h3 class="font-mono text-subhead font-semibold text-text-primary mb-3">
+            {useCase.title}
+          </h3>
+          <p class="text-text-secondary mb-4">
+            {useCase.description}
+          </p>
+          <div class="flex justify-between text-caption text-text-muted border-t border-border pt-3 mt-4">
+            <span>Throughput: <span class="text-brand-primary">{useCase.throughput}</span></span>
+            <span>Latency: <span class="text-brand-primary">{useCase.latency}</span></span>
+          </div>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+

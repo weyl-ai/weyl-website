@@ -1,0 +1,56 @@
+---
+title: Quick Start
+description: Get started with Weyl in 5 minutes
+category: guide
+---
+
+Get your first inference request running in under 5 minutes.
+
+## 
+1. Get API KeySign up at [weyl.ai/signup](https://weyl.ai/signup) to get your API key.
+
+```bashexport WEYL_API_KEY="your_api_key_here"
+
+```
+
+## 
+2. Make Your First Request
+
+```bashcurl -X POST https://api.weyl.ai/v1/generate \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "a hypermodern datacenter at night",    "model": "sdxl",    "width": 1024,    "height": 1024,    "steps": 30  }'
+
+```
+
+## 
+3. Handle the Response
+
+```json{  "id": "gen_abc123",  "status": "completed",  "image_url": "https://cdn.weyl.ai/outputs/gen_abc123.png",  "latency_ms": 47,  "model": "sdxl"}
+
+```
+
+## SDKs#
+
+## Python
+
+```pythonfrom weyl import WeylClientclient = WeylClient(api_key="your_api_key")result = client.generate(    prompt="a hypermodern datacenter at night",    model="sdxl",    width=1024,    height=1024)print(f"Image URL: {result.image_url}")print(f"Latency: {result.latency_ms}ms")
+
+```#
+
+## TypeScript
+
+```typescriptimport { WeylClient } from '@weyl/sdk';const client = new WeylClient({ apiKey: 'your_api_key' });const result = await client.generate({  prompt: 'a hypermodern datacenter at night',  model: 'sdxl',  width: 1024,  height: 1024,});console.log(`Image URL: ${result.imageUrl}`);console.log(`Latency: ${result.latencyMs}ms`);
+
+```
+
+## Next Steps
+
+- [Authentication](/docs/getting-started/auth/) 
+
+- API key management
+
+- [API Reference](/docs/api/) 
+
+- Complete API documentation
+
+- [Examples](https://github.com/weyl-ai/examples) 
+
+- Sample applications

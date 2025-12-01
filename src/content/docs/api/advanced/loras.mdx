@@ -1,0 +1,258 @@
+---
+title: LoRA Adapters
+description: Available LoRA adapters and their effects
+category: api
+---
+
+LoRA (Low-Rank Adaptation) adapters enhance base models with specific capabilities without full fine-tuning.
+
+## Available LoRAs
+
+| LoRA ID          | Model Support | Effect                          ||------------------|---------------|---------------------------------|| `anti_blur`      | FLUX Dev/Dev2 | Reduces blur, sharper details   || `realism_boost`  | FLUX Dev/Dev2 | Enhanced photorealism           || `amateur_snapshot` | FLUX Dev    | Film/snapshot aesthetic         || `detail_enhance` | FLUX Dev/Dev2 | Fine detail enhancement         |*More LoRAs coming soon 
+
+- check `/models/loras` endpoint for current list
+*
+
+## Basic Usage
+
+```json{  "prompt": "portrait of a woman, natural lighting",  "lora": [    {      "id": "anti_blur",      "weight": 0.8    }  ]}
+
+```
+
+## Multiple LoRAsStack multiple adapters:
+
+```json{  "prompt": "portrait in natural lighting",  "lora": [    {      "id": "anti_blur",      "weight": 0.8    },    {      "id": "realism_boost",      "weight": 0.75    }  ]}
+
+```**Best practice:*
+
+* Max 2-3 LoRAs per request. More can cause conflicts.
+
+## Weight Tuning
+
+| Weight | Effect                          | Recommendation      ||--------|---------------------------------|---------------------|| 0.3    | Subtle influence                | Testing             || 0.5    | Moderate effect                 | Balanced            || 0.7    | Strong effect                   | **Recommended*
+
+*     
+
+|| 0.9    | Very strong, may overpower      | Careful use         || 1.0+   | Maximum, possible artifacts     | ⚠️ Advanced only    |
+
+## Anti-Blur LoRA**Reduces blur, enhances sharpness**
+
+```json{  "prompt": "macro photography of flower petals",  "lora": [    {      "id": "anti_blur",      "weight": 0.8    }  ]}
+
+```**Best for:**
+
+- Portraits
+
+- Product photography
+
+- Macro shots
+
+- Detail-heavy scenes**Characteristics:**
+
+- Increases perceived sharpness
+
+- Better texture definition
+
+- Can over-sharpen at weight >0.9
+
+- Works well with lower guidance (2.8-3.5)**Compatible models:*
+
+* FLUX Dev, FLUX Dev2
+
+## Realism Boost LoRA**Enhanced photorealism**
+
+```json{  "prompt": "portrait photograph, natural lighting",  "lora": [    {      "id": "realism_boost",      "weight": 0.75    }  ]}
+
+```**Best for:**
+
+- Photorealistic portraits
+
+- Natural scenes
+
+- Photography-style images
+
+- Skin texture**Characteristics:**
+
+- More realistic skin tones
+
+- Better subsurface scattering
+
+- Natural lighting response
+
+- Subtle imperfections (film grain, pores)**Compatible models:*
+
+* FLUX Dev, FLUX Dev2
+
+## Amateur Snapshot LoRA**Film camera aesthetic**
+
+```json{  "prompt": "candid photo of person at cafe",  "lora": [    {      "id": "amateur_snapshot",      "weight": 0.9    }  ]}
+
+```**Best for:**
+
+- Film aesthetic
+
+- Vintage look
+
+- Casual photography
+
+- Street photography**Characteristics:**
+
+- Film grain
+
+- Slight imperfections
+
+- Natural color cast
+
+- "Real photo" feel**Compatible models:*
+
+* FLUX Dev
+
+## Detail Enhance LoRA**Fine-grained detail**
+
+```json{  "prompt": "intricate jewelry, macro shot",  "lora": [    {      "id": "detail_enhance",      "weight": 0.7    }  ]}
+
+```**Best for:**
+
+- Intricate patterns
+
+- Textures
+
+- Macro photography
+
+- Architectural details**Characteristics:**
+
+- Enhanced fine detail
+
+- Better texture preservation
+
+- Improved high-frequency content
+
+- May slow generation slightly**Compatible models:*
+
+* FLUX Dev, FLUX Dev2
+
+## Recommended Combinations#
+
+## Portrait Photography
+
+```json{  "prompt": "portrait of a person, 85mm lens, natural lighting",  "model": "dev2",  "guidance": 2.8,  "lora": [    {"id": "anti_blur", "weight": 0.8},    {"id": "realism_boost", "weight": 0.75}  ]}
+
+```#
+
+## Product Photography
+
+```json{  "prompt": "product shot, studio lighting, white background",  "model": "dev",  "guidance": 3.5,  "lora": [    {"id": "anti_blur", "weight": 0.9},    {"id": "detail_enhance", "weight": 0.7}  ]}
+
+```#
+
+## Film Aesthetic
+
+```json{  "prompt": "street photography, candid moment",  "model": "dev",  "guidance": 3.0,  "lora": [    {"id": "amateur_snapshot", "weight": 0.85}  ]}
+
+```#
+
+## Macro Photography
+
+```json{  "prompt": "macro shot of insect on flower",  "model": "dev2",  "guidance": 3.5,  "lora": [    {"id": "detail_enhance", "weight": 0.8},    {"id": "anti_blur", "weight": 0.7}  ]}
+
+```
+
+## Performance ImpactLoRAs add minimal overhead:
+
+| LoRA Count | Overhead   ||------------|------------|| 0          | Baseline   || 1          | +2-5%      || 2          | +5-8%      || 3          | +8-12%     |Impact is usually negligible compared to step count and resolution.
+
+## Custom LoRAs#
+
+## Upload Custom LoRA (Coming Soon)
+
+```bashcurl -X POST "https://sync.render.weyl.ai/loras" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -F "file=@my_lora.safetensors" \  -F "name=my_custom_lora" \  -F "base_model=flux/dev"
+
+```#
+
+## Use Custom LoRA
+
+```json{  "prompt": "...",  "lora": [    {      "id": "user/my_custom_lora",      "weight": 0.8    }  ]}
+
+```
+
+## Troubleshooting#
+
+## Over-Application**Symptom:*
+
+* Unnatural artifacts, over-sharpening**Solution:**
+
+- Lower weight (try 0.6 instead of 0.9)
+
+- Use fewer LoRAs
+
+- Increase steps#
+
+## Conflicting LoRAs**Symptom:*
+
+* Strange artifacts when using multiple LoRAs**Solution:**
+
+- Reduce weights
+
+- Remove conflicting adapters
+
+- Use at most 2-3 LoRAs#
+
+## Not Enough Effect**Symptom:*
+
+* LoRA not visible**Solution:**
+
+- Increase weight (try 0.8-0.9)
+
+- Ensure prompt matches LoRA purpose
+
+- Check model compatibility
+
+## DiscoveryList available LoRAs:
+
+```bashcurl "https://sync.render.weyl.ai/models/loras" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+``````json{  "loras": [    {      "id": "anti_blur",      "name": "Anti-Blur",      "description": "Reduces blur, sharper details",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.8    },    {      "id": "realism_boost",      "name": "Realism Boost",      "description": "Enhanced photorealism",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.75    }  ]}
+
+```
+
+## Best Practices
+1. **Start with recommended weights*
+
+* - Usually 0.7-0.8
+2. **Use 1-2 LoRAs*
+
+* - More can conflict
+3. **Match LoRA to prompt*
+
+* - Use realism_boost with "photograph" prompts
+4. **Test systematically*
+
+* - Enable one LoRA at a time
+5. **Lower guidance*
+
+* - LoRAs work better with guidance 2.8-3.5
+6. **Increase steps slightly*
+
+* - +2-5 steps for better LoRA integration
+
+## Complete Example
+
+```pythonimport requestsdef generate_with_lora(    prompt: str,    loras: list[dict],    model: str = "dev2") -> bytes:    """Generate image with LoRA adapters."""        url = f"https://sync.render.weyl.ai/image/flux/{model}/t2i?format=1024"        headers = {        "Authorization": f"Bearer {API_KEY}",        "Content-Type": "application/json"    }        payload = {        "prompt": prompt,        "guidance": 2.8,  # Lower guidance works well with LoRAs        "steps": 28,        "lora": loras    }        resp = requests.post(url, headers=headers, json=payload)    resp.raise_for_status()        return resp.content# Usage 
+
+- Portrait with realismimage = generate_with_lora(    prompt="portrait of a woman, 85mm lens, natural lighting, bokeh",    loras=[        {"id": "anti_blur", "weight": 0.8},        {"id": "realism_boost", "weight": 0.75}    ],    model="dev2")with open("portrait_with_loras.webp", "wb") as f:    f.write(image)
+
+```
+
+## Next Steps
+
+- [Detail Enhancement](/api/advanced/detail/) 
+
+- Alternative detail control
+
+- [FLUX Models](/api/models/flux/) 
+
+- Model capabilities
+
+- [Guidance Tuning](/api/advanced/guidance/) 
+
+- Optimize guidance with LoRAs

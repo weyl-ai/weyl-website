@@ -1,0 +1,43 @@
+---
+// src/components/ui/Button.astro
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+  type?: 'button' | 'submit' | 'reset';
+}
+
+const { 
+  href, 
+  variant = 'primary', 
+  size = 'md',
+  class: className = '',
+  type = 'button',
+} = Astro.props;
+
+const Tag = href ? 'a' : 'button';
+
+const baseStyles = 'inline-flex items-center justify-center gap-2 font-mono font-semibold transition-all rounded-md';
+
+const variants = {
+  primary: 'bg-brand-primary text-bg-primary hover:brightness-110 shadow-glow-sm hover:shadow-glow',
+  outline: 'bg-transparent text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-bg-primary',
+  ghost: 'bg-transparent text-brand-primary hover:bg-brand-primary/10',
+};
+
+const sizes = {
+  sm: 'px-3 py-1.5 text-small',
+  md: 'px-6 py-3 text-small',
+  lg: 'px-8 py-4 text-body',
+};
+---
+
+<Tag
+  href={href}
+  type={!href ? type : undefined}
+  class:list={[baseStyles, variants[variant], sizes[size], className]}
+>
+  <slot />
+</Tag>
+

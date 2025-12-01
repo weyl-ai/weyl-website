@@ -1,0 +1,138 @@
+---
+title: Capacity Management
+description: Handling 503 errors and capacity exhaustion
+category: api
+---
+
+The sync tier runs on dedicated capacity. When exhausted, requests return 50
+3.
+
+## Understanding 503
+
+```httpHTTP/1.1 503 Service UnavailableRetry-After: 30Link: <https://async.render.weyl.ai>; rel="alternate"X-Weyl-Request-Id: req_xyz789{  "error": "capacity_exhausted",  "message": "sync tier at capacity, retry in 30s or use async",  "request_id": "req_xyz789"}
+
+```**This means:**
+
+- All sync tier workers are busy
+
+- Your request was not processed
+
+- You can retry after the delay
+
+- Or switch to async tier
+
+## Response Strategy#
+
+## 
+1. Retry with Exponential Backoff
+
+```pythonimport timeimport requestsdef generate_with_backoff(url, data, headers, max_attempts=5):    for attempt in range(max_attempts):        resp = requests.post(url, json=data, headers=headers)                if resp.status_code == 200:            return resp.content                if resp.status_code == 503:            if attempt == max_attempts 
+
+- 1:                raise Exception("Max retries exceeded")                        retry_after = int(resp.headers.get('Retry-After', 30))            backoff = retry_after 
+
+* (2 *
+
+* attempt)  # exponential            print(f"Attempt {attempt + 1}: waiting {backoff}s...")            time.sleep(backoff)            continue                resp.raise_for_status()        raise Exception("Failed after retries")
+
+```#
+
+## 
+2. Fallback to Async Tier
+
+```pythondef generate_with_fallback(prompt, image=None):    # Try sync first    try:        resp = requests.post(            "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",            headers={"Authorization": f"Bearer {API_KEY}"},            json={"prompt": prompt, "image": image}        )                if resp.status_code == 200:            return {"type": "immediate", "bytes": resp.content}                if resp.status_code != 503:            resp.raise_for_status()        except requests.exceptions.HTTPError:        pass        # Fall back to async    resp = requests.post(        "https://async.render.weyl.ai/queue",        headers={"Authorization": f"Bearer {API_KEY}"},        json={            "modality": "video",            "family": "wan",            "model": "default",            "task": "i2v",            "format": "720p",            "prompt": prompt,            "image": image        }    )        resp.raise_for_status()    job = resp.json()        return {"type": "queued", "job_id": job["id"]}
+
+```#
+
+## 
+3. Circuit Breaker
+
+```typescriptclass CircuitBreaker {  private failures = 0;  private lastFailure = 0;  private readonly threshold = 3;  private readonly timeout = 60000; // 1 minute  async execute<T>(fn: () => Promise<T>): Promise<T> {    // If circuit is open, fail fast    if (this.isOpen()) {      throw new Error('Circuit breaker open, using async tier');    }    try {      const result = await fn();      this.onSuccess();      return result;    } catch (error) {      if (error.status === 503) {        this.onFailure();      }      throw error;    }  }  private isOpen(): boolean {    if (this.failures < this.threshold) return false;        const elapsed = Date.now() 
+
+- this.lastFailure;    if (elapsed > this.timeout) {      this.reset();      return false;    }        return true;  }  private onSuccess() {    this.failures = 0;  }  private onFailure() {    this.failures++;    this.lastFailure = Date.now();  }  private reset() {    this.failures = 0;    this.lastFailure = 0;  }}// Usageconst breaker = new CircuitBreaker();try {  const result = await breaker.execute(() =>    syncClient.generate({...})  );} catch (error) {  // Circuit is open, use async tier  const job = await asyncClient.enqueue({...});}
+
+```
+
+## Capacity Planning#
+
+## Burst vs Sustained
+
+- **Burst capacity:*
+
+* Handle short spikes (20× normal rate)
+
+- **Sustained capacity:*
+
+* Long-term throughput limitIf you consistently hit 503s:
+1. Upgrade to higher tier (more dedicated capacity)
+2. Use async tier for non-critical requests
+3. Implement request queuing client-side
+4. Contact sales for custom capacity allocation#
+
+## Peak HoursCapacity exhaustion is more likely during:
+
+- US business hours (9 AM 
+
+- 6 PM PT)
+
+- Product launches
+
+- Marketing campaignsConsider:
+
+- Using async tier during peak
+
+- Pre-generating assets off-peak
+
+- Caching generated content
+
+## MonitoringTrack 503 rate to optimize tier selection:
+
+```typescriptclass TierSelector {  private sync503Rate = 0;  private readonly threshold = 0.1; // 10%  shouldUseSync(): boolean {    return this.sync503Rate < this.threshold;  }  recordResponse(status: number) {    // Exponential moving average    const alpha = 0.1;    const is503 = status === 503 ? 1 : 0;    this.sync503Rate = alpha 
+
+* is503 + (1 
+
+- alpha) 
+
+* this.sync503Rate;  }}
+
+```
+
+## Best Practices
+1. **Always check Retry-After*
+
+* - Don't spam with retries
+2. **Implement circuit breakers*
+
+* - Fail fast when sync is exhausted
+3. **Have async fallback*
+
+* - Graceful degradation
+4. **Cache aggressively*
+
+* - Avoid regenerating same content
+5. **Monitor metrics*
+
+* - Track 503 rate and adjust strategy
+
+## Headers to Check
+
+```typescriptinterface CapacityHeaders {  'Retry-After': string;           // Seconds to wait  'Link': string;                   // Alternate endpoint  'X-Weyl-Capacity-Region': string; // Which region hit limit  'X-Weyl-Request-Id': string;      // For support tickets}
+
+```
+
+## Enterprise OptionsNeed guaranteed capacity?
+
+- **Reserved capacity*
+
+* - Dedicated GPU allocation
+
+- **Multi-region failover*
+
+* - Automatic routing to available regions
+
+- **Priority queue*
+
+* - Jump the line during high load
+
+- **Custom SLAs*
+
+* - Contractual uptime guaranteesContact sales@weyl.ai for custom arrangements.

@@ -1,0 +1,66 @@
+---
+// src/components/landing/TechStack.astro
+
+interface TechItem {
+  category: string;
+  items: string[];
+}
+
+const techStack: TechItem[] = [
+  {
+    category: 'Hardware',
+    items: ['NVIDIA Blackwell GB200', 'FP4 Tensor Cores', 'NVLink Fabric'],
+  },
+  {
+    category: 'Models',
+    items: ['Stable Diffusion XL', 'FLUX.1', 'Custom Fine-tunes'],
+  },
+  {
+    category: 'Runtime',
+    items: ['TensorRT-LLM', 'CUDA 12.6', 'vLLM Engine'],
+  },
+  {
+    category: 'API',
+    items: ['OpenAPI 3.1', 'WebSocket Streams', 'gRPC'],
+  },
+];
+---
+
+<section class="py-24 px-6 bg-bg-primary">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-headline font-semibold tracking-widest text-brand-primary mb-4">
+        TECHNOLOGY STACK
+      </h2>
+      <p class="font-mono text-body text-text-secondary max-w-2xl mx-auto">
+        Purpose-built infrastructure leveraging the latest advances in GPU architecture 
+        and inference optimization.
+      </p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {techStack.map((tech) => (
+        <div class="p-6 bg-bg-surface border border-border rounded-md">
+          <h3 class="font-mono text-small font-semibold text-brand-primary uppercase tracking-wider mb-4">
+            {tech.category}
+          </h3>
+          <ul class="space-y-2">
+            {tech.items.map((item) => (
+              <li class="font-mono text-caption text-text-secondary flex items-start gap-2">
+                <span class="text-brand-primary">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+    
+    <div class="mt-12 text-center">
+      <p class="font-mono text-small text-text-muted">
+        // Enterprise-grade infrastructure with 24/7 monitoring and support
+      </p>
+    </div>
+  </div>
+</section>
+

@@ -1,0 +1,110 @@
+---
+title: Sync Tier WebSocket
+description: Real-time streaming with intermediate frames
+category: api
+---
+
+**Endpoint:*
+
+* `wss://sync.render.weyl.ai/ws`Real-time generation with streaming intermediate frames for immediate feedback.
+
+## Use Cases
+
+- Live preview in creative tools
+
+- Real-time UI feedback
+
+- Interactive generation
+
+- Progress visualization
+
+## Connection Flow
+
+```
+1. Open WebSocket connection
+2. Authenticate with API key
+3. Send generate request
+4. Receive ack
+5. Receive progress/frame updates
+6. Receive complete with final URL
+
+```
+
+## Basic Example
+
+```javascriptconst ws = new WebSocket('wss://sync.render.weyl.ai/ws');ws.onopen = () => {  // Authenticate  ws.send(JSON.stringify({    type: 'auth',    token: process.env.WEYL_API_KEY  }));    // Submit generation  ws.send(JSON.stringify({    type: 'generate',    id: 'req_1',    modality: 'image',    family: 'flux',    model: 'dev',    task: 't2i',    format: '1024',    request: {      prompt: 'cyberpunk street scene at night',      guidance: 3.5,      steps: 25    }  }));};ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch (msg.type) {    case 'authenticated':      console.log('Authenticated');      break;        case 'ack':      console.log('Request acknowledged');      break;        case 'progress':      console.log(`Progress: ${(msg.progress 
+
+* 100).toFixed(0)}%`);      break;        case 'frame':      // Update preview with intermediate result      document.getElementById('preview').src = msg.frame;      break;        case 'complete':      console.log(`Complete: ${msg.output}`);      ws.close();      break;        case 'error':      console.error(`Error: ${msg.message}`);      ws.close();      break;  }};
+
+```
+
+## Intermediate Frames#
+
+## Enabling FramesIntermediate frames are sent automatically during generation. No opt-in required.#
+
+## Frame Format
+
+```json{  "type": "frame",  "request_id": "req_1",  "frame": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",  "progress": 0.5,  "step": 12}
+
+```**Frame encoding:*
+
+* Base64-encoded JPEG data URI#
+
+## Frame FrequencyFrames are sent at ~25%, 50%, 75% progress for image generation.**Performance impact:*
+
+* +50-100ms overhead per generation#
+
+## Display Frames
+
+```javascriptfunction displayFrame(frameDataUri) {  const img = document.getElementById('preview');  img.src = frameDataUri;  // data:image/jpeg;base64,...}ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    if (msg.type === 'frame') {    displayFrame(msg.frame);  }};
+
+```
+
+## Multiple Concurrent RequestsSubmit multiple requests over one connection:
+
+```javascriptlet requestCounter = 0;function generate(prompt) {  const requestId = `req_${++requestCounter}`;    ws.send(JSON.stringify({    type: 'generate',    id: requestId,    modality: 'image',    family: 'flux',    model: 'schnell',    task: 't2i',    format: '512',    request: { prompt }  }));    return requestId;}// Track requestsconst pending = new Map();const req1 = generate('portrait 1');const req2 = generate('portrait 2');const req3 = generate('portrait 3');ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    // Route by request_id  switch (msg.type) {    case 'complete':      console.log(`${msg.request_id} complete: ${msg.output}`);      break;  }};
+
+```
+
+## Capacity Handling#
+
+## 503 ResponseIf sync tier is at capacity:
+
+```json{  "type": "error",  "request_id": "req_1",  "code": "capacity_exhausted",  "message": "sync tier at capacity",  "retry_after": 30}
+
+```**Options:**
+1. Wait and retry
+2. Fall back to async tier
+3. Use different model (schnell instead of dev)
+
+## Complete TypeScript Client
+
+```typescriptinterface GenerateRequest {  modality: 'image' | 'video';  family: string;  model: string;  task: string;  format?: string;  request: {    prompt: string;    [key: string]: unknown;  };}interface Handlers {  onProgress?: (progress: number) => void;  onFrame?: (frame: string) => void;}class SyncWSClient {  private ws: WebSocket;  private authenticated = false;  private pendingRequests = new Map<string, {    resolve: (url: string) => void;    reject: (error: Error) => void;    handlers?: Handlers;  }>();  private requestCounter = 0;  constructor(private apiKey: string) {    this.ws = new WebSocket('wss://sync.render.weyl.ai/ws');    this.setup();  }  private setup() {    this.ws.onopen = () => {      this.ws.send(JSON.stringify({        type: 'auth',        token: this.apiKey      }));    };    this.ws.onmessage = (event) => {      const msg = JSON.parse(event.data);            if (msg.type === 'authenticated') {        this.authenticated = true;        return;      }            const pending = this.pendingRequests.get(msg.request_id);      if (!pending) return;            switch (msg.type) {        case 'progress':          pending.handlers?.onProgress?.(msg.progress);          break;                case 'frame':          pending.handlers?.onFrame?.(msg.frame);          break;                case 'complete':          pending.resolve(msg.output);          this.pendingRequests.delete(msg.request_id);          break;                case 'error':          pending.reject(new Error(msg.message));          this.pendingRequests.delete(msg.request_id);          break;      }    };    this.ws.onerror = (error) => {      console.error('WebSocket error:', error);    };  }  async generate(    params: GenerateRequest,    handlers?: Handlers  ): Promise<string> {    // Wait for auth    while (!this.authenticated) {      await new Promise(r => setTimeout(r, 100));    }        const requestId = `req_${++this.requestCounter}`;        return new Promise((resolve, reject) => {      this.pendingRequests.set(requestId, {        resolve,        reject,        handlers      });            this.ws.send(JSON.stringify({        type: 'generate',        id: requestId,        ...params      }));    });  }  close() {    this.ws.close();  }}// Usageconst client = new SyncWSClient(process.env.WEYL_API_KEY!);try {  const outputUrl = await client.generate(    {      modality: 'image',      family: 'flux',      model: 'dev',      task: 't2i',      format: '1024',      request: {        prompt: 'cyberpunk alley at night, neon signs',        guidance: 3.5      }    },    {      onProgress: (p) => {        console.log(`Progress: ${(p 
+
+* 100).toFixed(0)}%`);      },      onFrame: (frame) => {        // Update UI preview        document.getElementById('preview').src = frame;      }    }  );    console.log(`Complete: ${outputUrl}`);} catch (error) {  console.error('Generation failed:', error);} finally {  client.close();}
+
+```
+
+## React Hook
+
+```typescriptimport { useEffect, useRef, useState } from 'react';function useSyncGeneration(apiKey: string) {  const ws = useRef<WebSocket 
+
+| null>(null);  const [isConnected, setIsConnected] = useState(false);  const [progress, setProgress] = useState(0);  const [preview, setPreview] = useState<string | null>(null);  useEffect(() => {    ws.current = new WebSocket('wss://sync.render.weyl.ai/ws');        ws.current.onopen = () => {      ws.current!.send(JSON.stringify({        type: 'auth',        token: apiKey      }));    };    ws.current.onmessage = (event) => {      const msg = JSON.parse(event.data);            switch (msg.type) {        case 'authenticated':          setIsConnected(true);          break;        case 'progress':          setProgress(msg.progress);          break;        case 'frame':          setPreview(msg.frame);          break;      }    };    return () => {      ws.current?.close();    };  }, [apiKey]);  const generate = (params: GenerateRequest): Promise<string> => {    return new Promise((resolve, reject) => {      const requestId = `req_${Date.now()}`;            const handler = (event: MessageEvent) => {        const msg = JSON.parse(event.data);        if (msg.request_id !== requestId) return;                if (msg.type === 'complete') {          resolve(msg.output);          ws.current!.removeEventListener('message', handler);        } else if (msg.type === 'error') {          reject(new Error(msg.message));          ws.current!.removeEventListener('message', handler);        }      };            ws.current!.addEventListener('message', handler);            ws.current!.send(JSON.stringify({        type: 'generate',        id: requestId,        ...params      }));    });  };  return { isConnected, progress, preview, generate };}// Component usagefunction ImageGenerator() {  const { isConnected, progress, preview, generate } = useSyncGeneration(    process.env.WEYL_API_KEY!  );    const handleGenerate = async () => {    const url = await generate({      modality: 'image',      family: 'flux',      model: 'dev',      task: 't2i',      format: '1024',      request: {        prompt: 'cyberpunk street scene'      }    });        console.log('Complete:', url);  };    return (    <div>      {preview && <img src={preview} alt="Preview" />}      <div>Progress: {(progress 
+
+* 100).toFixed(0)}%</div>      <button onClick={handleGenerate} disabled={!isConnected}>        Generate      </button>    </div>  );}
+
+```
+
+## Next Steps
+
+- [Async WebSocket](/api/websocket/async/) 
+
+- Queue-based workflows
+
+- [Protocol Reference](/api/websocket/protocol/) 
+
+- Complete message specs
+
+- [Sync Tier](/api/sync/) 
+
+- HTTP API reference

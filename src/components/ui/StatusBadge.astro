@@ -1,0 +1,28 @@
+---
+// src/components/ui/StatusBadge.astro
+interface Props {
+  status: 'nominal' | 'warning' | 'error' | 'offline';
+  label?: string;
+}
+
+const { status, label } = Astro.props;
+
+const statusConfig = {
+  nominal: { color: 'text-semantic-success', bg: 'bg-semantic-success/15', text: 'NOMINAL' },
+  warning: { color: 'text-semantic-warning', bg: 'bg-semantic-warning/15', text: 'WARNING' },
+  error: { color: 'text-semantic-error', bg: 'bg-semantic-error/15', text: 'ERROR' },
+  offline: { color: 'text-text-muted', bg: 'bg-text-muted/15', text: 'OFFLINE' },
+};
+
+const config = statusConfig[status];
+---
+
+<span class:list={[
+  'inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-caption uppercase tracking-wide',
+  config.color,
+  config.bg,
+]}>
+  <span class="text-[10px]">█</span>
+  {label ?? config.text}
+</span>
+

@@ -1,0 +1,258 @@
+---
+title: Error Reference
+description: Complete error code list and handling
+category: api
+---
+
+Complete reference for error codes, handling, and retry logic.
+
+## HTTP Status Codes
+
+| Code | Name                 | Description                                ||------|----------------------|--------------------------------------------|| 200  | OK                   | Success (sync tier)                        || 202  | Accepted             | Job queued (async tier)                    || 303  | See Other            | Job complete, redirect to output           || 400  | Bad Request          | Validation failed                          || 401  | Unauthorized         | Invalid or missing API key                 || 403  | Forbidden            | Insufficient permissions                   || 404  | Not Found            | Resource not found                         || 413  | Payload Too Large    | Request body exceeds limit                 || 429  | Too Many Requests    | Rate limit exceeded                        || 503  | Service Unavailable  | Capacity exhausted (sync tier)             || 500  | Internal Server Error| Server error                               |
+
+## Error Response Format
+
+```json{  "error": "error_code",  "message": "Human-readable error description",  "request_id": "req_xyz789",  "details": {    "field": "prompt",    "reason": "exceeds max length"  }}
+
+```
+
+## Error Codes#
+
+## Authentication Errors##
+
+## unauthorized (401)
+
+```json{  "error": "unauthorized",  "message": "Invalid or missing API key",  "request_id": "req_xyz789"}
+
+```**Causes:**
+
+- Missing Authorization header
+
+- Invalid API key format
+
+- Expired API key
+
+- Revoked API key**Action:*
+
+* Check API key is correct and active.##
+
+## forbidden (403)
+
+```json{  "error": "forbidden",  "message": "Insufficient permissions for this model",  "request_id": "req_xyz789",  "details": {    "required_plan": "pro",    "current_plan": "starter"  }}
+
+```**Causes:**
+
+- Model requires higher tier
+
+- Feature not available in plan
+
+- Key scope restrictions**Action:*
+
+* Upgrade plan or check key permissions.#
+
+## Validation Errors##
+
+## validation_failed (400)
+
+```json{  "error": "validation_failed",  "message": "Invalid request format",  "request_id": "req_xyz789",  "details": {    "field": "prompt",    "reason": "prompt exceeds max length of 4000 characters",    "value_length": 4523  }}
+
+```**Common validation issues:**
+
+- Prompt too long (>4000 chars)
+
+- Steps out of range
+
+- Invalid image URL
+
+- Unsupported format
+
+- Missing required field**Action:*
+
+* Fix request parameters and retry.##
+
+## payload_too_large (413)
+
+```json{  "error": "payload_too_large",  "message": "Request body exceeds 10MB limit",  "request_id": "req_xyz789",  "size_bytes": 12582912,  "limit_bytes": 10485760}
+
+```**Action:*
+
+* Use `/uploads` endpoint for large images.#
+
+## Capacity Errors##
+
+## capacity_exhausted (503)
+
+```json{  "error": "capacity_exhausted",  "message": "sync tier at capacity, retry in 30s or use async",  "request_id": "req_xyz789",  "retry_after": 30,  "alternate_tier": "https://async.render.weyl.ai"}
+
+```**Sync tier only.****Action:**
+1. Wait `retry_after` seconds and retry
+2. Switch to async tier
+3. Use different model (e.g. schnell instead of dev)##
+
+## queue_full (429)
+
+```json{  "error": "queue_full",  "message": "queue depth exceeded, retry in 60s",  "request_id": "req_xyz789",  "retry_after": 60}
+
+```**Async tier only.*
+
+* Rare, only when queue >10,000 jobs.**Action:*
+
+* Wait and retry.#
+
+## Rate Limit Errors##
+
+## rate_limited (429)
+
+```json{  "error": "rate_limited",  "message": "rate limit exceeded, retry in 60s",  "request_id": "req_xyz789",  "retry_after": 60,  "limit": 1000,  "reset_at": "2024-12-01T18:00:00Z"}
+
+```**Action:*
+
+* Wait until `reset_at` or `retry_after`, then retry.#
+
+## Generation Errors##
+
+## generation_failed (500)
+
+```json{  "error": "generation_failed",  "message": "CUDA out of memory",  "request_id": "req_xyz789",  "retriable": true,  "job_id": "j_abc123"}
+
+```**Causes:**
+
+- GPU OOM
+
+- Model inference error
+
+- Infrastructure issue**Action:*
+
+* If `retriable: true`, retry. Otherwise, contact support with `request_id`.##
+
+## model_unavailable (503)
+
+```json{  "error": "model_unavailable",  "message": "Model temporarily unavailable",  "request_id": "req_xyz789",  "model": "flux/dev",  "retry_after": 120}
+
+```**Action:*
+
+* Wait and retry, or use different model.#
+
+## Not Found Errors##
+
+## job_not_found (404)
+
+```json{  "error": "job_not_found",  "message": "Job not found or expired",  "request_id": "req_xyz789",  "job_id": "j_abc123"}
+
+```**Causes:**
+
+- Invalid job ID
+
+- Job expired (>7 days old)
+
+- Job was cancelled**Action:*
+
+* Job is gone. Re-submit if needed.##
+
+## resource_not_found (404)
+
+```json{  "error": "resource_not_found",  "message": "Resource not found",  "request_id": "req_xyz789"}
+
+```**Action:*
+
+* Check endpoint URL and parameters.#
+
+## Timeout Errors##
+
+## timeout (500)
+
+```json{  "error": "timeout",  "message": "Request timeout",  "request_id": "req_xyz789",  "retriable": true}
+
+```**Action:*
+
+* Retry. Consider using async tier for long-running tasks.
+
+## Retry Logic#
+
+## Retriable Errors**Always retry:**
+
+- `capacity_exhausted` (503)
+
+- `queue_full` (429)
+
+- `rate_limited` (429)
+
+- `model_unavailable` (503)
+
+- `timeout` (500)**Sometimes retry:**
+
+- `generation_failed` (if `retriable: true`)**Never retry:**
+
+- `unauthorized` (401)
+
+- `forbidden` (403)
+
+- `validation_failed` (400)
+
+- `payload_too_large` (413)#
+
+## Exponential Backoff
+
+```pythonimport timeimport requestsdef with_retry(fn, max_retries=5):    for attempt in range(max_retries):        try:            return fn()        except requests.exceptions.HTTPError as e:            if e.response.status_code in [503, 429]:                retry_after = int(e.response.headers.get('Retry-After', 30))                backoff = retry_after 
+
+* (2 *
+
+* attempt)                print(f"Attempt {attempt + 1}: waiting {backoff}s...")                time.sleep(backoff)                continue            elif e.response.status_code >= 500:                # Server error, retry with backoff                backoff = min(60, 2 *
+
+* attempt)                time.sleep(backoff)                continue            else:                # Client error, don't retry                raise        raise Exception("Max retries exceeded")
+
+```#
+
+## IdempotencyUse `idempotency_key` for safe retries (async tier):
+
+```pythondef safe_enqueue(prompt: str, key: str):    resp = requests.post(        "https://async.render.weyl.ai/queue",        headers={"Authorization": f"Bearer {API_KEY}"},        json={            "modality": "image",            "family": "flux",            "model": "schnell",            "task": "t2i",            "prompt": prompt,            "idempotency_key": key        }    )        if resp.status_code == 202:        return resp.json()['id']    elif resp.status_code == 429:        time.sleep(int(resp.headers.get('Retry-After', 60)))        return safe_enqueue(prompt, key)  # Same key!    else:        resp.raise_for_status()
+
+```Same `idempotency_key` returns existing job if already queued/running.
+
+## Error Handling Patterns#
+
+## TypeScript
+
+```typescriptclass WeylError extends Error {  constructor(    public code: string,    public statusCode: number,    message: string,    public retriable: boolean = false,    public requestId?: string  ) {    super(message);  }}async function generateWithErrorHandling(params: GenerateParams) {  try {    return await syncClient.generate(params);  } catch (error) {    if (error.code === 'capacity_exhausted') {      // Fall back to async tier      return await asyncClient.enqueue(params);    } else if (error.code === 'rate_limited') {      // Wait and retry      await sleep(error.retryAfter 
+
+* 1000);      return await generateWithErrorHandling(params);    } else if (error.retriable) {      // Retry with backoff      await sleep(1000);      return await generateWithErrorHandling(params);    } else {      throw error;    }  }}
+
+```#
+
+## Python
+
+```pythonfrom enum import Enumfrom dataclasses import dataclassclass ErrorCode(Enum):    UNAUTHORIZED = "unauthorized"    CAPACITY_EXHAUSTED = "capacity_exhausted"    RATE_LIMITED = "rate_limited"    GENERATION_FAILED = "generation_failed"@dataclassclass WeylError(Exception):    code: ErrorCode    message: str    request_id: str    retriable: bool = False    retry_after: int | None = Nonedef handle_error(response):    error_data = response.json()        if response.status_code == 503:        raise WeylError(            code=ErrorCode.CAPACITY_EXHAUSTED,            message=error_data['message'],            request_id=error_data['request_id'],            retriable=True,            retry_after=int(response.headers.get('Retry-After', 30))        )    elif response.status_code == 429:        raise WeylError(            code=ErrorCode.RATE_LIMITED,            message=error_data['message'],            request_id=error_data['request_id'],            retriable=True,            retry_after=error_data.get('retry_after')        )    # ... handle other errors
+
+```
+
+## Circuit Breaker
+
+```typescriptclass CircuitBreaker {  private failures = 0;  private lastFailure = 0;  private readonly threshold = 5;  private readonly timeout = 60000;  // 1 minute  async execute<T>(fn: () => Promise<T>): Promise<T> {    if (this.isOpen()) {      throw new Error('Circuit breaker open');    }    try {      const result = await fn();      this.onSuccess();      return result;    } catch (error) {      this.onFailure();      throw error;    }  }  private isOpen(): boolean {    if (this.failures < this.threshold) return false;        const elapsed = Date.now() 
+
+- this.lastFailure;    if (elapsed > this.timeout) {      this.reset();      return false;    }        return true;  }  private onSuccess() {    this.failures = 0;  }  private onFailure() {    this.failures++;    this.lastFailure = Date.now();  }  private reset() {    this.failures = 0;  }}
+
+```
+
+## SupportFor unresolved errors, contact support with:
+
+- `X-Weyl-Request-Id` header value
+
+- Error code and message
+
+- Request parameters (without API key)
+
+- TimestampEmail: support@weyl.ai
+
+## Next Steps
+
+- [Request Schemas](/api/reference/requests/) 
+
+- Request formats
+
+- [Response Schemas](/api/reference/responses/) 
+
+- Response formats
+
+- [Capacity Management](/api/sync/capacity/) 
+
+- Handling 503s

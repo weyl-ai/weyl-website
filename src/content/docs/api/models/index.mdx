@@ -1,0 +1,189 @@
+---
+title: Models Overview
+description: Available models, families, and capabilities
+category: api
+---
+
+Weyl supports multiple model families, each optimized for different use cases.
+
+## Active Models
+
+| Family   | Modality | Models           | Status       | Best For                    ||----------|----------|------------------|--------------|------------------------------|| `flux`   | image    | dev2, dev, schnell | ✓ Active    | General purpose, quality     || `zimage` | image    | turbo            | ✓ Active    | Speed, iteration             || `wan`    | video    | default          | Coming Soon | Image animation              |
+
+## Model Selection Guide#
+
+## FLUX Family**Black Forest Labs 
+
+- State of the art image generation**
+
+- **dev2*
+
+* - FLUX.2 Dev (32B parameters)  
+
+- Best quality, latest architecture  
+
+- Mistral-3 24B text encoder  
+
+- Excellent prompt adherence  
+
+- ~2.4s @ 1024px on nunchaku
+
+- **dev*
+
+* - FLUX.1 Dev (12B parameters)  
+
+- Strong baseline, T5-XXL encoder  
+
+- Great balance of quality and speed  
+
+- ~1.8s @ 1024px on nunchaku
+
+- **schnell*
+
+* - FLUX.1 Schnell (12B parameters, distilled)  
+
+- Fastest, 4-step generation  
+
+- Good quality for most use cases  
+
+- ~450ms @ 1024px on nunchaku#
+
+## Z-Image Family**Alibaba Tongyi Lab 
+
+- Ultra-fast generation**
+
+- **turbo*
+
+* - Z-Image Turbo (6B parameters)  
+
+- Sub-second at 1024px (~320ms)  
+
+- Apache-2.0 license  
+
+- Great for iteration, prototyping  
+
+- Fixed CFG 1.0#
+
+## WAN Family (Coming Soon)**Video generation from images**
+
+- **default*
+
+* - WAN 2.2 (MoE architecture)  
+
+- Animate still images  
+
+- 0.5-10 second clips  
+
+- 720p and 480p output  
+
+- Excellent motion coherence
+
+## Discovery EndpointGet current model availability and capabilities:
+
+```bashcurl "https://sync.render.weyl.ai/models" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+``````json{  "image": {    "flux": {      "dev2": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape"],        "max_steps": 50,        "typical_steps": 25,        "guidance_range": [1.0, 5.0],        "recommended_guidance": {          "short_prompt": 3.5,          "detailed_prompt": 1.5        }      },      "dev": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch", "tensorrt"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape"],        "typical_steps": 25,        "guidance_range": [1.0, 5.0],        "recommended_guidance": 3.5      },      "schnell": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch", "tensorrt"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape"],        "fixed_steps": 4,        "fixed_guidance": 3.5      }    },    "zimage": {      "turbo": {        "tasks": ["t2i"],        "backends": ["nunchaku"],        "formats": ["1024", "512", "portrait", "landscape"],        "typical_steps": 8,        "fixed_cfg": 1.0      }    }  }}
+
+```
+
+## Format Support#
+
+## Image FormatsAll image models support:
+
+| Format           | Dimensions | Aspect ||------------------|------------|--------|| `1024`           | 1024×1024  | 1:1    || `512`            | 512×512    | 1:1    || `portrait`       | 768×1024   | 3:4    || `portrait-wide`  | 576×1024   | 9:16   || `landscape`      | 1024×768   | 4:3    || `landscape-wide` | 1024×576   | 16:9   |#
+
+## Video Formats (WAN)
+
+| Format          | Dimensions | Aspect ||-----------------|------------|--------|| `720p`          | 1280×720   | 16:9   || `720p-portrait` | 720×1280   | 9:16   || `480p`          | 832×480    | ~16:9  || `480p-portrait` | 480×832    | ~9:16  || `square`        | 640×640    | 1:1    |
+
+## Backend Availability
+
+| Backend    | FLUX Dev2 | FLUX Dev | FLUX Schnell | Z-Image | WAN ||------------|-----------|----------|--------------|---------|-----|| `nunchaku` | ✓         | ✓        | ✓            | ✓       | 
+
+-   
+
+|| `torch`    | ✓         | ✓        | ✓            | 
+
+-       
+
+| ✓   || `tensorrt` | 
+
+-         
+
+| ✓        | ✓            | 
+
+-       | 
+
+-   |Default backend chosen automatically. Override with `?backend=` when alternatives exist.
+
+## Performance Matrix**Sync tier latency (p50) at 1024×1024:**
+
+| Model            | Backend    | Steps | Latency ||------------------|------------|-------|---------|| flux/schnell     | nunchaku   | 4     | 450ms   || flux/schnell     | tensorrt   | 4     | 380ms   || flux/dev         | nunchaku   | 25    | 1.8s    || flux/dev         | tensorrt   | 25    | 1.5s    || flux/dev2        | nunchaku   | 25    | 2.4s    || zimage/turbo     | nunchaku   | 8     | 320ms   |**Video (WAN, 720p, 2 seconds):**| Model            | Backend | Steps | Latency ||------------------|---------|-------|---------|| wan/default      | torch   | 20    | ~12s    || wan/default (⚡) | torch   | 8     | ~5s     |⚡ = Lightning mode with distilled weights
+
+## Model AliasesHuggingFace model IDs map to Weyl family/model:
+
+```bash# These are equivalent:/image/flux/schnell/t2i/image/black-forest-labs/FLUX.1-schnell/t2i# Also works:/image/alibaba/Z-Image-Turbo/t2i/image/zimage/turbo/t2i
+
+```Full alias map at `/models/aliases`.
+
+## Choosing a Model#
+
+## For Speed
+1. **zimage/turbo*
+
+* - Sub-second (320ms)
+2. **flux/schnell*
+
+* - Very fast (450ms)
+3. **flux/dev*
+
+* - Fast (1.8s)#
+
+## For Quality
+1. **flux/dev2*
+
+* - Best quality, latest
+2. **flux/dev*
+
+* - Excellent baseline
+3. **flux/schnell*
+
+* - Good for 4 steps#
+
+## For Iteration
+
+- **zimage/turbo*
+
+* - Rapid prototyping
+
+- **flux/schnell*
+
+* - Fast preview generation
+
+- **flux/dev*
+
+* - Final renders#
+
+## For Video
+
+- **wan/default*
+
+* - Only option currently (coming soon)
+
+## Next Steps
+
+- [FLUX Models](/api/models/flux/) 
+
+- Detailed FLUX guide
+
+- [Z-Image](/api/models/zimage/) 
+
+- Z-Image Turbo guide
+
+- [WAN Models](/api/models/wan/) 
+
+- WAN video generation
+
+- [Backends](/api/models/backends/) 
+
+- Backend comparison

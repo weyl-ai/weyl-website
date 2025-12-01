@@ -1,0 +1,52 @@
+---
+title: Announcing Weyl
+description: Introducing Weyl - inference infrastructure for generative media
+pubDate: 2024-12-01
+author: Weyl Team
+tags: [announcement, infrastructure, AI]
+---
+
+# Announcing Weyl
+
+Today we're launching Weyl, purpose-built inference infrastructure for generative media.
+
+## The Problem
+
+Current inference providers optimize for LLMs, not diffusion models. This creates fundamental mismatches:
+
+- **Latency**: Text generation can stream tokens; image generation needs the full result
+- **Compute**: Diffusion models have different memory/compute patterns than transformers
+- **Cost**: Generic GPU instances waste money on unnecessary capabilities
+
+## Our Approach
+
+Weyl is built from the ground up for diffusion workloads:
+
+### Hardware
+
+NVIDIA Blackwell GB200 with FP4 Tensor Cores. Custom CUDA kernels optimized for diffusion model kernels. NVLink fabric for zero-copy memory transfers.
+
+### Software
+
+TensorRT-LLM with custom optimizations. Automatic batch sizing based on request patterns. Multi-region routing with sub-10ms failover.
+
+### Economics
+
+FP4 precision delivers 4x throughput improvement with minimal quality degradation. This translates directly to 4x cost reduction.
+
+## Results
+
+- **47ms** p99 latency for SDXL 1024x1024
+- **99.99%** uptime across multi-region deployment
+- **4x** cost reduction vs. FP16 inference
+
+## Get Started
+
+Sign up for free at [weyl.ai/signup](https://weyl.ai/signup). Free tier includes 1,000 requests per month with no credit card required.
+
+Read the [documentation](/docs/getting-started/) or check out [example applications](https://github.com/weyl-ai/examples).
+
+---
+
+*Build trust. Ship code. Arbitrage dysfunction.*
+

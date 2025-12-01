@@ -1,0 +1,214 @@
+---
+title: Typography System
+description: Complete typography guide for Weyl's dual-system design
+---
+
+Weyl implements a **dual typography system*
+
+* that reflects our epistemological stance: data requires different typography than institutions.--
+-
+
+## Hypermodern Typography (Dark Mode)> "The terminal doesn't lie. The terminal doesn't comfort."Monospace typography enforces data integrity. Every character occupies the same width, making columns align, diffs visible, and data scannable.#
+
+## Font Stack
+
+```cssfont-family: 'Iosevka', 'Berkeley Mono', 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+
+```**Display Font:*
+
+* Aldrich — Geometric, technical, for headlines#
+
+## Type Scale
+
+| Class | Size | Usage ||-------|------|-------|| `.text-hero` | 48px | Hero sections, major announcements || `.text-headline` | 32px | Section headers || `.text-subhead` | 24px | Subsections || `.text-body` | 16px | Body content || `.text-secondary` | 14px | Secondary information || `.text-caption` | 12px | Captions, labels || `.text-micro` | 10px | Micro labels, metadata |#
+
+## Weight SemanticsWeight indicates **signal strength**:
+
+- **300 (Light)**: Historical, derived, context
+
+- **400 (Regular)**: Current data, standard
+
+- **500 (Medium)**: Elevated importance
+
+- **600 (Semibold)**: Key metrics
+
+- **700 (Bold)**: Primary emphasis
+
+- **800 (Heavy)**: Critical, active state#
+
+## Semantic Colors<div class="grid grid-cols-2 gap-4 my-8">  <div class="p-4 bg-bg-surface border border-border rounded-md">    <div class="text-link font-mono mb-2">█ Links / Interactive</div>    <code class="text-caption">#54aeff</code>  </div>    <div class="p-4 bg-bg-surface border border-border rounded-md">    <div class="text-success-state font-mono mb-2">█ Nominal / Confirmed</div>    <code class="text-caption">#3fb950</code>  </div>    <div class="p-4 bg-bg-surface border border-border rounded-md">    <div class="text-warning-state font-mono mb-2">█ Caution / Threshold</div>    <code class="text-caption">#ffa657</code>  </div>    <div class="p-4 bg-bg-surface border border-border rounded-md">    <div class="text-error-state font-mono mb-2">█ Critical / Fault</div>    <code class="text-caption">#ff7b72</code>  </div></div>#
+
+## Example: Metric Display
+
+```html<div class="metric">  <span class="metric-value">43.5</span>  <span class="metric-unit">it/s</span>  <span class="metric-label">throughput</span></div>
+
+```<div class="metric my-8 p-6 bg-bg-surface border border-border rounded-md">  <span class="metric-value">43.5</span>  <span class="metric-unit">it/s</span>  <span class="metric-label">throughput</span></div>#
+
+## Example: Status Bar
+
+```html<div class="status-bar">  <span class="status nominal">█ NOMINAL</span>  <span class="status-item">latency: 1.2ms</span>  <span class="status-item">state: LIVE</span></div>
+
+```<div class="status-bar my-8 p-4 bg-bg-surface border border-border rounded-md">  <span class="status nominal">█ NOMINAL</span>  <span class="status-item">latency: 1.2ms</span>  <span class="status-item">state: LIVE</span></div>--
+-
+
+## High Modernism Typography (Light Mode)> "The institution earned trust by delivering. The stamp meant something."Sans-serif typography communicates institutional authority. Weight indicates rank, size indicates importance, spacing indicates formality.#
+
+## Font Stack
+
+```cssfont-family: 'Helvetica Neue', 'Univers', 'Arial', 'Liberation Sans', system-ui, sans-serif;
+
+```**Display Fonts:**
+
+- **Futura*
+
+* — Bauhaus geometry for proclamations
+
+- **Trade Gothic*
+
+* — Industrial strength for institutional headers**Serif:*
+
+* Georgia or Charter — For attributed statements and emphasis#
+
+## Departmental ColorsAvailable in light mode:
+
+- `.text-executive` — Authority, directive (#1a1a1a)
+
+- `.text-administration` — Department headers (#1a5276)
+
+- `.text-operations` — Procedure, verified (#2d5a27)
+
+- `.text-priority` — Urgent, critical (#c41e3a)
+
+- `.text-heritage` — Archive, historical (#8b7355)
+
+- `.text-gilt` — Ceremony, achievement (#d4a017)#
+
+## Example: Document Header
+
+```html<header class="document-header">  <h1 class="proclamation">QUALITY ASSURANCE</h1>  <p class="division">STANDARDS BUREAU</p>  <p class="document-number">Document No. 1962-QA-0042</p></header>
+
+```#
+
+## Example: Institutional Quote
+
+```html<blockquote class="institutional-quote">  <p>"In a well-ordered laboratory, precision is not a goal but a habit."</p>  <cite>— Bureau of Standards, 1962</cite></blockquote>
+
+```<blockquote class="institutional-quote my-8">  <p>"In a well-ordered laboratory, precision is not a goal but a habit."</p>  <cite>— Bureau of Standards, 1962</cite></blockquote>--
+-
+
+## Utility Classes#
+
+## Line Heights
+
+- `.leading-tight` — 1.2 (for headlines)
+
+- `.leading-normal` — 1.5 (for body text)
+
+- `.leading-relaxed` — 1.7 (for long-form content)#
+
+## Letter Spacing
+
+- `.tracking-tight` — -0.02em
+
+- `.tracking-normal` — 0
+
+- `.tracking-wide` — 0.04em
+
+- `.tracking-wider` — 0.08em#
+
+## Special Features
+
+- `.tabular-nums` — For aligned numeric data
+
+- `.readable-content` — Max-width: 65ch for optimal readability
+
+- `.truncate` — Text overflow with ellipsis--
+-
+
+## The `//` ConventionIn hypermodern typography, double slashes serve as semantic delimiters:
+
+```// section //// render // weyl // ai// status: nominal //
+
+```This convention:
+
+- References C++/programming comments
+
+- Creates visual rhythm
+
+- Indicates machine-readable segments
+
+- Separates navigation from content**Do not use*
+
+* in High Modernism contexts—use traditional punctuation.--
+-
+
+## Accessibility#
+
+## Contrast Ratios
+
+- Body text: **4.5:1*
+
+* minimum (WCAG AA)
+
+- Large text (>18px): **3:1*
+
+* minimum (WCAG AA)
+
+- UI components: **3:1*
+
+* minimum (WCAG AA)#
+
+## Font Size Minimums
+
+- Body text: **16px*
+
+* minimum
+
+- Interactive elements: **14px*
+
+* minimum
+
+- Captions: **12px*
+
+* minimum (sparingly)#
+
+## Line LengthOptimal: **45-75 characters per line**Use `.readable-content` class for max-width constraint:
+
+```html<article class="readable-content">  <!-
+
+- Content automatically constrained to 65ch --></article>
+
+```--
+-
+
+## Responsive BehaviorTypography automatically scales on mobile devices:
+
+- Hero: 48px → 32px
+
+- Headline: 32px → 24px
+
+- Subhead: 24px → 18px
+
+- Body: 16px (maintains for readability)--
+-
+
+## Print StylesAll content automatically switches to High Modernism for print:
+
+- Sans-serif typography
+
+- Black text on white background
+
+- No shadows or glow effects
+
+- 11pt base size with 1.4 line height--
+-
+
+## ImplementationAll typography utilities are available globally. Simply use the classes:
+
+```html<h1 class="font-display text-hero tracking-wide">WEYL</h1><p class="font-mono text-body leading-normal">Infrastructure for generative media.</p><span class="text-caption tracking-wider uppercase">© 2024</span>
+
+```For custom implementations, use CSS variables:
+
+```css.custom-header {  font-family: var(--font-display);  font-size: var(--text-headline);  line-height: var(--leading-tight);  letter-spacing: var(--tracking-wide);  color: var(--color-brand-primary);}
+
+```

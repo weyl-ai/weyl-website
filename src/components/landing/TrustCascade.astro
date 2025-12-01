@@ -1,0 +1,60 @@
+---
+// src/components/landing/TrustCascade.astro
+import Card from '@components/ui/Card.astro';
+import MetricDisplay from '@components/ui/MetricDisplay.astro';
+
+interface Metric {
+  value: string | number;
+  unit?: string;
+  label: string;
+}
+
+const metrics: Metric[] = [
+  { value: '99.99', unit: '%', label: 'Uptime SLA' },
+  { value: '47', unit: 'ms', label: 'P99 Latency' },
+  { value: '1,071', unit: 'TFLOPS', label: 'Peak Performance' },
+  { value: '3.2', unit: 'M', label: 'Requests/Day' },
+];
+---
+
+<section class="py-24 px-6 bg-bg-primary">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-headline font-semibold tracking-widest text-brand-primary mb-4">
+        PRODUCTION-GRADE INFRASTRUCTURE
+      </h2>
+      <p class="font-mono text-body text-text-secondary max-w-2xl mx-auto">
+        Built on Blackwell architecture with custom kernels for FP4 precision. 
+        The same stack powering real-time media generation at scale.
+      </p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {metrics.map((metric) => (
+        <MetricDisplay
+          value={metric.value}
+          unit={metric.unit}
+          label={metric.label}
+        />
+      ))}
+    </div>
+    
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Card title="Low Latency" variant="elevated">
+        Sub-100ms end-to-end inference with optimized CUDA kernels and 
+        zero-copy memory transfers.
+      </Card>
+      
+      <Card title="Cost Optimized" variant="elevated">
+        FP4 quantization delivers 4x throughput improvement with minimal 
+        quality degradation.
+      </Card>
+      
+      <Card title="Reliable" variant="elevated">
+        Multi-region redundancy with automatic failover and request routing 
+        for 99.99% uptime.
+      </Card>
+    </div>
+  </div>
+</section>
+

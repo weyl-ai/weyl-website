@@ -1,0 +1,66 @@
+---
+title: Core Concepts
+description: Understanding Weyl API fundamentals
+category: api
+---
+
+## Model FamiliesEach family is a distinct transformer backbone with its own characteristics.
+
+| Family   | Modality | Default Backend | Status       | Notes                              ||----------|----------|-----------------|--------------|-------------------------------------|| `flux`   | image    | nunchaku        | **active*
+
+*   
+
+| FLUX.2 — 32B, Mistral-3 encoder    || `zimage` | image    | nunchaku        | **active*
+
+*   
+
+| Z-Image Turbo — sub-second, 6B     || `wan`    | video    | torch           | coming soon  | WAN 2.2 — MoE, high quality i2v    || `qwen`   | image    | nunchaku        | coming soon  | Qwen-Image — superior editing      || `sdxl`   | image    | tensorrt        | coming soon  | SDXL 1.0 — huge LoRA ecosystem     |#
+
+## Active Families**flux*
+
+* (image) — Black Forest Labs
+
+| Model      | Tasks    | Params | Notes                                    ||------------|----------|--------|------------------------------------------|| `dev2`     | t2i, i2i | 32B    | FLUX.2 Dev — Mistral-3 24B text encoder  || `dev`      | t2i, i2i | 12B    | FLUX.1 Dev — T5-XXL encoder              || `schnell`  | t2i, i2i | 12B    | FLUX.1 Schnell — 4 steps, fastest        |**zimage*
+
+* (image) — Alibaba Tongyi Lab
+
+| Model   | Tasks | Params | Notes                                    ||---------|-------|--------|------------------------------------------|| `turbo` | t2i   | 6B     | Sub-second generation, Apache-2.0       |
+
+## BackendsThree inference backends, each with different tradeoffs:
+
+| Backend    | Stack                | Notes                        ||------------|----------------------|------------------------------|| `nunchaku` | NVFP4 on Blackwell   | Fastest, 4-bit quantized     || `torch`    | diffusers + CUDA     | Flexible, full precision     || `tensorrt` | TRT-LLM + ModelOpt   | NVIDIA-optimized, production |Backend defaults by family. Override with `?backend=` when alternatives exist.
+
+## Formats#
+
+## Video Formats
+
+| Format          | Dimensions | Aspect ||-----------------|------------|--------|| `720p`          | 1280×720   | 16:9   || `720p-portrait` | 720×1280   | 9:16   || `480p`          | 832×480    | ~16:9  || `480p-portrait` | 480×832    | ~9:16  || `square`        | 640×640    | 1:1    |#
+
+## Image Formats
+
+| Format           | Dimensions | Aspect ||------------------|------------|--------|| `1024`           | 1024×1024  | 1:1    || `512`            | 512×512    | 1:1    || `portrait`       | 768×1024   | 3:4    || `portrait-wide`  | 576×1024   | 9:16   || `landscape`      | 1024×768   | 4:3    || `landscape-wide` | 1024×576   | 16:9   |
+
+## Model AliasingHuggingFace model IDs are accepted as family/model shorthand:
+
+```bash/image/black-forest-labs/FLUX.1-schnell/t2i
+
+```Resolves to `/image/flux/schnell/t2i`. Check `/models/aliases` for the full map.
+
+## Image ReferencesImages can be provided in three ways:
+1. **HTTPS URL*
+
+* - `https://example.com/image.jpg`
+2. **Asset URL*
+
+* - `https://cdn.render.weyl.ai/a/xyz123`
+3. **Base64 Data URI*
+
+* - `data:image/png;base64,...`For images >1MB, use `/uploads` endpoint for a stable asset URL.
+
+## Request IDsEvery request gets a unique ID in `X-Weyl-Request-Id` header. Include this when reporting issues for faster debugging.
+
+## SeedsSet `seed` for reproducible generation. Same prompt + seed + parameters = same output (within backend precision limits).
+
+```json{  "prompt": "neon city at night",  "seed": 42}
+
+```

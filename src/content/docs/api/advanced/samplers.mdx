@@ -1,0 +1,243 @@
+---
+title: Samplers
+description: Sampling algorithms for diffusion models
+category: api
+---
+
+Samplers determine how the model iteratively denoises from random noise to your final image/video.
+
+## Available Samplers
+
+| Sampler   | Speed | Quality | Stability | Best For                  ||-----------|-------|---------|-----------|---------------------------|| `euler`   | Fast  | Good    | High      | General purpose, default  || `uni_pc`  | Fast  | Good    | High      | WAN video, fast iteration || `res_2m`  | Medium| Better  | High      | Quality, RES4LYF          || `res_3s`  | Slow  | Best    | High      | Maximum quality           |
+
+## Euler**Default for most models**
+
+```json{  "prompt": "...",  "sampler": "euler"}
+
+```**Characteristics:**
+
+- Fast convergence
+
+- Stable across step counts
+
+- General purpose
+
+- Works well with all schedulers**Best for:**
+
+- Default choice
+
+- Fast iteration
+
+- Predictable results
+
+## UniPC**Default for WAN**
+
+```json{  "prompt": "...",  "sampler": "uni_pc"}
+
+```**Characteristics:**
+
+- Predictor-corrector method
+
+- Fast convergence
+
+- Excellent for video
+
+- Lower step counts (10-20)**Best for:**
+
+- WAN video generation
+
+- Fast iteration
+
+- Lower step budgets
+
+## RES 2M (RES4LYF)**Recommended for quality**
+
+```json{  "prompt": "...",  "sampler": "res_2m",  "steps": 30}
+
+```**Characteristics:**
+
+- Residual feedback
+
+- Better detail than euler
+
+- 2-moment formulation
+
+- Requires more steps (25-40)**Best for:**
+
+- High-quality final renders
+
+- Detail preservation
+
+- FLUX Dev/Dev2
+
+- WAN with quality focus**Performance impact:*
+
+* ~10% slower than euler at same step count
+
+## RES 3S**Maximum quality**
+
+```json{  "prompt": "...",  "sampler": "res_3s",  "steps": 40}
+
+```**Characteristics:**
+
+- 3rd-order solver
+
+- Best quality
+
+- Highest stability
+
+- Requires higher step counts (30-50)**Best for:**
+
+- Absolute maximum quality
+
+- Final production renders
+
+- When speed not critical**Performance impact:*
+
+* ~20% slower than euler
+
+## Step Count Recommendations#
+
+## FLUX Models
+
+| Sampler  | Min Steps | Optimal Steps | Max Steps ||----------|-----------|---------------|-----------|| euler    | 15        | 25            | 50        || res_2m   | 25        | 30            | 50        || res_3s   | 30        | 40            | 60        |#
+
+## WAN Models
+
+| Sampler  | Min Steps | Optimal Steps | Max Steps ||----------|-----------|---------------|-----------|| uni_pc   | 10        | 20            | 40        || euler    | 15        | 20            | 40        || res_2m   | 20        | 25            | 50        || res_3s   | 25        | 35            | 50        |
+
+## Sampler + Scheduler Combinations#
+
+## Recommended Combinations**FLUX Dev/Dev2 (Quality):**
+
+```json{  "sampler": "res_2m",  "scheduler": "exponential",  "steps": 30}
+
+```**FLUX Schnell (Speed):**
+
+```json{  "sampler": "euler",  "scheduler": "simple",  "steps": 4}
+
+```**WAN (Quality):**
+
+```json{  "sampler": "res_2m",  "scheduler": "bong_tangent",  "steps": 25}
+
+```**WAN (Speed):**
+
+```json{  "sampler": "uni_pc",  "scheduler": "simple",  "steps": 15}
+
+```
+
+## Visual Comparison#
+
+## Euler vs RES 2M**Euler (25 steps):**
+
+- Clean output
+
+- Good details
+
+- Slight smoothing in high-frequency areas**RES 2M (30 steps):**
+
+- Sharper details
+
+- Better texture preservation
+
+- Slightly longer generation timeDifference is subtle but noticeable in detailed scenes (faces, textures, fine patterns).#
+
+## UniPC vs RES 2M (WAN Video)**UniPC (20 steps):**
+
+- Fast convergence
+
+- Good motion
+
+- Smooth temporal consistency**RES 2M (25 steps):**
+
+- Better frame detail
+
+- Improved texture retention
+
+- Slightly better motion qualityFor video, difference is minimal unless generating high-detail scenes.
+
+## Performance Benchmarks**FLUX Dev @ 1024×1024 (nunchaku backend):**
+
+| Sampler  | Steps | Latency | Quality Score ||----------|-------|---------|---------------|| euler    | 25    | 1.8s    | 8.2/10        || res_2m   | 30    | 2.1s    | 8.7/10        || res_3s   | 40    | 2.9s    | 9.0/10        |**WAN @ 720p, 2s duration (torch backend):**| Sampler  | Steps | Latency | Quality Score ||----------|-------|---------|---------------|| uni_pc   | 20    | 12s     | 8.0/10        || euler    | 20    | 12.5s   | 8.1/10        || res_2m   | 25    | 16s     | 8.5/10        |
+
+## Error Tolerance#
+
+## Stability Ranking
+1. **res_3s*
+
+* - Most stable, highest error tolerance
+2. **res_2m*
+
+* - Very stable, good error handling
+3. **euler*
+
+* - Stable, occasional artifacts at low steps
+4. **uni_pc*
+
+* - Stable for intended use cases (video)#
+
+## Low Step PerformanceSome samplers degrade faster at low step counts:**10 steps:**
+
+- euler: Usable but noisy
+
+- uni_pc: Good for video
+
+- res_2m: Not recommended
+
+- res_3s: Not recommended**15 steps:**
+
+- euler: Good
+
+- uni_pc: Excellent
+
+- res_2m: Acceptable
+
+- res_3s: Not recommended**25+ steps:**
+
+- All samplers perform well
+
+## Advanced Usage#
+
+## Sampler SwitchingSome models benefit from starting with one sampler and switching mid-generation:
+
+```json{  "prompt": "...",  "sampler": "euler",  "sampler_switch": {    "at_step": 15,    "to": "res_2m"  },  "steps": 30}
+
+```Fast convergence with euler, then fine detail with res_2m. (Coming soon)#
+
+## Custom Step SchedulesOverride per-step behavior (advanced):
+
+```json{  "prompt": "...",  "sampler": "res_2m",  "sampler_config": {    "momentum": 0.9,    "order": 2  }}
+
+```(Coming soon 
+
+- contact support for custom configurations)
+
+## Choosing a Sampler#
+
+## Decision Tree
+
+```Need video generation?└─ Yes → uni_pc (default) or res_2m (quality)└─ No → Image generation    └─ Priority: Speed?        └─ Yes → euler        └─ No → Priority: Quality?            └─ Yes → res_3s            └─ No → res_2m (balanced)
+
+```#
+
+## By Use Case
+
+| Use Case                  | Recommended Sampler ||---------------------------|---------------------|| Fast iteration            | euler               || Final renders (image)     | res_2m or res_3s    || Video generation          | uni_pc              || High-detail video         | res_2m              || Production quality        | res_3s              || Balanced (default)        | euler               |
+
+## Next Steps
+
+- [Schedulers](/api/advanced/schedulers/) 
+
+- Noise schedule tuning
+
+- [Guidance](/api/advanced/guidance/) 
+
+- CFG tuning
+
+- [FLUX Models](/api/models/flux/) 
+
+- Model-specific recommendations
+
+- [WAN Models](/api/models/wan/) 
+
+- Video generation

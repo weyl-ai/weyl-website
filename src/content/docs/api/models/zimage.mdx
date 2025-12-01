@@ -1,0 +1,210 @@
+---
+title: Z-Image Turbo
+description: Ultra-fast image generation from Alibaba Tongyi Lab
+category: api
+---
+
+**Family:*
+
+* `zimage`  **Model:*
+
+* `turbo`  **Creator:*
+
+* Alibaba Tongyi Lab  **License:*
+
+* Apache-2.0Ultra-fast image generation optimized for iteration and real-time use cases.
+
+## OverviewZ-Image Turbo is a 6B parameter model delivering sub-second generation at 1024×102
+4. Perfect for:
+
+- Rapid prototyping
+
+- Real-time generation in tools
+
+- High-volume batch processing
+
+- Cost-sensitive workflows
+
+## Basic Usage
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/zimage/turbo/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "portrait of a character, natural lighting"  }' \  -o output.webp
+
+```
+
+## Performance
+
+| Resolution | Steps | Latency (p50) | Latency (p99) ||------------|-------|---------------|---------------|| 512×512    | 5     | 140ms         | 280ms         || 1024×1024  | 8     | 320ms         | 650ms         || 768×1024   | 7     | 250ms         | 520ms         || 1024×576   | 6     | 220ms         | 480ms         |*Measured on nunchaku backend***3-8× faster than FLUX Schnell*
+
+* while maintaining good quality.
+
+## Parameters#
+
+## Required
+
+```json{  "prompt": "description of image"}
+
+```#
+
+## Optional
+
+```json{  "prompt": "cyberpunk street at night",  "negative_prompt": "blur, distortion",  "steps": 8,  "seed": 42}
+
+```**Note:*
+
+* Z-Image uses fixed CFG 1.0 internally. The `guidance` parameter is ignored.
+
+## Tasks#
+
+## Text-to-Image (t2i)Primary task, fully optimized:
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/zimage/turbo/t2i?format=portrait" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "character portrait, anime style",    "steps": 8  }' \  -o portrait.webp
+
+```#
+
+## Image-to-Image (i2i)**Not supported*
+
+* - Z-Image Turbo is t2i only.
+
+## Step Count Tuning
+
+| Steps | Quality | Latency @ 1024px ||-------|---------|------------------|| 5     | Good    | ~200ms           || 8     | Better  | ~320ms           || 12    | Best    | ~480ms           |Default: `8` steps. Lower for speed, higher for quality.
+
+## Format SupportAll standard image formats:
+
+| Format           | Dimensions | Aspect | Latency ||------------------|------------|--------|---------|| `512`            | 512×512    | 1:1    | 140ms   || `1024`           | 1024×1024  | 1:1    | 320ms   || `portrait`       | 768×1024   | 3:4    | 250ms   || `portrait-wide`  | 576×1024   | 9:16   | 230ms   || `landscape`      | 1024×768   | 4:3    | 250ms   || `landscape-wide` | 1024×576   | 16:9   | 220ms   |
+
+## Quality vs FLUX#
+
+## Strengths
+
+- **Speed:*
+
+* 3-8× faster than FLUX Schnell
+
+- **Cost:*
+
+* Lower per-request cost
+
+- **Consistency:*
+
+* Reliable output quality
+
+- **License:*
+
+* Apache-2.0, very permissive#
+
+## Tradeoffs
+
+- **Detail:*
+
+* Less fine detail than FLUX Dev/Dev2
+
+- **Prompt Adherence:*
+
+* Simpler text encoder
+
+- **Complexity:*
+
+* Better for straightforward prompts
+
+- **LoRAs:*
+
+* Limited LoRA support
+
+## Use Case Guide#
+
+## ✓ Great For
+
+- Rapid iteration during creative process
+
+- Real-time generation in tools/apps
+
+- Background/texture generation
+
+- Concept exploration
+
+- High-volume batch processing
+
+- Cost-optimized workflows#
+
+## ✗ Not Ideal For
+
+- Highly detailed photorealism
+
+- Complex multi-element scenes
+
+- Fine-grained control with LoRAs
+
+- Image-to-image transformation
+
+## Complete Example
+
+```pythonimport requestsdef generate_zimage(prompt: str, format: str = "1024") -> bytes:    """Generate image with Z-Image Turbo."""        url = f"https://sync.render.weyl.ai/image/zimage/turbo/t2i?format={format}"        headers = {        "Authorization": f"Bearer {os.environ['WEYL_API_KEY']}",        "Content-Type": "application/json"    }        payload = {        "prompt": prompt,        "steps": 8,        "seed": 42    }        resp = requests.post(url, headers=headers, json=payload)    resp.raise_for_status()        cdn_url = resp.headers.get('Content-Location')    print(f"CDN URL: {cdn_url}")        return resp.content# Fast iteration loopprompts = [    "character portrait, natural lighting",    "character portrait, dramatic lighting",     "character portrait, soft lighting"]for i, prompt in enumerate(prompts):    img = generate_zimage(prompt, format="512")  # 512px for speed    with open(f"iteration_{i}.webp", "wb") as f:        f.write(img)    print(f"Generated iteration {i} in ~140ms")
+
+```
+
+## Prompt Tips#
+
+## StructureKeep prompts focused and direct:
+
+```[subject], [style], [lighting]
+
+```**Good:**
+
+```portrait of a woman, soft lighting, natural colors
+
+```**Too Complex:**
+
+```highly detailed photorealistic portrait of a woman in her thirties with subtle makeup, golden hour lighting from the left, bokeh background with trees, shot on 85mm f/1.4, film grain
+
+```Z-Image works best with simpler prompts. For complex scenes, use FLUX.#
+
+## Negative PromptsEffective negatives for Z-Image:
+
+```blur, distortion, artifacts, low quality
+
+```Keep negative prompts short.
+
+## BackendZ-Image Turbo only supports `nunchaku` backend (FP4 quantization on Blackwell). No backend override needed.
+
+## Comparison Matrix
+
+| Feature              | Z-Image Turbo | FLUX Schnell | FLUX Dev ||----------------------|---------------|--------------|----------|| Speed @ 1024px       | ~320ms        | ~450ms       | ~1.8s    || Steps                | 5-12          | 4 (fixed)    | 20-40    || Detail level         | Good          | Better       | Best     || Prompt complexity    | Simple        | Moderate     | Complex  || LoRA support         | Limited       | Full         | Full     || Cost per request     | Lowest        | Low          | Medium   || License              | Apache-2.0    | Apache-2.0   | Non-commercial |
+
+## When to Choose Z-ImageChoose Z-Image Turbo when:
+
+- Speed is critical (sub-second required)
+
+- Iterating rapidly on concepts
+
+- Processing high volume
+
+- Cost optimization needed
+
+- Simple-to-moderate prompt complexity
+
+- Don't need LoRAs or fine controlChoose FLUX when:
+
+- Quality is paramount
+
+- Complex multi-element scenes
+
+- Need LoRA adapters
+
+- Photorealism required
+
+- Image-to-image workflows
+
+## Next Steps
+
+- [FLUX Models](/api/models/flux/) 
+
+- When you need more quality
+
+- [Model Comparison](/api/models/) 
+
+- Full model matrix
+
+- [Sync Tier](/api/sync/image/) 
+
+- Image generation API reference

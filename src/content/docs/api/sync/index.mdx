@@ -1,0 +1,103 @@
+---
+title: Sync Tier Overview
+description: Real-time synchronous generation on dedicated capacity
+category: api
+---
+
+**Base URL:*
+
+* `https://sync.render.weyl.ai`Synchronous generation on dedicated bare metal. POST your request, receive bytes directly. No queues, no polling.
+
+## Characteristics
+
+- **Immediate Response:*
+
+* GET bytes in HTTP body
+
+- **SLA-Backed:*
+
+* 99.99% uptime guarantee
+
+- **Fixed Latency:*
+
+* Predictable generation time
+
+- **CDN Location:*
+
+* `Content-Location` header points to permanent URL
+
+- **Capacity-Limited:*
+
+* Returns 503 when exhausted
+
+## When to Use
+
+- Real-time preview in creative tools
+
+- Interactive applications
+
+- Live generation demos
+
+- Latency-critical workflows
+
+- User-facing generation
+
+## Basic Example
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "cyberpunk street scene at night, neon lights, rain"  }' \  -o output.webp
+
+```
+
+## Response Handling#
+
+## Success (200)
+
+```httpHTTP/1.1 200 OKContent-Type: image/webpContent-Location: https://cdn.render.weyl.ai/a/abc123X-Weyl-Request-Id: req_xyz789X-Weyl-Seed: 42X-Weyl-Duration-Ms: 847<image bytes>
+
+```#
+
+## Capacity Exhausted (503)
+
+```httpHTTP/1.1 503 Service UnavailableRetry-After: 30Link: <https://async.render.weyl.ai>; rel="alternate"{  "error": "capacity_exhausted",  "message": "sync tier at capacity, retry in 30s or use async",  "request_id": "req_xyz789"}
+
+```
+
+## Handling 503When you receive a 503:
+1. **Wait:*
+
+* Check `Retry-After` header (seconds)
+2. **Retry:*
+
+* Same request after delay
+3. **Fallback:*
+
+* Use async tier instead
+
+```pythonimport timeimport requestsdef generate_with_retry(url, data, headers, max_retries=3):    for attempt in range(max_retries):        resp = requests.post(url, json=data, headers=headers)                if resp.status_code == 200:            return resp.content                if resp.status_code == 503:            retry_after = int(resp.headers.get('Retry-After', 30))            print(f"Capacity exhausted, waiting {retry_after}s...")            time.sleep(retry_after)            continue                    resp.raise_for_status()        raise Exception("Max retries exceeded")
+
+```
+
+## Performance Characteristics
+
+| Model          | Typical Latency (p50) | p99 Latency ||----------------|-----------------------|-------------|| flux/schnell   | 450ms                 | 1.2s        || flux/dev       | 1.8s                  | 3.5s        || flux/dev2      | 2.4s                  | 4.8s        || zimage/turbo   | 320ms                 | 850ms       |*Measured for 1024×1024 on nunchaku backend
+*
+
+## WebSocket StreamingFor real-time intermediate frames during generation:
+
+```javascriptconst ws = new WebSocket('wss://sync.render.weyl.ai/ws');ws.onopen = () => {  ws.send(JSON.stringify({    type: 'generate',    id: 'req_1',    modality: 'image',    family: 'flux',    model: 'dev',    task: 't2i',    request: {      prompt: 'portrait of a woman, cinematic lighting'    }  }));};ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch(msg.type) {    case 'ack':      console.log('Job accepted:', msg.job_id);      break;    case 'progress':      console.log('Progress:', msg.progress);      break;    case 'frame':      // Update preview with intermediate result      updatePreview(msg.frame);      break;    case 'complete':      console.log('Complete:', msg.output);      ws.close();      break;  }};
+
+```See [WebSocket documentation](/api/websocket/) for full protocol details.
+
+## Next Steps
+
+- [Video Generation](/api/sync/video/) 
+
+- Generate video with i2v
+
+- [Image Generation](/api/sync/image/) 
+
+- t2i, i2i, edit tasks
+
+- [Capacity Management](/api/sync/capacity/) 
+
+- Handling 503s gracefully

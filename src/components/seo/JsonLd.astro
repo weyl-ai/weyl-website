@@ -1,0 +1,13 @@
+---
+// src/components/seo/JsonLd.astro
+import type { WithContext, Thing } from 'schema-dts';
+
+interface Props {
+  schema: WithContext<Thing>;
+}
+
+const { schema } = Astro.props;
+---
+
+<script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />
+

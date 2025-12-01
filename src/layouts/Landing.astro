@@ -1,0 +1,34 @@
+---
+// src/layouts/Landing.astro
+import BaseHead from './BaseHead.astro';
+import JsonLd from '@components/seo/JsonLd.astro';
+import { organizationSchema, websiteSchema } from '@lib/seo/schema';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Weyl',
+  description = 'The render layer for generative media. Inference infrastructure for diffusion models with sub-100ms latency.',
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} />
+    <JsonLd schema={organizationSchema} />
+    <JsonLd schema={websiteSchema} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+

@@ -1,0 +1,158 @@
+---
+title: Image Uploads
+description: Presigned uploads for large images
+category: api
+---
+
+For images >1MB, use the uploads endpoint to get a stable CDN URL before generation.
+
+## Why Use Uploads**Problems with inline images:**
+
+- Data URIs bloat request size
+
+- External URLs may expire
+
+- Repeated requests download image multiple times**Benefits of uploads:**
+
+- Stable CDN URL
+
+- Reusable across requests
+
+- Faster generation starts
+
+- Better caching
+
+## Basic Flow
+
+```
+1. POST /uploads → get presigned upload URL
+2. PUT to presigned URL → upload image
+3. Use asset URL in generation requests
+
+```
+
+## Step 1: Request Upload URL
+
+```bashcurl -X POST "https://sync.render.weyl.ai/uploads" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "filename": "portrait.jpg",    "content_type": "image/jpeg",    "size_bytes": 2458120  }'
+
+```#
+
+## Response
+
+```json{  "asset_id": "a_xyz123",  "asset_url": "https://cdn.render.weyl.ai/a/xyz123",  "upload_url": "https://cdn.render.weyl.ai/upload/presigned?token=...",  "expires_at": "2024-12-01T18:00:00Z"}
+
+```
+
+## Step 2: Upload Image
+
+```bashcurl -X PUT "<upload_url>" \  -H "Content-Type: image/jpeg" \  --data-binary @portrait.jpg
+
+```**Success:*
+
+* 200 OK
+
+## Step 3: Use in Generation
+
+```bashcurl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "she turns to face camera",    "image": "https://cdn.render.weyl.ai/a/xyz123"  }' \  -o output.mp4
+
+```
+
+## Supported Formats
+
+| Format | MIME Type         | Max Size ||--------|-------------------|----------|| JPEG   | `image/jpeg`      | 10 MB    || PNG    | `image/png`       | 10 MB    || WebP   | `image/webp`      | 10 MB    |
+
+## Complete Example (Python)
+
+```pythonimport requestsimport osdef upload_and_generate(    image_path: str,    prompt: str,    api_key: str) -> bytes:    """Upload image and generate video."""        # Get file info    size = os.path.getsize(image_path)    content_type = 'image/jpeg'  # or detect from extension        # Step 1: Request upload URL    upload_req = requests.post(        "https://sync.render.weyl.ai/uploads",        headers={            "Authorization": f"Bearer {api_key}",            "Content-Type": "application/json"        },        json={            "filename": os.path.basename(image_path),            "content_type": content_type,            "size_bytes": size        }    )    upload_req.raise_for_status()        upload_data = upload_req.json()    asset_url = upload_data['asset_url']    upload_url = upload_data['upload_url']        print(f"Asset URL: {asset_url}")        # Step 2: Upload image    with open(image_path, 'rb') as f:        upload_resp = requests.put(            upload_url,            headers={"Content-Type": content_type},            data=f        )    upload_resp.raise_for_status()        print("Upload complete")        # Step 3: Generate video    generate_resp = requests.post(        "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",        headers={            "Authorization": f"Bearer {api_key}",            "Content-Type": "application/json"        },        json={            "prompt": prompt,            "image": asset_url,            "cfg": 7.0        }    )    generate_resp.raise_for_status()        return generate_resp.content# Usagevideo = upload_and_generate(    image_path="portrait.jpg",    prompt="she turns to face camera",    api_key=os.environ['WEYL_API_KEY'])with open("output.mp4", "wb") as f:    f.write(video)
+
+```
+
+## TypeScript Example
+
+```typescriptasync function uploadAndGenerate(  imagePath: string,  prompt: string,  apiKey: string): Promise<Blob> {  // Read file  const file = await fs.readFile(imagePath);  const contentType = 'image/jpeg';    // Step 1: Request upload URL  const uploadReq = await fetch('https://sync.render.weyl.ai/uploads', {    method: 'POST',    headers: {      'Authorization': `Bearer ${apiKey}`,      'Content-Type': 'application/json'    },    body: JSON.stringify({      filename: path.basename(imagePath),      content_type: contentType,      size_bytes: file.length    })  });    const uploadData = await uploadReq.json();  const { asset_url, upload_url } = uploadData;    console.log(`Asset URL: ${asset_url}`);    // Step 2: Upload image  await fetch(upload_url, {    method: 'PUT',    headers: { 'Content-Type': contentType },    body: file  });    console.log('Upload complete');    // Step 3: Generate video  const generateResp = await fetch(    'https://sync.render.weyl.ai/video/wan/default/i2v?format=720p',    {      method: 'POST',      headers: {        'Authorization': `Bearer ${apiKey}`,        'Content-Type': 'application/json'      },      body: JSON.stringify({        prompt,        image: asset_url,        cfg: 7.0      })    }  );    return await generateResp.blob();}// Usageconst video = await uploadAndGenerate(  'portrait.jpg',  'she turns to face camera',  process.env.WEYL_API_KEY!);
+
+```
+
+## Asset Retention
+
+- Assets retained for **30 days**
+
+- Access asset anytime within retention period
+
+- After 30 days, may be purged
+
+- Generated outputs (in `/i/` or `/v/`) retained forever
+
+## Reusing UploadsSame asset URL works across multiple requests:
+
+```bash# Upload onceASSET_URL="https://cdn.render.weyl.ai/a/xyz123"# Use many timescurl -X POST ".../i2v..." -d "{\"image\": \"$ASSET_URL\", ...}"curl -X POST ".../i2i..." -d "{\"image\": \"$ASSET_URL\", ...}"curl -X POST ".../edit..." -d "{\"image\": \"$ASSET_URL\", ...}"
+
+```
+
+## Error Handling#
+
+## Upload Request Failed
+
+```json{  "error": "payload_too_large",  "message": "Image exceeds 10MB limit",  "size_bytes": 12582912,  "limit_bytes": 10485760}
+
+```**Action:*
+
+* Compress image before upload.#
+
+## Upload Failed
+
+```HTTP/1.1 403 Forbidden
+
+```**Causes:**
+
+- Upload URL expired (>1 hour old)
+
+- Invalid signature**Action:*
+
+* Request new upload URL.#
+
+## Asset Not Found
+
+```json{  "error": "resource_not_found",  "message": "Asset not found or expired"}
+
+```**Causes:**
+
+- Invalid asset ID
+
+- Asset expired (>30 days)**Action:*
+
+* Re-upload image.
+
+## Best Practices
+1. **Reuse uploads*
+
+* - Same image for multiple requests
+2. **Check file size*
+
+* - Compress if >1MB
+3. **Set correct content type*
+
+* - Matches actual image format
+4. **Handle expiration*
+
+* - Upload URL valid 1 hour
+5. **Retry on 403*
+
+* - Request new upload URL
+6. **Cache asset URLs*
+
+* - Store for reuse within 30 days
+
+## Next Steps
+
+- [Model Discovery](/api/infrastructure/discovery/) 
+
+- Available models endpoint
+
+- [Image Generation](/api/sync/image/) 
+
+- Using uploaded images
+
+- [Video Generation](/api/sync/video/) 
+
+- i2v with uploads

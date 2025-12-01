@@ -1,0 +1,388 @@
+/* Typography scale and utilities */
+
+@import url('https://fonts.googleapis.com/css2?family=Aldrich&display=swap');
+
+/* === TYPE SCALE === */
+
+.text-hero {
+  font-size: var(--text-hero);
+  line-height: var(--leading-tight);
+}
+
+.text-headline {
+  font-size: var(--text-headline);
+  line-height: var(--leading-tight);
+}
+
+.text-subhead {
+  font-size: var(--text-subhead);
+  line-height: var(--leading-tight);
+}
+
+.text-body {
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.text-secondary {
+  font-size: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.text-small {
+  font-size: var(--text-small);
+  line-height: var(--leading-normal);
+}
+
+.text-caption {
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+
+.text-micro {
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+
+/* === FONT FAMILIES === */
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* === LINE HEIGHTS === */
+
+.leading-tight {
+  line-height: var(--leading-tight);
+}
+
+.leading-normal {
+  line-height: var(--leading-normal);
+}
+
+.leading-relaxed {
+  line-height: var(--leading-relaxed);
+}
+
+/* === LETTER SPACING === */
+
+.tracking-tight {
+  letter-spacing: var(--tracking-tight);
+}
+
+.tracking-normal {
+  letter-spacing: var(--tracking-normal);
+}
+
+.tracking-wide {
+  letter-spacing: var(--tracking-wide);
+}
+
+.tracking-wider {
+  letter-spacing: var(--tracking-wider);
+}
+
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+
+/* === HYPERMODERN TEXT COLORS === */
+
+.text-link {
+  color: var(--text-primary-color);
+}
+
+.text-success-state {
+  color: var(--text-success-color);
+}
+
+.text-warning-state {
+  color: var(--text-warning-color);
+}
+
+.text-error-state {
+  color: var(--text-error-color);
+}
+
+.text-special {
+  color: var(--text-special-color);
+}
+
+.text-accent {
+  color: var(--text-accent-color);
+}
+
+.text-primary-content {
+  color: var(--text-primary-content);
+}
+
+.text-secondary-content {
+  color: var(--text-secondary-content);
+}
+
+.text-tertiary-content {
+  color: var(--text-tertiary-content);
+}
+
+.text-faint {
+  color: var(--text-faint);
+}
+
+/* === HIGH MODERNISM DEPARTMENTAL COLORS === */
+
+[data-theme="light"] .text-executive {
+  color: var(--color-executive);
+}
+
+[data-theme="light"] .text-administration {
+  color: var(--color-administration);
+}
+
+[data-theme="light"] .text-operations {
+  color: var(--color-operations);
+}
+
+[data-theme="light"] .text-priority {
+  color: var(--color-priority);
+}
+
+[data-theme="light"] .text-heritage {
+  color: var(--color-heritage);
+}
+
+[data-theme="light"] .text-gilt {
+  color: var(--color-gilt);
+}
+
+/* === NUMERIC & TABULAR === */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* === TEXT UTILITIES === */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+/* === READABLE CONTENT WIDTH === */
+
+.readable-content {
+  max-width: 65ch;
+}
+
+/* === HYPERMODERN USAGE PATTERNS === */
+
+/* Metric Display Pattern */
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metric-value {
+  font-size: var(--text-headline);
+  font-weight: 700;
+  color: var(--text-primary-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-unit {
+  font-size: var(--text-secondary);
+  font-weight: 400;
+  color: var(--text-muted-color);
+}
+
+.metric-label {
+  font-size: var(--text-caption);
+  color: var(--text-subtle-color);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+/* Status Bar Pattern */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status.nominal {
+  color: var(--text-success-color);
+}
+
+.status.warning {
+  color: var(--text-warning-color);
+}
+
+.status.error {
+  color: var(--text-error-color);
+}
+
+.status-item {
+  color: var(--text-muted-color);
+}
+
+/* === HIGH MODERNISM USAGE PATTERNS === */
+
+/* Document Header Pattern */
+.document-header {
+  font-family: var(--font-mono);
+}
+
+.proclamation {
+  font-size: var(--text-hero);
+  font-weight: 900;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] .proclamation {
+  color: var(--color-executive);
+}
+
+.division {
+  font-size: var(--text-subhead);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-brand-primary);
+}
+
+[data-theme="light"] .division {
+  color: var(--color-administration);
+}
+
+.document-number {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .document-number {
+  color: var(--color-heritage);
+}
+
+/* Institutional Quote Pattern */
+.institutional-quote {
+  border-left: 4px solid var(--color-brand-primary);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+}
+
+.institutional-quote p {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] .institutional-quote {
+  border-left-color: var(--color-administration);
+}
+
+[data-theme="light"] .institutional-quote p {
+  color: var(--color-executive);
+}
+
+.institutional-quote cite {
+  display: block;
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+[data-theme="light"] .institutional-quote cite {
+  color: var(--color-heritage);
+}
+
+/* === CODE BLOCKS === */
+
+pre,
+code {
+  font-family: var(--font-mono);
+}
+
+pre {
+  padding: var(--space-4);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+/* Inline code */
+:not(pre) > code {
+  padding: 0.125rem 0.375rem;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-size: 0.875em;
+}
+
+/* === RESPONSIVE TYPOGRAPHY === */
+
+@media (max-width: 640px) {
+  :root {
+    --text-hero: 2rem;        /* 32px on mobile */
+    --text-headline: 1.5rem;  /* 24px on mobile */
+    --text-subhead: 1.125rem; /* 18px on mobile */
+    /* Body text maintains 16px for readability */
+  }
+}
+
+/* === PRINT STYLES === */
+
+@media print {
+  body {
+    font-family: var(--font-mono);
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #000;
+  }
+  
+  /* Always use High Modernism for print */
+  .hypermodern-only {
+    display: none;
+  }
+  
+  /* Ensure black text on white background */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Remove shadows and glows */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+}

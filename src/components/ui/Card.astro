@@ -1,0 +1,43 @@
+---
+// src/components/ui/Card.astro
+interface Props {
+  title?: string;
+  href?: string;
+  variant?: 'default' | 'elevated' | 'interactive';
+  class?: string;
+}
+
+const { 
+  title, 
+  href, 
+  variant = 'default',
+  class: className = '',
+} = Astro.props;
+
+const Tag = href ? 'a' : 'div';
+
+const variants = {
+  default: 'bg-bg-surface border border-border',
+  elevated: 'bg-bg-elevated border border-border shadow-lg',
+  interactive: 'bg-bg-surface border border-border hover:border-brand-primary hover:shadow-glow-sm transition-all cursor-pointer',
+};
+---
+
+<Tag
+  href={href}
+  class:list={[
+    'block p-6 rounded-md',
+    variants[variant],
+    className,
+  ]}
+>
+  {title && (
+    <h3 class="font-mono text-subhead font-semibold text-text-primary mb-3">
+      {title}
+    </h3>
+  )}
+  <div class="font-mono text-body text-text-secondary">
+    <slot />
+  </div>
+</Tag>
+

@@ -1,0 +1,135 @@
+---
+title: Model Aliases
+description: HuggingFace model ID aliasing
+category: api
+---
+
+Use HuggingFace model IDs as shorthand for Weyl family/model paths.
+
+## Why Aliases**Problem:*
+
+* Different naming conventions between platforms**Solution:*
+
+* Map HuggingFace IDs to Weyl family/model structure
+
+## UsageInstead of:
+
+```/image/flux/schnell/t2i
+
+```You can use:
+
+```/image/black-forest-labs/FLUX.1-schnell/t2i
+
+```Both resolve to the same model.
+
+## Supported Aliases
+
+| HuggingFace ID                      | Weyl Path          ||-------------------------------------|--------------------|| `black-forest-labs/FLUX.1-schnell`  | `flux/schnell`     || `black-forest-labs/FLUX.1-dev`      | `flux/dev`         || `black-forest-labs/FLUX.2-dev`      | `flux/dev2`        || `alibaba/Z-Image-Turbo`             | `zimage/turbo`     |
+
+## Examples#
+
+## FLUX Schnell (Aliased)
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/black-forest-labs/FLUX.1-schnell/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{"prompt": "cyberpunk street scene"}'
+
+```Equivalent to:
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \  ...
+
+```#
+
+## Z-Image Turbo (Aliased)
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/alibaba/Z-Image-Turbo/t2i?format=512" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{"prompt": "portrait"}'
+
+```Equivalent to:
+
+```bashcurl -X POST "https://sync.render.weyl.ai/image/zimage/turbo/t2i?format=512" \  ...
+
+```
+
+## DiscoveryGet full alias map:
+
+```bashcurl "https://sync.render.weyl.ai/models/aliases" \  -H "Authorization: Bearer $WEYL_API_KEY"
+
+```Response:
+
+```json{  "aliases": {    "black-forest-labs/FLUX.1-schnell": {      "family": "flux",      "model": "schnell",      "canonical_path": "/image/flux/schnell"    },    "black-forest-labs/FLUX.1-dev": {      "family": "flux",      "model": "dev",      "canonical_path": "/image/flux/dev"    },    "black-forest-labs/FLUX.2-dev": {      "family": "flux",      "model": "dev2",      "canonical_path": "/image/flux/dev2"    },    "alibaba/Z-Image-Turbo": {      "family": "zimage",      "model": "turbo",      "canonical_path": "/image/zimage/turbo"    }  }}
+
+```
+
+## Alias Resolution
+
+```typescriptinterface AliasMapping {  family: string;  model: string;  canonical_path: string;}class ModelResolver {  private aliases = new Map<string, AliasMapping>();  async loadAliases(apiKey: string) {    const resp = await fetch('https://sync.render.weyl.ai/models/aliases', {      headers: { 'Authorization': `Bearer ${apiKey}` }    });        const data = await resp.json();        for (const [hfId, mapping] of Object.entries(data.aliases)) {      this.aliases.set(hfId, mapping as AliasMapping);    }  }  resolve(hfId: string): AliasMapping | null {    return this.aliases.get(hfId) ?? null;  }  buildUrl(hfId: string, task: string): string {    const mapping = this.resolve(hfId);    if (!mapping) {      throw new Error(`Unknown model ID: ${hfId}`);    }        return `${mapping.canonical_path}/${task}`;  }}// Usageconst resolver = new ModelResolver();await resolver.loadAliases(API_KEY);const url = resolver.buildUrl('black-forest-labs/FLUX.1-schnell', 't2i');// Returns: "/image/flux/schnell/t2i"
+
+```
+
+## URL CanonicalizationServer automatically redirects aliases to canonical paths:
+
+```httpGET /image/black-forest-labs/FLUX.1-schnell/t2iHTTP/1.1 308 Permanent RedirectLocation: /image/flux/schnell/t2iX-Weyl-Canonical-Path: /image/flux/schnell/t2i
+
+```
+
+## When to Use#
+
+## ✓ Use Aliases When
+
+- Porting code from other platforms
+
+- Users familiar with HF IDs
+
+- Maintaining compatibility
+
+- Easier model discovery#
+
+## ✗ Use Canonical Paths When
+
+- Building new integrations
+
+- Performance-critical (skip redirect)
+
+- Documentation/examples
+
+- Internal tooling
+
+## Performance**Alias resolution adds ~2-5ms latency*
+
+* due to redirect.For high-performance use cases, use canonical paths:
+
+- `/image/flux/schnell/t2i` ✓
+
+- `/image/black-forest-labs/FLUX.1-schnell/t2i` ✗ (extra redirect)
+
+## Custom Aliases (Enterprise)Request custom alias mappings:
+
+```your-org/your-model → custom/family/model
+
+```Contact sales@weyl.ai for custom alias configuration.
+
+## Best Practices
+1. **Use canonical paths*
+
+* - Faster, no redirect
+2. **Cache alias mappings*
+
+* - Don't look up every request
+3. **Document which format*
+
+* - Be consistent in your codebase
+4. **Validate aliases*
+
+* - Check `/models/aliases` for support
+
+## Next Steps
+
+- [Model Discovery](/api/infrastructure/discovery/) 
+
+- Available models
+
+- [Models Overview](/api/models/) 
+
+- Model documentation
+
+- [FLUX Models](/api/models/flux/) 
+
+- FLUX-specific docs

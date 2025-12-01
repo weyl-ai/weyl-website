@@ -1,0 +1,792 @@
+---
+alwaysApply: true
+---
+
+# `// hypermodern // typescript`
+
+## Vibes You Can Ship
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> TypeScript isn't making your life worse. It's just showing you how bad your life already is.  
+> — Kent C. Dodds
+
+> If you're using something like Zod, which gives you an element of runtime type safety as well... your app is gonna be even more robust.  
+> — Matt Pocock
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## // 00. THE PRIME DIRECTIVE
+
+Make the compiler your bouncer. Every escape hatch is a future CVE. Every `any` is technical debt with compound interest.
+
+```typescript
+// × weak energy
+async function getUser(id?: string) {
+  // TODO: implement actual fetch
+  return null;
+}
+
+// ✓ post-framework
+async function getUser<TId extends UserId>(
+  id: Branded<TId, 'UserId'>
+): Promise<Result<User<TId>, FetchError<'USER_NOT_FOUND' | 'DB_ERROR'>>> {
+  // compiler won't let you ship broken code
+}
+```
+
+## // 01. TSCONFIG: MAXIMUM CONSTRAINT MODE
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true, 
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false
+  }
+}
+```
+
+The compiler becomes your architecture. Every typo crashes the build. This is the way.
+
+## // 02. BRANDED TYPES
+
+Never raw primitives. Brand everything.
+
+```typescript
+declare const brand: unique symbol;
+type Brand<T, B> = T & { [brand]: B };
+
+type UserId = Brand<string, 'UserId'>;
+type Email = Brand<string, 'Email'>;
+type Timestamp = Brand<number, 'Timestamp'>;
+
+const makeUserId = (id: string): Result<UserId, 'INVALID_ID'> => {
+  if (!id.match(/^usr_[a-z0-9]{16}$/)) {
+    return Err('INVALID_ID');
+  }
+  return Ok(id as UserId);
+};
+
+function sendEmail(to: Email, from: Email): void { /* ... */ }
+sendEmail('test@test.com', 'admin@site.com'); // × type error
+```
+
+## // 03. RESULT MONADS
+
+Exceptions are legacy code.
+
+```typescript
+import { Result, Ok, Err } from 'neverthrow';
+
+type ParseError = 'INVALID_JSON' | 'MISSING_FIELD' | 'TYPE_MISMATCH';
+
+function parseConfig(raw: string): Result<Config, ParseError> {
+  const parsed = JSON.parse(raw); // wrapped internally
+  
+  return parsed.match({
+    ok: (data) => validateConfig(data),
+    err: () => Err('INVALID_JSON' as ParseError)
+  });
+}
+
+const config = parseConfig(raw)
+  .map(c => enrichConfig(c))
+  .mapErr(e => logError(e))
+  .unwrapOr(defaultConfig);
+```
+
+## // 04. TYPE-SAFE ROUTING
+
+URLs aren't strings.
+
+```typescript
+import { createRoute } from '@tanstack/router';
+import { z } from 'zod';
+
+export const userRoute = createRoute({
+  path: '/users/$userId/posts/$postId',
+  validateSearch: z.object({
+    page: z.number().min(1).default(1),
+    sort: z.enum(['date', 'likes']).default('date')
+  }),
+  beforeLoad: async ({ params }) => {
+    const user = await getUser(params.userId as UserId);
+    return { user };
+  }
+});
+
+router.navigate({ 
+  to: userRoute.to, 
+  params: { 
+    userId: 'usr_abc123', // × not a UserId
+    postId: 123 // × should be string
+  }
+});
+```
+
+## // 05. CONTEXT BOUNDARIES
+
+Type narrowing as architecture.
+
+```typescript
+type AppState = {
+  user: User | null;
+  session: Session | null;
+  org: Organization | null;
+};
+
+export function AuthBoundary({ 
+  children 
+}: { 
+  children: (ctx: AuthenticatedContext) => ReactNode 
+}) {
+  const state = useAppState();
+  
+  if (!state.user || !state.session) {
+    return <Login />;
+  }
+  
+  const ctx: AuthenticatedContext = {
+    user: state.user,
+    session: state.session,
+    org: state.org // still nullable
+  };
+  
+  return children(ctx);
+}
+
+<AuthBoundary>
+  {({ user, session }) => (
+    <Dashboard 
+      userName={user.name} // no optional chaining
+      sessionId={session.id}
+    />
+  )}
+</AuthBoundary>
+```
+
+## // 06. EXHAUSTIVE PATTERN MATCHING
+
+```typescript
+import { match, P } from 'ts-pattern';
+
+type State = 
+  | { status: 'idle' }
+  | { status: 'loading'; progress: number }
+  | { status: 'success'; data: User[] }
+  | { status: 'error'; error: Error; retry: () => void };
+
+const ui = match(state)
+  .with({ status: 'idle' }, () => <StartButton />)
+  .with({ status: 'loading' }, ({ progress }) => 
+    <ProgressBar value={progress} />
+  )
+  .with({ status: 'success', data: P.select() }, (users) => 
+    <UserList users={users} />
+  )
+  .with({ status: 'error' }, ({ error, retry }) => 
+    <ErrorBoundary error={error} onRetry={retry} />
+  )
+  .exhaustive(); // compile error if you miss a case
+```
+
+## // 07. THE ANGLE BRACKET THESIS
+
+> You never truly learned TypeScript, at least not in depth. That's the source of your pain.  
+> — Total TypeScript
+
+If your TypeScript doesn't look like Haskell had a baby with Rust, you're doing it wrong.
+
+```typescript
+// × javascript with types
+function processItems(items: any[], callback: Function): any[] {
+  return items.map(callback);
+}
+
+// ✓ post-framework
+function processItems<
+  TItem extends Branded<unknown, TBrand>,
+  TBrand extends string,
+  TResult extends TItem | TransformResult<TItem>
+>(
+  items: ReadonlyArray<TItem>,
+  transformer: (item: TItem) => Result<TResult, ProcessError<TBrand>>
+): Result<ReadonlyArray<TResult>, AggregateError<TBrand>> {
+  return pipe(
+    items,
+    A.traverse(Result.applicative)(transformer),
+    Result.mapErr(errors => new AggregateError(errors))
+  );
+}
+```
+
+## // 08. VALIDATION AT THE EDGE
+
+```typescript
+import { z } from 'zod';
+
+const UserSchema = z.object({
+  id: z.string().refine((id): id is UserId => 
+    /^usr_[a-z0-9]{16}$/.test(id)
+  ),
+  email: z.string().email().transform(e => e as Email),
+  role: z.enum(['admin', 'user', 'guest']),
+  metadata: z.record(z.unknown()).optional()
+});
+
+type User = z.infer<typeof UserSchema>;
+
+export const userApi = createRoute({
+  path: '/api/users/:id',
+  validateParams: z.object({
+    id: z.string().transform(id => id as UserId)
+  }),
+  handler: async ({ params }) => {
+    const user = await db.users.findUnique({
+      where: { id: params.id }
+    });
+    
+    return UserSchema.parse(user);
+  }
+});
+```
+
+## // 09. RED FLAGS
+
+Every one of these is a bug waiting to happen:
+
+- `?.` → hiding a null check that should be a boundary
+- `!` → lying to the compiler
+- `as` → overriding reality
+- `any` → giving up
+- `// @ts-ignore` → admitting defeat
+- `// TODO` → agent's favorite escape hatch
+- `if (x)` → should be a discriminated union
+- `try/catch` → should be a Result type
+- `"" + number` → should be explicit conversion
+- `obj[key]` → should be a Record with known keys
+
+## // 10. ESSENTIAL ARSENAL
+
+### // core infrastructure
+- **[zod](https://github.com/colinhacks/zod)** - runtime validation that generates types
+- **[neverthrow](https://github.com/supermacro/neverthrow)** - Result/Option monads
+- **[ts-pattern](https://github.com/gvergnaud/ts-pattern)** - exhaustive pattern matching
+- **[effect-ts](https://effect.website)** - TypeScript on steroids
+
+### // web framework layer  
+- **[TanStack Router](https://tanstack.com/router)** - type-safe routing
+- **[tRPC](https://trpc.io)** - end-to-end typesafe APIs
+- **[better-auth](https://better-auth.com)** - auth built for TypeScript
+
+### // data layer
+- **[drizzle](https://orm.drizzle.team)** - type-safe SQL
+- **[kysely](https://kysely.dev)** - type-safe query builder
+- **[prisma](https://prisma.io)** - ORM with generated types
+
+## // 11. WHY THIS WORKS WITH AI
+
+> Make a computer do as much of my work for me as possible.  
+> — Kent C. Dodds
+
+Claude and Copilot are pattern matchers. Maximum constraints mean:
+
+1. **No escape hatches** → agent can't `// TODO: implement later`
+2. **Exhaustive checks** → must handle all variants  
+3. **No implicit any** → must provide real implementations
+4. **Branded types** → can't mix up parameters
+5. **Result types** → must handle errors explicitly
+
+The agent bounces off the compiler until it produces working code.
+
+## // 12. THE PHILOSOPHICAL CORE
+
+> Union types in TypeScript let you see into every possible future of your code.  
+> — Matt Pocock
+
+We're not writing code for today. We're writing code for:
+- You at 3am debugging production
+- The junior who joins next week
+- The AI that will refactor this in 2026
+- The attacker probing for type confusion
+
+**Make illegal states unrepresentable.**
+
+## // 13. MIGRATION STRATEGY
+
+You don't flip a switch. You evolve:
+
+1. **Week 1**: Enable strict mode
+2. **Week 2**: Add Zod to API boundaries  
+3. **Week 3**: Convert IDs to branded types
+4. **Week 4**: Replace throws with Results
+5. **Week 5**: Add exhaustive matching
+6. **Month 2**: Type-safe routing
+7. **Month 3**: Context boundaries everywhere
+
+## // 14. PARTING WISDOM
+
+> TypeScript was built in tandem with VSCode to make the best IDE experience possible.  
+> — Matt Pocock
+
+The types aren't the point. The point is a codebase where:
+- Refactoring is fearless
+- Bugs are compile-time errors
+- AI agents can't cheat
+- New devs can't break things
+- You can sleep at night
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+*"If it compiles, it works" isn't a meme. It's a lifestyle.*
+
+## // APPENDIX A: NEXTJS PROJECT STRUCTURE
+
+```
+nextjs-hypermodern/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   └── register/
+│   │   │       └── page.tsx
+│   │   ├── (authenticated)/
+│   │   │   ├── layout.tsx          # AuthBoundary wrapper
+│   │   │   ├── dashboard/
+│   │   │   │   └── page.tsx
+│   │   │   └── users/
+│   │   │       ├── [userId]/
+│   │   │       │   └── page.tsx
+│   │   │       └── page.tsx
+│   │   ├── api/
+│   │   │   └── trpc/
+│   │   │       └── [trpc]/
+│   │   │           └── route.ts
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── server/
+│   │   ├── api/
+│   │   │   ├── routers/
+│   │   │   │   ├── user.ts
+│   │   │   │   └── post.ts
+│   │   │   ├── root.ts
+│   │   │   └── trpc.ts
+│   │   └── db/
+│   │       ├── schema.ts
+│   │       └── client.ts
+│   ├── lib/
+│   │   ├── types/
+│   │   │   ├── branded.ts
+│   │   │   ├── result.ts
+│   │   │   └── domain.ts
+│   │   ├── validation/
+│   │   │   ├── user.ts
+│   │   │   └── common.ts
+│   │   └── utils/
+│   │       ├── trpc.ts
+│   │       └── auth.ts
+│   └── components/
+│       ├── ui/
+│       │   └── button.tsx
+│       └── boundaries/
+│           └── auth-boundary.tsx
+├── public/
+├── .env.local
+├── bunfig.toml
+├── next.config.ts
+├── package.json
+├── tsconfig.json
+└── tailwind.config.ts
+```
+
+### // tsconfig.json (NextJS)
+
+```json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/server/*": ["./src/server/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/components/*": ["./src/components/*"]
+    },
+    "target": "ES2022",
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noPropertyAccessFromIndexSignature": true
+  },
+  "include": [
+    "./src",
+    "./next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "./node_modules"
+  ]
+}
+```
+
+## // APPENDIX B: VITE + TANSTACK ROUTER PROJECT STRUCTURE
+
+```
+vite-tanstack-hypermodern/
+├── src/
+│   ├── routes/
+│   │   ├── __root.tsx
+│   │   ├── index.tsx
+│   │   ├── login.tsx
+│   │   ├── _authenticated.tsx     # route group with auth
+│   │   ├── _authenticated/
+│   │   │   ├── dashboard.tsx
+│   │   │   ├── users/
+│   │   │   │   ├── index.tsx
+│   │   │   │   └── $userId.tsx
+│   │   │   └── posts/
+│   │   │       ├── index.tsx
+│   │   │       └── $postId/
+│   │   │           └── index.tsx
+│   │   └── api/
+│   │       └── trpc/
+│   │           └── [trpc].ts
+│   ├── lib/
+│   │   ├── types/
+│   │   │   ├── branded.ts
+│   │   │   ├── result.ts
+│   │   │   └── domain.ts
+│   │   ├── validation/
+│   │   │   ├── user.ts
+│   │   │   ├── post.ts
+│   │   │   └── common.ts
+│   │   ├── api/
+│   │   │   ├── client.ts
+│   │   │   └── contracts.ts
+│   │   └── router.ts
+│   ├── components/
+│   │   ├── ui/
+│   │   │   ├── button.tsx
+│   │   │   └── card.tsx
+│   │   ├── boundaries/
+│   │   │   ├── auth-boundary.tsx
+│   │   │   └── error-boundary.tsx
+│   │   └── patterns/
+│   │       └── loading-pattern.tsx
+│   ├── server/
+│   │   ├── api/
+│   │   │   ├── routers/
+│   │   │   │   ├── user.ts
+│   │   │   │   └── post.ts
+│   │   │   ├── root.ts
+│   │   │   └── trpc.ts
+│   │   └── db/
+│   │       ├── schema.ts
+│   │       └── client.ts
+│   ├── app.tsx
+│   ├── main.tsx
+│   └── vite-env.d.ts
+├── public/
+├── .env
+├── .env.example
+├── bunfig.toml
+├── index.html
+├── package.json
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── tailwind.config.ts
+```
+
+### // tsconfig.json (Vite + TanStack Router)
+
+```json
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}
+```
+
+### // tsconfig.app.json (Vite + TanStack Router)
+
+```json
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/server/*": ["./src/server/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}
+```
+
+### // tsconfig.node.json (Vite + TanStack Router)
+
+```json
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["bun-types"]
+  },
+  "include": [
+    "vite.config.ts"
+  ]
+}
+```
+
+## // APPENDIX C: SHARED TYPE MODULES
+
+### // src/lib/types/branded.ts
+
+```typescript
+declare const brand: unique symbol;
+
+export type Brand<T, B> = T & { [brand]: B };
+
+export type UserId = Brand<string, 'UserId'>;
+export type PostId = Brand<string, 'PostId'>;
+export type Email = Brand<string, 'Email'>;
+export type JWT = Brand<string, 'JWT'>;
+export type Timestamp = Brand<number, 'Timestamp'>;
+export type UUID = Brand<string, 'UUID'>;
+```
+
+### // src/lib/types/result.ts
+
+```typescript
+import { Result, Ok, Err } from 'neverthrow';
+
+export { Result, Ok, Err };
+
+export type AsyncResult<T, E> = Promise<Result<T, E>>;
+
+export type ParseError = 
+  | 'INVALID_JSON' 
+  | 'MISSING_FIELD' 
+  | 'TYPE_MISMATCH'
+  | 'VALIDATION_FAILED';
+
+export type DbError =
+  | 'NOT_FOUND'
+  | 'DUPLICATE_ENTRY'
+  | 'CONNECTION_ERROR'
+  | 'CONSTRAINT_VIOLATION';
+
+export type AuthError =
+  | 'INVALID_CREDENTIALS'
+  | 'SESSION_EXPIRED'
+  | 'INSUFFICIENT_PERMISSIONS'
+  | 'USER_NOT_FOUND';
+```
+
+### // src/lib/validation/user.ts
+
+```typescript
+import { z } from 'zod';
+import type { UserId, Email } from '@/lib/types/branded';
+
+export const UserIdSchema = z
+  .string()
+  .regex(/^usr_[a-z0-9]{16}$/)
+  .transform(id => id as UserId);
+
+export const EmailSchema = z
+  .string()
+  .email()
+  .transform(email => email.toLowerCase() as Email);
+
+export const CreateUserSchema = z.object({
+  email: EmailSchema,
+  password: z.string().min(12),
+  name: z.string().min(1).max(255),
+  role: z.enum(['admin', 'user', 'guest']).default('user')
+});
+
+export const UserSchema = z.object({
+  id: UserIdSchema,
+  email: EmailSchema,
+  name: z.string(),
+  role: z.enum(['admin', 'user', 'guest']),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  metadata: z.record(z.unknown()).optional()
+});
+
+export type User = z.infer<typeof UserSchema>;
+export type CreateUser = z.infer<typeof CreateUserSchema>;
+```
+
+## // APPENDIX D: PROJECT INITIALIZATION
+
+### // NextJS Setup
+
+```bash
+# create project
+bunx create-next-app@latest nextjs-hypermodern \
+  --typescript \
+  --tailwind \
+  --app \
+  --src-dir \
+  --import-alias "@/*" \
+  --no-eslint
+
+cd nextjs-hypermodern
+
+# core dependencies
+bun add zod neverthrow ts-pattern @tanstack/react-query
+bun add @trpc/server @trpc/client @trpc/react-query @trpc/next
+bun add drizzle-orm @neondatabase/serverless
+bun add better-auth
+
+# dev dependencies
+bun add -D drizzle-kit @types/bun
+bun add -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
+bun add -D prettier prettier-plugin-tailwindcss
+```
+
+### // bunfig.toml (NextJS)
+
+```toml
+[install]
+peer = true
+dev = true
+optional = true
+
+[install.lockfile]
+save = true
+print = "yarn"
+
+[test]
+coverage = true
+coverageThreshold = 0.9
+```
+
+### // Vite + TanStack Router Setup
+
+```bash
+# create project
+bun create vite vite-tanstack-hypermodern \
+  --template react-ts
+
+cd vite-tanstack-hypermodern
+
+# core dependencies
+bun add @tanstack/react-router @tanstack/router-vite-plugin
+bun add @tanstack/react-query
+bun add zod neverthrow ts-pattern
+bun add @trpc/server @trpc/client @trpc/react-query
+bun add drizzle-orm @neondatabase/serverless
+bun add better-auth
+
+# dev dependencies
+bun add -D @types/bun bun-types @vitejs/plugin-react
+bun add -D drizzle-kit
+bun add -D tailwindcss postcss autoprefixer
+bun add -D @typescript-eslint/parser @typescript-eslint/eslint-plugin
+bun add -D prettier prettier-plugin-tailwindcss
+```
+
+### // bunfig.toml (Vite)
+
+```toml
+[install]
+peer = true
+dev = true
+optional = true
+
+[install.lockfile]
+save = true
+print = "yarn"
+
+[test]
+coverage = true
+coverageThreshold = 0.9
+
+[run]
+bunx = ["bunx", "--bun"]

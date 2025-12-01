@@ -1,0 +1,317 @@
+---
+title: Schedulers
+description: Noise schedule algorithms for diffusion models
+category: api
+---
+
+Schedulers control the noise reduction schedule during generation. They determine how quickly the model transitions from random noise to your final image.
+
+## Available Schedulers
+
+| Scheduler      | Speed | Quality | Best For                     ||----------------|-------|---------|------------------------------|| `simple`       | Fast  | Good    | Fast iteration, previews     || `beta`         | Fast  | Good    | General purpose, default     || `exponential`  | Medium| Better  | Smooth gradients, quality    || `sgm_uniform`  | Medium| Good    | SDM-style generation         || `bong_tangent` | Slow  | Best    | WAN video, bidirectional     |
+
+## Simple**Fastest scheduler**
+
+```json{  "prompt": "...",  "scheduler": "simple"}
+
+```**Characteristics:**
+
+- Linear noise schedule
+
+- Fast computation
+
+- Minimal overhead
+
+- Good for iteration**Best for:**
+
+- Rapid prototyping
+
+- Fast preview generation
+
+- Development/testing
+
+- Low step counts
+
+## Beta**Default for most models**
+
+```json{  "prompt": "...",  "scheduler": "beta"}
+
+```**Characteristics:**
+
+- Beta distribution schedule
+
+- Balanced performance
+
+- Stable across step counts
+
+- General purpose**Best for:**
+
+- Default choice
+
+- Most use cases
+
+- FLUX models
+
+- Balanced quality/speed
+
+## Exponential**Smooth noise reduction**
+
+```json{  "prompt": "...",  "scheduler": "exponential",  "steps": 30}
+
+```**Characteristics:**
+
+- Exponential decay schedule
+
+- Smoother gradients
+
+- Better detail preservation
+
+- Slightly slower**Best for:**
+
+- High-quality renders
+
+- Smooth color gradients
+
+- Photorealistic images
+
+- FLUX Dev/Dev2**Performance impact:*
+
+* ~5% slower than beta
+
+## SGM Uniform**Stable Diffusion-style schedule**
+
+```json{  "prompt": "...",  "scheduler": "sgm_uniform"}
+
+```**Characteristics:**
+
+- Uniform noise schedule
+
+- SDM-compatible
+
+- Consistent with SD workflows
+
+- Good compatibility**Best for:**
+
+- Users familiar with SD
+
+- Replicating SD results
+
+- Compatibility workflows
+
+## Bong Tangent**Bidirectional scheduler for video**
+
+```json{  "prompt": "...",  "scheduler": "bong_tangent",  "steps": 25}
+
+```**Characteristics:**
+
+- Bidirectional attention
+
+- Optimized for video
+
+- Best temporal consistency
+
+- Requires shift parameter for WAN**Best for:**
+
+- **WAN video generation (recommended)**
+
+- Temporal coherence
+
+- High-quality video**Requirements:**
+
+- Works best with `sampler: res_2m`
+
+- WAN models require `shift: 5` for optimal results
+
+## Step Count Impact#
+
+## Minimum Steps by Scheduler
+
+| Scheduler      | Min Steps | Optimal Steps ||----------------|-----------|---------------|| simple         | 4         | 15            || beta           | 10        | 25            || exponential    | 15        | 30            || sgm_uniform    | 15        | 25            || bong_tangent   | 20        | 25            |Lower step counts may cause artifacts or incomplete convergence.
+
+## Scheduler + Sampler Combinations#
+
+## Recommended Pairings**Fast Iteration:**
+
+```json{  "sampler": "euler",  "scheduler": "simple",  "steps": 15}
+
+```**Balanced Quality:**
+
+```json{  "sampler": "euler",  "scheduler": "beta",  "steps": 25}
+
+```**High Quality (Image):**
+
+```json{  "sampler": "res_2m",  "scheduler": "exponential",  "steps": 30}
+
+```**Best Quality (Video):**
+
+```json{  "sampler": "res_2m",  "scheduler": "bong_tangent",  "steps": 25}
+
+```
+
+## Model-Specific Recommendations#
+
+## FLUX Models**FLUX Schnell:**
+
+```json{  "scheduler": "simple",  // Fixed, optimized for 4 steps  "steps": 4}
+
+```**FLUX Dev:**
+
+```json{  "scheduler": "beta",  // Default  "steps": 25}
+
+```or for quality:
+
+```json{  "scheduler": "exponential",  "steps": 30}
+
+```**FLUX Dev2:**
+
+```json{  "scheduler": "exponential",  // Smoother gradients  "steps": 28}
+
+```#
+
+## WAN Models**WAN (Default):**
+
+```json{  "sampler": "res_2m",  "scheduler": "bong_tangent",  "steps": 20}
+
+```**WAN Lightning:**
+
+```json{  "sampler": "euler",  "scheduler": "simple",  "lightning": true,  "shift": 5,  "steps": 8}
+
+```#
+
+## Z-Image Turbo
+
+```json{  "scheduler": "simple",  // Fixed, optimized for speed  "steps": 8}
+
+```
+
+## Visual Comparison#
+
+## Beta vs Exponential**Beta (25 steps):**
+
+- Standard noise reduction
+
+- Good balance
+
+- Slight stepping in gradients**Exponential (30 steps):**
+
+- Smoother color transitions
+
+- Better gradient quality
+
+- More natural lightingDifference is subtle but visible in sky gradients, smooth surfaces, and lighting transitions.#
+
+## Simple vs Bong Tangent (WAN)**Simple (20 steps):**
+
+- Fast generation
+
+- Good temporal consistency
+
+- Occasional temporal artifacts**Bong Tangent (25 steps):**
+
+- Better frame coherence
+
+- Smoother motion
+
+- More natural animationCritical for video quality.
+
+## Performance Benchmarks**FLUX Dev @ 1024×1024 (nunchaku, euler sampler):**
+
+| Scheduler    | Steps | Latency | Quality ||--------------|-------|---------|---------|| simple       | 20    | 1.5s    | 7.8/10  || beta         | 25    | 1.8s    | 8.3/10  || exponential  | 30    | 2.1s    | 8.7/10  || sgm_uniform  | 25    | 1.9s    | 8.2/10  |**WAN @ 720p, 2s (torch, res_2m sampler):**| Scheduler    | Steps | Latency | Quality ||--------------|-------|---------|---------|| simple       | 20    | 12s     | 7.5/10  || beta         | 20    | 12.5s   | 8.0/10  || bong_tangent | 25    | 16s     | 8.8/10  |
+
+## Noise Schedule Visualization#
+
+## Beta Schedule
+
+```Noise Level  1.0 ┤      │╲      │ ╲  0.5 │  ╲___      │      ╲___  0.0 └──────────╲___      0    Steps    N
+
+```Gradual then rapid noise reduction.#
+
+## Exponential Schedule
+
+```Noise Level  1.0 ┤      │╲      │ ╲  0.5 │  ╲      │   ╲  0.0 └────╲____      0    Steps  N
+
+```Smooth exponential decay.#
+
+## Simple Schedule
+
+```Noise Level  1.0 ┤      │╲      │ ╲  0.5 │  ╲      │   ╲  0.0 └────╲      0  Steps  N
+
+```Linear reduction.
+
+## Advanced Options#
+
+## Custom Noise ScheduleOverride schedule parameters (advanced):
+
+```json{  "scheduler": "beta",  "scheduler_config": {    "beta_start": 0.00085,    "beta_end": 0.012,    "beta_schedule": "scaled_linear"  }}
+
+```(Coming soon 
+
+- contact support for custom schedules)#
+
+## Shift Parameter (WAN)Control bidirectional attention shift:
+
+```json{  "scheduler": "bong_tangent",  "shift": 5  // Default for WAN, 0-10 range}
+
+```Higher shift = more temporal smoothing, less motion freedom.
+
+## Choosing a Scheduler#
+
+## Decision Tree
+
+```What are you generating?├─ Video│  └─ WAN → bong_tangent└─ Image   └─ Priority?      ├─ Speed → simple      ├─ Balance → beta (default)      └─ Quality → exponential
+
+```#
+
+## By Use Case
+
+| Use Case                     | Recommended Scheduler ||------------------------------|-----------------------|| Fast iteration               | simple                || General purpose              | beta                  || High-quality images          | exponential           || Video generation (WAN)       | bong_tangent          || Compatibility with SD        | sgm_uniform           || Smooth gradients             | exponential           |
+
+## Common Issues#
+
+## Artifacts at Low Steps**Symptom:*
+
+* Noise/artifacts in output at low step counts**Solution:**
+
+- Increase steps to scheduler minimum
+
+- Use simpler scheduler (beta or simple)
+
+- Try different sampler#
+
+## Color Banding**Symptom:*
+
+* Visible steps in smooth gradients**Solution:**
+
+- Use `exponential` scheduler
+
+- Increase step count
+
+- Try `res_2m` sampler#
+
+## Temporal Artifacts (Video)**Symptom:*
+
+* Frame flickering or inconsistency**Solution:**
+
+- Use `bong_tangent` scheduler
+
+- Set `shift: 5`
+
+- Increase steps to 25+
+
+## Next Steps
+
+- [Samplers](/api/advanced/samplers/) 
+
+- Sampling algorithms
+
+- [Guidance](/api/advanced/guidance/) 
+
+- CFG tuning
+
+- [WAN Models](/api/models/wan/) 
+
+- Video-specific settings
+
+- [FLUX Models](/api/models/flux/) 
+
+- Image-specific settings

@@ -1,0 +1,68 @@
+---
+title: Authentication
+description: Manage your API keys and authentication
+category: guide
+---
+
+All API requests require authentication using API keys.
+
+## Getting API Keys
+1. Sign up at [weyl.ai/signup](https://weyl.ai/signup)
+2. Navigate to your dashboard
+3. Generate a new API key
+4. Store it securely (it won't be shown again)
+
+## Using API KeysInclude your API key in the `Authorization` header:
+
+```bashAuthorization: Bearer wyl_sk_1234567890abcdef
+
+```
+
+## Key Types#
+
+## Development Keys
+
+- Prefix: `wyl_sk_dev_`
+
+- Rate limit: 100 requests/minute
+
+- Free tier included#
+
+## Production Keys
+
+- Prefix: `wyl_sk_prod_`
+
+- Rate limit: Custom (based on plan)
+
+- Requires paid plan
+
+## Security Best Practices#
+
+## Environment VariablesNever hardcode API keys. Use environment variables:
+
+```bashWEYL_API_KEY=wyl_sk_prod_1234567890abcdef
+
+```#
+
+## Key RotationRotate keys regularly:
+1. Generate new key in dashboard
+2. Update your applications
+3. Revoke old key after verification#
+
+## Scope LimitationsEach key can be scoped to specific:
+
+- Models
+
+- Rate limits
+
+- IP ranges
+
+- Endpoints
+
+## Rate LimitsRate limits are enforced per API key:
+
+| Plan | Requests/Minute | Burst ||------|----------------|-------|| Free | 100 | 20 || Starter | 1,000 | 200 || Pro | 10,000 | 2,000 || Enterprise | Custom | Custom |
+
+## Error Codes
+
+| Code | Description ||------|-------------|| 401 | Invalid or missing API key || 403 | Key lacks required permissions || 429 | Rate limit exceeded |
