@@ -1,125 +1,67 @@
 ---
 title: Queue Submission
 description: Submit jobs to the async queue
-category: api
 ---
 
-**Endpoint:*
+# Queue Submission
 
-* `POST /queue`Submit generation jobs to the async queue.
+**Endpoint:** `POST /queue`
+
+Submit generation jobs to the async queue.
 
 ## Request Format
 
-```bashcurl -X POST "https://async.render.weyl.ai/queue" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "modality": "video",    "family": "wan",    "model": "default",    "task": "i2v",    "format": "720p",    "prompt": "she turns to face the camera",    "image": "https://example.com/portrait.jpg"  }'
-
+```bash
+curl -X POST "https://async.render.weyl.ai/queue" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "modality": "image",
+    "family": "flux",
+    "model": "schnell",
+    "task": "t2i",
+    "format": "1024",
+    "prompt": "portrait in natural lighting"
+  }'
 ```
 
-## Required Fields
+## Response (202)
 
-```typescriptinterface AsyncJobRequest {  modality: 'video' 
-
-| 'image';  family: string;  model: string;  task: 't2v' | 'i2v' | 't2i' | 'i2i' | 'edit';  prompt: string;    // Task-specific requirements  image?: string;  // required for i2v, i2i, edit  mask?: string;   // required for edit}
-
+```json
+{
+  "id": "j_abc123",
+  "status": "queued",
+  "position": 5,
+  "eta_seconds": 75
+}
 ```
 
-## Generation ParametersAll sync tier generation parameters are supported:
+## Queue Options
 
-```json{  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "format": "1024",  "prompt": "portrait in rembrandt lighting",  "negative_prompt": "blur, distortion, artifacts",  "steps": 30,  "guidance": 3.5,  "seed": 42,  "sampler": "res_2m",  "scheduler": "exponential"}
+### Priority
 
-```See [Image Generation](/api/sync/image/) or [Video Generation](/api/sync/video/) for parameter details.
-
-## Queue Options#
-
-## Priority
-
-```json{  "modality": "image",  "family": "flux",  "model": "schnell",  "task": "t2i",  "prompt": "urgent generation",  "priority": "high"}
-
+```json
+{
+  "priority": "normal",  // low, normal, high
+  "prompt": "..."
+}
 ```
 
-- `low` 
+### Webhook
 
-- Cheaper, slower (0.7× cost)
-
-- `normal` 
-
-- Standard (1.0× cost)
-
-- `high` 
-
-- Faster, more expensive (1.5× cost, Pro+ only)#
-
-## Webhook Callback
-
-```json{  "modality": "video",  "family": "wan",  "model": "default",  "task": "i2v",  "prompt": "...",  "image": "...",  "webhook": "https://myapp.com/api/webhooks/weyl"}
-
-```We POST to your webhook when complete:
-
-```httpPOST /api/webhooks/weylX-Weyl-Signature: abc123...Content-Type: application/json{  "job_id": "j_abc123",  "status": "complete",  "output": "https://cdn.render.weyl.ai/v/xyz.mp4",  "seed": 42,  "completed_at": "2024-12-01T17:00:12Z"}
-
-```Verify signature to prevent spoofing:
-
-```pythonimport hmacimport hashlibdef verify(body: bytes, signature: str, secret: str) -> bool:    expected = hmac.new(        secret.encode(),        body,        hashlib.sha256    ).hexdigest()    return hmac.compare_digest(signature, expected)
-
-```#
-
-## TTL (Time-to-Live)Auto-cancel jobs that queue too long:
-
-```json{  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "prompt": "...",  "ttl": 300}
-
-```Job auto-cancels if still queued after 300 seconds. Range: 60-86400 seconds.#
-
-## IdempotencyPrevent duplicate submissions:
-
-```json{  "modality": "image",  "family": "flux",  "model": "schnell",  "task": "t2i",  "prompt": "...",  "idempotency_key": "user_123_batch_456_item_001"}
-
-```Same `idempotency_key` within 24 hours:
-
-- Returns existing job if queued/running
-
-- Returns completed job if finished
-
-- Creates new job if previous completed >24h ago
-
-## Response#
-
-## Accepted (202)
-
-```httpHTTP/1.1 202 AcceptedLocation: https://async.render.weyl.ai/jobs/j_abc123Link: </jobs/j_abc123/events>; rel="monitor"X-Weyl-Request-Id: req_xyz789{  "id": "j_abc123",  "status": "queued",  "position": 5,  "eta_seconds": 75,  "events_url": "https://async.render.weyl.ai/jobs/j_abc123/events"}
-
-```#
-
-## Queue Full (429)
-
-```httpHTTP/1.1 429 Too Many RequestsRetry-After: 60{  "error": "queue_full",  "message": "queue depth exceeded, retry in 60s",  "request_id": "req_xyz789"}
-
-```Rare, only when queue >10,000 jobs. Wait and retry.
-
-## Batch SubmissionSubmit multiple jobs efficiently:
-
-```pythonimport requestsdef submit_batch(prompts: list[str]):    url = "https://async.render.weyl.ai/queue"    headers = {"Authorization": f"Bearer {API_KEY}"}        job_ids = []        for i, prompt in enumerate(prompts):        payload = {            "modality": "image",            "family": "flux",            "model": "schnell",            "task": "t2i",            "format": "1024",            "prompt": prompt,            "idempotency_key": f"batch_1_{i}",            "webhook": f"https://myapp.com/webhook?batch=1&index={i}"        }                resp = requests.post(url, headers=headers, json=payload)        resp.raise_for_status()                job = resp.json()        job_ids.append(job['id'])        print(f"Submitted: {job['id']} (position {job['position']})")        return job_ids
-
+```json
+{
+  "webhook": "https://myapp.com/callback",
+  "prompt": "..."
+}
 ```
 
-## Error Codes
+### Idempotency
 
-| Code | Error                  | Action                           ||------|------------------------|----------------------------------|| 202  | Accepted               | Poll or subscribe for updates    || 400  | Validation failed      | Check request format             || 401  | Unauthorized           | Check API key                    || 429  | Queue full             | Wait for Retry-After, then retry |
-
-## Queue MetricsMonitor queue health at `/queue/stats` (coming soon):
-
-```json{  "depth": 147,  "avg_wait_seconds": 32,  "workers_active": 24,  "workers_total": 32}
-
+```json
+{
+  "idempotency_key": "unique_key_123",
+  "prompt": "..."
+}
 ```
 
-## Next Steps
-
-- [Job Management](/api/async/jobs/) 
-
-- Status, cancel, retrieve
-
-- [SSE Streaming](/api/async/sse/) 
-
-- Real-time progress updates
-
-- [WebSocket](/api/websocket/async/) 
-
-- Batch workflows

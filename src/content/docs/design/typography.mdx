@@ -6,6 +6,7 @@ description: Complete typography guide for Weyl's dual-system design
 Weyl implements a **dual typography system*
 
 * that reflects our epistemological stance: data requires different typography than institutions.--
+
 -
 
 ## Hypermodern Typography (Dark Mode)> "The terminal doesn't lie. The terminal doesn't comfort."Monospace typography enforces data integrity. Every character occupies the same width, making columns align, diffs visible, and data scannable.#
@@ -14,13 +15,17 @@ Weyl implements a **dual typography system*
 
 ```cssfont-family: 'Iosevka', 'Berkeley Mono', 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
 
-```**Display Font:*
+```
+
+**Display Font:*
 
 * Aldrich — Geometric, technical, for headlines#
 
 ## Type Scale
 
-| Class | Size | Usage ||-------|------|-------|| `.text-hero` | 48px | Hero sections, major announcements || `.text-headline` | 32px | Section headers || `.text-subhead` | 24px | Subsections || `.text-body` | 16px | Body content || `.text-secondary` | 14px | Secondary information || `.text-caption` | 12px | Captions, labels || `.text-micro` | 10px | Micro labels, metadata |#
+| Class 
+
+| Size | Usage ||-------|------|-------|| `.text-hero` | 48px | Hero sections, major announcements || `.text-headline` | 32px | Section headers || `.text-subhead` | 24px | Subsections || `.text-body` | 16px | Body content || `.text-secondary` | 14px | Secondary information || `.text-caption` | 12px | Captions, labels || `.text-micro` | 10px | Micro labels, metadata |#
 
 ## Weight SemanticsWeight indicates **signal strength**:
 
@@ -49,6 +54,7 @@ Weyl implements a **dual typography system*
 ```html<div class="status-bar">  <span class="status nominal">█ NOMINAL</span>  <span class="status-item">latency: 1.2ms</span>  <span class="status-item">state: LIVE</span></div>
 
 ```<div class="status-bar my-8 p-4 bg-bg-surface border border-border rounded-md">  <span class="status nominal">█ NOMINAL</span>  <span class="status-item">latency: 1.2ms</span>  <span class="status-item">state: LIVE</span></div>--
+
 -
 
 ## High Modernism Typography (Light Mode)> "The institution earned trust by delivering. The stamp meant something."Sans-serif typography communicates institutional authority. Weight indicates rank, size indicates importance, spacing indicates formality.#
@@ -57,15 +63,23 @@ Weyl implements a **dual typography system*
 
 ```cssfont-family: 'Helvetica Neue', 'Univers', 'Arial', 'Liberation Sans', system-ui, sans-serif;
 
-```**Display Fonts:**
+```
 
-- **Futura*
+**Display Fonts:**
+
+- 
+
+**Futura*
 
 * — Bauhaus geometry for proclamations
 
-- **Trade Gothic*
+- 
 
-* — Industrial strength for institutional headers**Serif:*
+**Trade Gothic*
+
+* — Industrial strength for institutional headers
+
+**Serif:*
 
 * Georgia or Charter — For attributed statements and emphasis#
 
@@ -94,6 +108,7 @@ Weyl implements a **dual typography system*
 ```html<blockquote class="institutional-quote">  <p>"In a well-ordered laboratory, precision is not a goal but a habit."</p>  <cite>— Bureau of Standards, 1962</cite></blockquote>
 
 ```<blockquote class="institutional-quote my-8">  <p>"In a well-ordered laboratory, precision is not a goal but a habit."</p>  <cite>— Bureau of Standards, 1962</cite></blockquote>--
+
 -
 
 ## Utility Classes#
@@ -123,6 +138,7 @@ Weyl implements a **dual typography system*
 - `.readable-content` — Max-width: 65ch for optimal readability
 
 - `.truncate` — Text overflow with ellipsis--
+
 -
 
 ## The `//` ConventionIn hypermodern typography, double slashes serve as semantic delimiters:
@@ -137,9 +153,12 @@ Weyl implements a **dual typography system*
 
 - Indicates machine-readable segments
 
-- Separates navigation from content**Do not use*
+- Separates navigation from content
+
+**Do not use*
 
 * in High Modernism contexts—use traditional punctuation.--
+
 -
 
 ## Accessibility#
@@ -172,13 +191,16 @@ Weyl implements a **dual typography system*
 
 * minimum (sparingly)#
 
-## Line LengthOptimal: **45-75 characters per line**Use `.readable-content` class for max-width constraint:
+## Line LengthOptimal: **45-75 characters per line
+
+**Use `.readable-content` class for max-width constraint:
 
 ```html<article class="readable-content">  <!-
 
 - Content automatically constrained to 65ch --></article>
 
 ```--
+
 -
 
 ## Responsive BehaviorTypography automatically scales on mobile devices:
@@ -190,6 +212,7 @@ Weyl implements a **dual typography system*
 - Subhead: 24px → 18px
 
 - Body: 16px (maintains for readability)--
+
 -
 
 ## Print StylesAll content automatically switches to High Modernism for print:
@@ -201,6 +224,7 @@ Weyl implements a **dual typography system*
 - No shadows or glow effects
 
 - 11pt base size with 1.4 line height--
+
 -
 
 ## ImplementationAll typography utilities are available globally. Simply use the classes:

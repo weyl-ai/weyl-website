@@ -1,231 +1,65 @@
 ---
 title: FLUX Models
 description: FLUX.2 Dev, FLUX.1 Dev, FLUX.1 Schnell guide
-category: api
 ---
 
-**Family:*
+# FLUX Models
 
-* `flux`  **Creator:*
+**Family:** `flux`  
+**Creator:** Black Forest Labs  
+**Modality:** Image generation
 
-* Black Forest Labs  **Modality:*
+State-of-the-art text-to-image models from the creators of Stable Diffusion.
 
-* Image generationState-of-the-art text-to-image models from the creators of Stable Diffusion.
+## Model Variants
 
-## Model Variants#
+### FLUX.2 Dev (dev2)
 
-## FLUX.2 Dev (dev2)**32B parameter model with Mistral-3 24B text encoder**
+**32B parameter model with Mistral-3 24B text encoder**
 
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/dev2/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "portrait of a person in natural light, 85mm lens, shallow depth of field",    "guidance": 3.5,    "steps": 25  }' \  -o output.webp
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/dev2/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "portrait in natural light",
+    "guidance": 3.5,
+    "steps": 25
+  }' \
+  -o output.webp
+```
 
-```**Characteristics:**
-
+**Characteristics:**
 - Best prompt understanding
-
 - Excellent fine detail
+- ~2.4s @ 1024px on nunchaku
 
-- Great coherence on complex scenes
-
-- ~2.4s @ 1024px on nunchaku**Guidance Tuning:**
-
+**Guidance Tuning:**
 - Short prompts: `guidance: 3.5`
-
 - Detailed prompts: `guidance: 1.5`
 
-- Very detailed: `guidance: 1.0`#
+### FLUX.1 Dev (dev)
 
-## FLUX.1 Dev (dev)**12B parameter model with T5-XXL encoder**
+**12B parameter model with T5-XXL encoder**
 
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/dev/t2i?format=landscape" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "mountain landscape at golden hour, dramatic clouds",    "guidance": 3.5,    "steps": 25  }' \  -o output.webp
-
-```**Characteristics:**
-
+**Characteristics:**
 - Excellent quality/speed balance
-
 - Strong baseline model
+- ~1.8s @ 1024px on nunchaku
 
-- Wide LoRA ecosystem
+**Guidance:** Standard `guidance: 3.5`
 
-- ~1.8s @ 1024px on nunchaku**Guidance:**
+### FLUX.1 Schnell (schnell)
 
-- Standard: `guidance: 3.5`
+**12B distilled model, optimized for 4 steps**
 
-- Photorealism: `guidance: 2.8`#
-
-## FLUX.1 Schnell (schnell)**12B distilled model, optimized for 4 steps**
-
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=512" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "cyberpunk alley at night, neon signs",    "steps": 4  }' \  -o output.webp
-
-```**Characteristics:**
-
+**Characteristics:**
 - Fastest FLUX variant
-
 - Fixed 4 steps
-
-- Good quality for speed
-
 - ~450ms @ 1024px on nunchaku
+- Apache-2.0 license
 
-- Apache-2.0 license**Fixed Parameters:**
-
+**Fixed Parameters:**
 - Steps: `4` (always)
-
 - Guidance: `3.5` (fixed)
 
-## Tasks#
-
-## Text-to-Image (t2i)All FLUX models support t2i:
-
-```json{  "prompt": "portrait of a character, cinematic lighting",  "negative_prompt": "blur, distortion, low quality",  "steps": 25,  "guidance": 3.5,  "seed": 42}
-
-```#
-
-## Image-to-Image (i2i)Transform existing images:
-
-```json{  "prompt": "convert to watercolor painting style",  "image": "https://example.com/photo.jpg",  "strength": 0.65,  "guidance": 3.5}
-
-```**Strength guide:**
-
-- `0.1-0.3` 
-
-- Subtle adjustments
-
-- `0.4-0.6` 
-
-- Balanced transformation
-
-- `0.7-0.9` 
-
-- Heavy changes
-
-## Advanced Parameters#
-
-## Samplers
-
-| Sampler   | Notes                              | Best For        ||-----------|------------------------------------|-----------------|| `euler`   | Default, fast and stable           | General purpose || `res_2m`  | RES4LYF, better detail than euler  | Quality         || `res_3s`  | Best quality, slower               | Final renders   |
-
-```json{  "prompt": "...",  "sampler": "res_2m",  "steps": 30}
-
-```#
-
-## Schedulers
-
-| Scheduler      | Notes                          ||----------------|--------------------------------|| `simple`       | Fast iteration                 || `beta`         | Good default                   || `exponential`  | Smoother gradients             || `sgm_uniform`  | SDM-style schedule             |
-
-```json{  "prompt": "...",  "scheduler": "exponential"}
-
-```#
-
-## LoRAsApply LoRA adapters for enhanced results:
-
-```json{  "prompt": "portrait with natural lighting",  "lora": [    {      "id": "anti_blur",      "weight": 0.8    },    {      "id": "realism_boost",      "weight": 0.9    }  ]}
-
-```See [LoRA documentation](/api/advanced/loras/) for available adapters.#
-
-## Detail EnhancementFine-grained detail control:
-
-```json{  "prompt": "macro photography of flower",  "detail_amount": 0.5,  "detail_start": 0.2,  "detail_end": 0.8}
-
-```
-
-## Backend OptionsFLUX models support multiple backends:
-
-| Backend    | Dev2 | Dev | Schnell | Notes                     ||------------|------|-----|---------|---------------------------|| `nunchaku` | ✓    | ✓   | ✓       | Default, FP4, fastest     || `torch`    | ✓    | ✓   | ✓       | Full precision, flexible  || `tensorrt` | 
-
--    
-
-| ✓   | ✓       | TRT-optimized, production |Override with `?backend=`:
-
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/dev/t2i?format=1024&backend=tensorrt" \  ...
-
-```
-
-## Performance Comparison**Latency @ 1024×1024 (p50):**
-
-| Model   | Backend    | Steps | Latency ||---------|------------|-------|---------|| dev2    | nunchaku   | 25    | 2.4s    || dev2    | torch      | 25    | 4.2s    || dev     | nunchaku   | 25    | 1.8s    || dev     | tensorrt   | 25    | 1.5s    || dev     | torch      | 25    | 3.1s    || schnell | nunchaku   | 4     | 450ms   || schnell | tensorrt   | 4     | 380ms   || schnell | torch      | 4     | 620ms   |**Resolution scaling:**| Format           | Schnell | Dev | Dev2 ||------------------|---------|-----|------|| 512×512          | 180ms   | 680ms | 920ms || 1024×1024        | 450ms   | 1.8s | 2.4s || 1024×576         | 320ms   | 1.2s | 1.6s || 768×1024         | 380ms   | 1.4s | 1.9s |
-
-## Quality Tips#
-
-## For Portraits
-
-```json{  "prompt": "portrait of a person, 85mm lens, shallow depth of field, natural lighting, film grain",  "model": "dev2",  "guidance": 3.5,  "steps": 28,  "lora": [    {"id": "anti_blur", "weight": 0.8},    {"id": "realism_boost", "weight": 0.75}  ]}
-
-```#
-
-## For Photorealism
-
-```json{  "prompt": "photograph of [subject], natural lighting, high detail, sharp focus",  "model": "dev",  "guidance": 2.8,  "steps": 30,  "sampler": "res_2m",  "scheduler": "exponential"}
-
-```#
-
-## For Speed
-
-```json{  "prompt": "[description]",  "model": "schnell",  "format": "512",  "steps": 4}
-
-```#
-
-## For Style Transfer
-
-```json{  "prompt": "in the style of [artist/style], [additional details]",  "image": "https://example.com/source.jpg",  "strength": 0.65,  "model": "dev",  "guidance": 3.5}
-
-```
-
-## Prompt Engineering#
-
-## Structure
-
-```[subject], [style/medium], [lighting], [mood], [technical details]
-
-```**Example:**
-
-```portrait of a woman, oil painting, golden hour lighting, serene mood, high detail, bokeh background
-
-```#
-
-## Negative PromptsEffective negative prompts for FLUX:
-
-```blur, distortion, artifacts, low quality, bad anatomy, deformed, cropped, out of frame
-
-```#
-
-## Guidance by Prompt Length
-
-| Prompt Length | dev2 Guidance | dev Guidance ||---------------|---------------|--------------|| 1-10 words    | 3.5           | 3.5          || 10-30 words   | 2.5           | 3.5          || 30-50 words   | 1.5           | 3.0          || 50+ words     | 1.0           | 2.8          |
-
-## Example Gallery#
-
-## Photorealism
-
-```json{  "model": "dev2",  "prompt": "portrait of a woman in her 30s, natural lighting from window, subtle smile, eyes looking at camera, soft focus background, 85mm lens, f/1.4, film grain",  "guidance": 3.5,  "steps": 28,  "format": "portrait"}
-
-```#
-
-## Artistic Style
-
-```json{  "model": "dev",  "prompt": "cyberpunk street scene at night, neon signs reflecting in puddles, flying cars in background, cinematic composition, film noir aesthetic",  "guidance": 3.5,  "steps": 25,  "format": "landscape-wide"}
-
-```#
-
-## Fast Iteration
-
-```json{  "model": "schnell",  "prompt": "character concept art, full body, white background",  "steps": 4,  "format": "portrait"}
-
-```
-
-## Next Steps
-
-- [Advanced Tuning](/api/advanced/guidance/) 
-
-- Guidance optimization
-
-- [LoRAs](/api/advanced/loras/) 
-
-- Available LoRA adapters
-
-- [Samplers](/api/advanced/samplers/) 
-
-- Algorithm comparison
-
-- [Detail Enhancement](/api/advanced/detail/) 
-
-- Fine control

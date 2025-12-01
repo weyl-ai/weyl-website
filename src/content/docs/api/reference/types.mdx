@@ -1,276 +1,154 @@
 ---
 title: Type Reference
-description: Enums, IDs, and primitive types
-category: api
+description: TypeScript type definitions
 ---
 
-Reference for common types, enums, and identifiers.
+# Type Reference
 
-## Modality
+Complete TypeScript type definitions for the Weyl API.
 
-```typescripttype Modality = 'image' | 'video';
+## Core Types
 
-```Output type:
+```typescript
+type Modality = 'image' | 'video';
 
-- `image` 
+type Family = 'flux' | 'zimage' | 'wan';
 
-- Static image (JPEG, WebP)
+type Task = 't2i' | 'i2i' | 't2v' | 'i2v' | 'edit';
 
-- `video` 
+type ImageFormat = 
+  | '1024' | '512'
+  | 'portrait' | 'portrait-wide'
+  | 'landscape' | 'landscape-wide';
 
-- Video clip (MP4)
+type VideoFormat = 
+  | '720p' | '720p-portrait'
+  | '480p' | '480p-portrait'
+  | 'square';
 
-## Task
+type Backend = 'nunchaku' | 'torch' | 'tensorrt';
 
-```typescripttype Task = 't2i' 
+type Sampler = 'euler' | 'euler_a' | 'dpmpp_2m' | 'heun';
 
-| 'i2i' | 'edit' | 't2v' | 'i2v';
+type Scheduler = 'simple' | 'normal' | 'sgm';
 
+type Priority = 'low' | 'normal' | 'high';
+
+type JobStatus = 'queued' | 'running' | 'complete' | 'failed' | 'cancelled';
 ```
 
-| Task   | Requires            | Produces | Description                ||--------|---------------------|----------|----------------------------|| `t2i`  | prompt              | image    | text to image              || `i2i`  | prompt + image      | image    | image to image             || `edit` | prompt + image + mask | image  | inpaint / outpaint         || `t2v`  | prompt              | video    | text to video              || `i2v`  | prompt + image      | video    | image to video             |
+## Request Types
 
-## Model Family
+```typescript
+interface BaseGenerationRequest {
+  prompt: string;
+  negative_prompt?: string;
+  steps?: number;
+  guidance?: number;
+  seed?: number;
+}
 
-```typescripttype Family = 'flux' 
+interface ImageGenerationRequest extends BaseGenerationRequest {
+  sampler?: Sampler;
+  scheduler?: Scheduler;
+  loras?: LoRAConfig[];
+  upscale?: 1.5 | 2 | 4;
+  detail_enhance?: boolean;
+  detail_strength?: number;
+}
 
-| 'zimage' | 'wan' | 'qwen' | 'sdxl';
+interface I2IRequest extends ImageGenerationRequest {
+  image: string;
+  strength?: number;
+}
 
+interface VideoGenerationRequest extends BaseGenerationRequest {
+  image: string;
+  duration?: number;
+  cfg?: number;
+}
+
+interface LoRAConfig {
+  url: string;
+  weight: number;
+}
 ```
 
-| Family   | Modality | Status       ||----------|----------|--------------|| `flux`   | image    | ✓ Active     || `zimage` | image    | ✓ Active     || `wan`    | video    | Coming Soon  || `qwen`   | image    | Coming Soon  || `sdxl`   | image    | Coming Soon  |
+## Response Types
 
-## Model Variants
+```typescript
+interface Job {
+  id: string;
+  status: JobStatus;
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  failed_at?: string;
+}
 
-```typescript// FLUX variantstype FluxModel = 'dev2' 
+interface QueuedJob extends Job {
+  status: 'queued';
+  position: number;
+  eta_seconds: number;
+}
 
-| 'dev' | 'schnell';// Z-Image variantstype ZImageModel = 'turbo';// WAN variantstype WanModel = 'default';
+interface RunningJob extends Job {
+  status: 'running';
+  progress: number;
+  step: number;
+  total_steps: number;
+  eta_seconds: number;
+}
 
+interface CompleteJob extends Job {
+  status: 'complete';
+  output: string;
+  duration_ms: number;
+}
+
+interface FailedJob extends Job {
+  status: 'failed';
+  error: {
+    code: string;
+    message: string;
+  };
+}
 ```
 
-## Image Format
+## WebSocket Types
 
-```typescripttype ImageFormat =  
+```typescript
+interface WSMessage {
+  type: string;
+  [key: string]: unknown;
+}
 
-| '1024'           // 1024×1024  | '512'            // 512×512  | 'portrait'       // 768×1024  | 'portrait-wide'  // 576×1024  | 'landscape'      // 1024×768  | 'landscape-wide' // 1024×576  ;
+interface WSAuthMessage extends WSMessage {
+  type: 'auth';
+  token: string;
+}
 
+interface WSGenerateMessage extends WSMessage {
+  type: 'generate';
+  modality: Modality;
+  family: Family;
+  model: string;
+  task: Task;
+  format: string;
+  stream_frames?: boolean;
+}
+
+interface WSFrameMessage extends WSMessage {
+  type: 'frame';
+  step: number;
+  total_steps: number;
+  data: string;
+}
+
+interface WSCompleteMessage extends WSMessage {
+  type: 'complete';
+  output: string;
+  latency_ms?: number;
+}
 ```
 
-## Video Format
-
-```typescripttype VideoFormat =  
-
-| '720p'           // 1280×720  | '720p-portrait'  // 720×1280  | '480p'           // 832×480  | '480p-portrait'  // 480×832  | 'square'         // 640×640  ;
-
-```
-
-## Backend
-
-```typescripttype Backend = 'nunchaku' 
-
-| 'torch' | 'tensorrt';
-
-```
-
-| Backend    | Precision | Speed      | Models              ||------------|-----------|------------|---------------------|| `nunchaku` | FP4       | ⚡⚡⚡       | FLUX, Z-Image       || `torch`    | FP16      | ⚡⚡         | FLUX, WAN           || `tensorrt` | Mixed     | ⚡⚡⚡       | FLUX Dev/Schnell    |
-
-## Sampler
-
-```typescripttype Sampler = 'euler' 
-
-| 'uni_pc' | 'res_2m' | 'res_3s';
-
-```
-
-| Sampler   | Speed  | Quality | Best For        ||-----------|--------|---------|-----------------|| `euler`   | Fast   | Good    | General purpose || `uni_pc`  | Fast   | Good    | WAN video       || `res_2m`  | Medium | Better  | Quality         || `res_3s`  | Slow   | Best    | Maximum quality |
-
-## Scheduler
-
-```typescripttype Scheduler =  
-
-| 'simple'  | 'beta'  | 'exponential'  | 'sgm_uniform'  | 'bong_tangent'  ;
-
-```
-
-| Scheduler      | Speed  | Best For                 ||----------------|--------|--------------------------|| `simple`       | Fast   | Iteration                || `beta`         | Fast   | Default                  || `exponential`  | Medium | Quality                  || `sgm_uniform`  | Medium | SD compatibility         || `bong_tangent` | Slow   | WAN video                |
-
-## Priority
-
-```typescripttype Priority = 'low' 
-
-| 'normal' | 'high';
-
-```**Async tier only.**
-
-| Priority | Queue Position | Cost  | Plan Required ||----------|----------------|-------|---------------|| `low`    | Back           | 0.7×  | All           || `normal` | Standard       | 1.0×  | All           || `high`   | Front          | 1.5×  | Pro+          |
-
-## Job Status
-
-```typescripttype JobStatus =  
-
-| 'queued'  | 'running'  | 'complete'  | 'error'  | 'cancelled'  ;
-
-```**Async tier only.*
-*
-
-## Identifiers#
-
-## Request ID
-
-```Format: req_[a-zA-Z0-9]{12}Example: req_xyz789abc123
-
-```Generated by server, included in `X-Weyl-Request-Id` header.#
-
-## Job ID
-
-```Format: j_[a-zA-Z0-9]{12}Example: j_7Xy9kL2mN4pQ
-
-```**Async tier only.*
-
-* Generated by server when job queued.#
-
-## User ID
-
-```Format: u_[a-zA-Z0-9]{12}Example: u_abc123xyz789
-
-```Associated with API key.#
-
-## Asset ID
-
-```Format: a_[a-zA-Z0-9]{12}Example: a_def456uvw012
-
-```For uploaded assets.
-
-## URL Formats#
-
-## CDN URLs
-
-```typescripttype CDNUrl =  
-
-| `https://cdn.render.weyl.ai/i/${string}.webp`  // image  | `https://cdn.render.weyl.ai/v/${string}.mp4`   // video  | `https://cdn.render.weyl.ai/a/${string}`       // asset  ;
-
-```**Examples:**
-
-```https://cdn.render.weyl.ai/i/abc123xyz789.webphttps://cdn.render.weyl.ai/v/def456uvw012.mp4https://cdn.render.weyl.ai/a/ghi789rst345
-
-```#
-
-## API Endpoints
-
-```typescript// Sync tiertype SyncEndpoint =  `https://sync.render.weyl.ai/${Modality}/${Family}/${Model}/${Task}`;// Async tiertype AsyncQueueEndpoint = 'https://async.render.weyl.ai/queue';type AsyncJobEndpoint = `https://async.render.weyl.ai/jobs/${JobId}`;
-
-```
-
-## Range Types#
-
-## Seed
-
-```typescripttype Seed = number;  // 0 to 4294967295 (2^32 
-
-- 1)
-
-```#
-
-## Progress
-
-```typescripttype Progress = number;  // 0.0 to 1.0
-
-```#
-
-## Guidance
-
-```typescripttype Guidance = number;  // 1.0 to 5.0 typically
-
-```Model-specific ranges:
-
-- FLUX Dev/Dev2: 1.0 
-
-- 5.0
-
-- FLUX Schnell: 3.5 (fixed)
-
-- WAN: 6.0 
-
-- 9.0
-
-- Z-Image: 1.0 (fixed)#
-
-## CFG (Classifier-Free Guidance)
-
-```typescripttype CFG = number;  // Alias for Guidance
-
-```#
-
-## Steps
-
-```typescripttype Steps = number;  // Model-specific range
-
-```
-
-| Model        | Min | Max | Default ||--------------|-----|-----|---------|| flux/schnell | 4   | 4   | 4       || flux/dev     | 10  | 50  | 25      || flux/dev2    | 10  | 50  | 25      || zimage/turbo | 4   | 15  | 8       || wan/default  | 10  | 50  | 20      |#
-
-## Duration (Video)
-
-```typescripttype Duration = number;  // 0.5 to 10.0 seconds
-
-```#
-
-## Strength (i2i)
-
-```typescripttype Strength = number;  // 0.0 to 1.0
-
-```
-
-| Range   | Effect                     ||---------|----------------------------|| 0.1-0.3 | Subtle changes             || 0.4-0.6 | Balanced transformation    || 0.7-0.9 | Heavy transformation       || 1.0     | Maximum (nearly ignores source) |#
-
-## Weight (LoRA)
-
-```typescripttype LoRAWeight = number;  // 0.0 to 1.0+ (typically 0.7-0.9)
-
-```
-
-## Data URI Format
-
-```typescripttype DataURI = `data:${MimeType};base64,${string}`;
-
-```**Supported for images:**
-
-```data:image/jpeg;base64,/9j/4AAQSkZJRg...data:image/png;base64,iVBORw0KGgo...data:image/webp;base64,UklGRiQAAABXRUJQ...
-
-```
-
-## Timestamp Format
-
-```typescripttype ISO8601 = string;  // ISO 8601 date-time
-
-```**Example:**
-
-```2024-12-01T17:00:00Z
-
-```
-
-## Complete Request Type
-
-```typescriptinterface GenerateRequest {  // Required  prompt: string;    // Task-specific  image?: string;               // URL or data URI  mask?: string;                // URL or data URI    // Generation params  negative_prompt?: string;  steps?: Steps;  guidance?: Guidance;  cfg?: CFG;                    // alias for guidance  seed?: Seed;  strength?: Strength;          // i2i only  duration?: Duration;          // video only    // Advanced  sampler?: Sampler;  scheduler?: Scheduler;  lora?: LoRAConfig[];  detail_amount?: number;       // 0.0-1.0  detail_start?: number;        // 0.0-1.0  detail_end?: number;          // 0.0-1.0    // Multi-output  count?: number;               // 1-4    // Video-specific  motion_strength?: number;     // 0.0-1.0  lightning?: boolean;          // WAN only  shift?: number;               // 0-10, bong_tangent only}
-
-```
-
-## Complete Job Type
-
-```typescriptinterface Job {  id: JobId;  status: JobStatus;    // Queue info  position?: number;  eta_seconds?: number;    // Progress  progress?: Progress;    // Output  output?: CDNUrl;  outputs?: CDNUrl[];  seed?: Seed;    // Error  error?: {    code: string;    message: string;    retriable: boolean;  };    // Timestamps  created_at: ISO8601;  started_at?: ISO8601;  completed_at?: ISO8601;    // Debug  request?: GenerateRequest;}
-
-```
-
-## Next Steps
-
-- [Request Schemas](/api/reference/requests/) 
-
-- Request formats
-
-- [Response Schemas](/api/reference/responses/) 
-
-- Response formats
-
-- [Error Reference](/api/reference/errors/) 
-
-- Error codes

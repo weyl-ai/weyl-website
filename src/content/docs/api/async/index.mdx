@@ -1,149 +1,44 @@
 ---
-title: Async Tier Overview
-description: Queue-based generation with cost optimization
-category: api
+title: Async Tier Overview  
+description: Queue-based generation
 ---
 
-**Base URL:*
+# Async Tier
 
-* `https://async.render.weyl.ai`Queue-backed generation with CDN-arbitraged pricing. Equal quality, lower cost, higher latency.
+**Base URL:** `https://async.render.weyl.ai`
+
+Queue-backed generation with CDN-arbitraged pricing.
 
 ## How It Works
 
 ```
 1. POST /queue → 202 Accepted + job ID
-2. Poll /jobs/{id} OR subscribe to SSE OR use WebSocket
+2. Poll /jobs/{id} OR subscribe to SSE
 3. GET /jobs/{id} → 303 redirect to CDN when complete
-
 ```
-
-## Characteristics
-
-- **No Capacity Limits:*
-
-* Jobs queue until capacity available
-
-- **Lower Cost:*
-
-* CDN-arbitraged pricing, ~40% cheaper than sync
-
-- **Flexible Priority:*
-
-* Normal, low, high queue priority
-
-- **Webhook Support:*
-
-* Callback on completion
-
-- **Idempotency:*
-
-* Prevent duplicate submissions
-
-## When to Use
-
-- Batch processing workflows
-
-- Cost-sensitive applications
-
-- Non-time-critical generation
-
-- Background job systems
-
-- High-volume workloads
-
-## Basic Example#
 
 ## Submit Job
 
-```bashcurl -X POST "https://async.render.weyl.ai/queue" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "modality": "image",    "family": "flux",    "model": "dev",    "task": "t2i",    "format": "1024",    "prompt": "cyberpunk cityscape at night"  }'
-
-```#
-
-## Response
-
-```json{  "id": "j_7Xy9kL2mN4pQ",  "status": "queued",  "position": 3,  "eta_seconds": 45,  "events_url": "https://async.render.weyl.ai/jobs/j_7Xy9kL2mN4pQ/events"}
-
-```#
-
-## Poll for Status
-
-```bashcurl "https://async.render.weyl.ai/jobs/j_7Xy9kL2mN4pQ" \  -H "Authorization: Bearer $WEYL_API_KEY"
-
-```#
-
-## When Complete
-
-```httpHTTP/1.1 303 See OtherLocation: https://cdn.render.weyl.ai/i/abc123.webp
-
+```bash
+curl -X POST "https://async.render.weyl.ai/queue" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "modality": "image",
+    "family": "flux",
+    "model": "schnell",
+    "task": "t2i",
+    "format": "1024",
+    "prompt": "cyberpunk cityscape"
+  }'
 ```
 
-## Retrieval Methods#
+## Check Status
 
-## 
-1. PollingSimple but inefficient:
-
-```pythonimport timeimport requestsdef wait_for_job(job_id: str, poll_interval: float = 2.0):    url = f"https://async.render.weyl.ai/jobs/{job_id}"    headers = {"Authorization": f"Bearer {API_KEY}"}        while True:        resp = requests.get(url, headers=headers)                if resp.status_code == 303:            cdn_url = resp.headers['Location']            return cdn_url                job = resp.json()                if job['status'] == 'error':            raise Exception(f"Job failed: {job['error']['message']}")                print(f"Status: {job['status']}, Progress: {job.get('progress', 0)}")        time.sleep(poll_interval)
-
-```#
-
-## 
-2. Server-Sent EventsEfficient push-based updates:
-
-```pythonimport requestsdef stream_job_progress(job_id: str):    url = f"https://async.render.weyl.ai/jobs/{job_id}/events"    headers = {"Authorization": f"Bearer {API_KEY}"}        with requests.get(url, headers=headers, stream=True) as resp:        resp.raise_for_status()                for line in resp.iter_lines():            if not line:                continue                        line = line.decode('utf-8')                        if line.startswith('event:'):                event_type = line[7:].strip()            elif line.startswith('data:'):                data = json.loads(line[6:])                                if event_type == 'position':                    print(f"Queue position: {data['position']}")                elif event_type == 'started':                    print("Generation started")                elif event_type == 'progress':                    print(f"Progress: {data['progress']*100:.0f}%")                elif event_type == 'complete':                    print(f"Complete: {data['output']}")                    return data['output']                elif event_type == 'error':                    raise Exception(data['message'])
-
-```#
-
-## 
-3. WebSocketBest for batch workflows:
-
-```javascriptconst ws = new WebSocket('wss://async.render.weyl.ai/ws');ws.onopen = () => {  // Submit multiple jobs over single connection  ws.send(JSON.stringify({    type: 'enqueue',    modality: 'image',    family: 'flux',    model: 'schnell',    task: 't2i',    request: {      prompt: 'portrait 1'    }  }));    ws.send(JSON.stringify({    type: 'enqueue',    modality: 'image',    family: 'flux',    model: 'schnell',    task: 't2i',    request: {      prompt: 'portrait 2'    }  }));};ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch(msg.type) {    case 'queued':      console.log(`Job ${msg.job_id} queued at position ${msg.position}`);      break;    case 'complete':      console.log(`Job ${msg.job_id} complete: ${msg.output}`);      break;    case 'error':      console.error(`Job ${msg.job_id} failed:`, msg.error);      break;  }};
-
+```bash
+curl "https://async.render.weyl.ai/jobs/j_abc123" \
+  -H "Authorization: Bearer $WEYL_API_KEY"
 ```
 
-## Priority Levels
+When complete, returns 303 redirect to the CDN URL.
 
-| Priority | Queue Position | Cost Multiplier | Plan Required ||----------|----------------|-----------------|---------------|| `low`    | Back of queue  | 0.7×            | All           || `normal` | Standard       | 1.0×            | All           || `high`   | Front of queue | 1.5×            | Pro+          |
-
-```json{  "modality": "video",  "family": "wan",  "model": "default",  "task": "i2v",  "prompt": "...",  "image": "...",  "priority": "high"}
-
-```
-
-## WebhooksGet notified on completion instead of polling:
-
-```json{  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "prompt": "portrait in natural lighting",  "webhook": "https://myapp.com/webhooks/weyl"}
-
-```**Webhook Payload:**
-
-```json{  "job_id": "j_abc123",  "status": "complete",  "output": "https://cdn.render.weyl.ai/i/xyz789.webp",  "seed": 42,  "created_at": "2024-12-01T17:00:00Z",  "completed_at": "2024-12-01T17:00:12Z"}
-
-```Verify webhook authenticity using `X-Weyl-Signature` header.
-
-## IdempotencyPrevent duplicate submissions:
-
-```json{  "modality": "image",  "family": "flux",  "model": "schnell",  "task": "t2i",  "prompt": "...",  "idempotency_key": "user_123_request_456"}
-
-```Same `idempotency_key` within 24 hours returns the same job ID.
-
-## Job Lifecycle
-
-```queued → running → complete   ↓cancelled (manual)   ↓error (generation failed)
-
-```
-
-## Next Steps
-
-- [Queue Submission](/api/async/queue/) 
-
-- Enqueue jobs
-
-- [Job Management](/api/async/jobs/) 
-
-- Status, cancel
-
-- [SSE Streaming](/api/async/sse/) 
-
-- Real-time progress
-
-- [WebSocket](/api/websocket/async/) 
-
-- Batch workflows

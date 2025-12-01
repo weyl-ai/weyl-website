@@ -1,153 +1,115 @@
 ---
 title: Response Schemas
-description: Complete response schemas and formats
-category: api
+description: Complete response format reference
 ---
 
-Complete reference for API response formats.
+# Response Schemas
 
-## Sync Tier Response#
+Complete schemas for all API responses.
 
-## Success (200)**Headers:**
+## Sync Success (200)
 
-```httpHTTP/1.1 200 OKContent-Type: image/webp  (or video/mp4)Content-Location: https://cdn.render.weyl.ai/i/abc123.webpContent-Length: 1234567X-Weyl-Request-Id: req_xyz789X-Weyl-Seed: 42X-Weyl-Duration-Ms: 847X-RateLimit-Remaining: 9950X-RateLimit-Reset: 1699564800
+```http
+HTTP/1.1 200 OK
+Content-Type: image/webp
+Content-Location: https://cdn.render.weyl.ai/i/xyz.webp
+X-Generation-Time: 1847
+X-Seed: 42
 
-```**Body:*
-
-* Binary image or video bytes#
-
-## Capacity Exhausted (503)
-
-```httpHTTP/1.1 503 Service UnavailableRetry-After: 30Link: <https://async.render.weyl.ai>; rel="alternate"Content-Type: application/json{  "error": "capacity_exhausted",  "message": "sync tier at capacity, retry in 30s or use async",  "request_id": "req_xyz789",  "retry_after": 30,  "alternate_tier": "https://async.render.weyl.ai"}
-
+<binary data>
 ```
 
-## Async Tier Responses#
+## Sync Capacity Exhausted (503)
 
-## Queue Submission (202)
+```http
+HTTP/1.1 503 Service Unavailable
+Retry-After: 30
+Content-Type: application/json
 
-```httpHTTP/1.1 202 AcceptedLocation: https://async.render.weyl.ai/jobs/j_abc123Link: </jobs/j_abc123/events>; rel="monitor"Content-Type: application/json{  "id": "j_abc123",  "status": "queued",  "position": 5,  "eta_seconds": 75,  "events_url": "https://async.render.weyl.ai/jobs/j_abc123/events"}
-
-```#
-
-## Job Status (Queued)
-
-```json{  "id": "j_abc123",  "status": "queued",  "position": 3,  "eta_seconds": 45,  "created_at": "2024-12-01T17:00:00Z"}
-
-```#
-
-## Job Status (Running)
-
-```json{  "id": "j_abc123",  "status": "running",  "progress": 0.65,  "eta_seconds": 8,  "started_at": "2024-12-01T17:00:32Z",  "created_at": "2024-12-01T17:00:00Z"}
-
-```#
-
-## Job Status (Complete 
-
-- 303 Redirect)
-
-```httpHTTP/1.1 303 See OtherLocation: https://cdn.render.weyl.ai/i/abc123.webpX-Weyl-Seed: 42X-Weyl-Duration-Ms: 12400
-
-```Follow `Location` header to retrieve output.#
-
-## Job Status (Error)
-
-```json{  "id": "j_abc123",  "status": "error",  "error": {    "code": "generation_failed",    "message": "CUDA out of memory",    "retriable": true  },  "created_at": "2024-12-01T17:00:00Z",  "started_at": "2024-12-01T17:00:32Z",  "completed_at": "2024-12-01T17:00:45Z",  "request": {    "prompt": "...",    "image": "..."  }}
-
-```#
-
-## Queue Full (429)
-
-```json{  "error": "queue_full",  "message": "queue depth exceeded, retry in 60s",  "request_id": "req_xyz789",  "retry_after": 60}
-
+{
+  "error": "capacity_exhausted",
+  "message": "sync tier at capacity, retry in 30s",
+  "retry_after": 30
+}
 ```
 
-## Model Discovery#
+## Async Job Queued (202)
 
-## GET /models
-
-```json{  "image": {    "flux": {      "dev2": {        "tasks": ["t2i", "i2i"],        "backends": ["nunchaku", "torch"],        "default_backend": "nunchaku",        "formats": ["1024", "512", "portrait", "landscape"],        "max_steps": 50,        "typical_steps": 25,        "guidance_range": [1.0, 5.0],        "recommended_guidance": {          "short_prompt": 3.5,          "detailed_prompt": 1.5        }      }    }  },  "video": {    "wan": {      "default": {        "tasks": ["i2v"],        "backends": ["torch"],        "formats": ["720p", "480p", "square"],        "duration_range": [0.5, 10.0],        "cfg_range": [6.0, 9.0],        "recommended_cfg": 7.0      }    }  }}
-
+```json
+{
+  "id": "j_abc123",
+  "status": "queued",
+  "position": 5,
+  "eta_seconds": 75,
+  "created_at": "2024-01-15T10:30:00Z"
+}
 ```
 
-## LoRA Discovery#
+## Async Job Status
 
-## GET /models/loras
+### Queued
 
-```json{  "loras": [    {      "id": "anti_blur",      "name": "Anti-Blur",      "description": "Reduces blur, sharper details",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.8,      "weight_range": [0.3, 1.0]    },    {      "id": "realism_boost",      "name": "Realism Boost",      "description": "Enhanced photorealism",      "base_models": ["flux/dev", "flux/dev2"],      "recommended_weight": 0.75,      "weight_range": [0.5, 0.9]    }  ]}
-
+```json
+{
+  "id": "j_abc123",
+  "status": "queued",
+  "position": 3,
+  "eta_seconds": 45
+}
 ```
 
-## Uploads#
+### Running
 
-## POST /uploads
-
-```json{  "asset_id": "a_xyz123",  "asset_url": "https://cdn.render.weyl.ai/a/xyz123",  "upload_url": "https://cdn.render.weyl.ai/upload/presigned?token=...",  "expires_at": "2024-12-01T18:00:00Z"}
-
+```json
+{
+  "id": "j_abc123",
+  "status": "running",
+  "progress": 0.65,
+  "step": 20,
+  "total_steps": 30,
+  "eta_seconds": 8
+}
 ```
 
-## Common Headers#
+### Complete (303)
 
-## Request Headers
-
-```Authorization: Bearer wyl_sk_prod_...Content-Type: application/jsonX-Idempotency-Key: optional_dedup_key
-
-```#
-
-## Response Headers
-
-```X-Weyl-Request-Id: req_xyz789X-RateLimit-Remaining: 9950X-RateLimit-Reset: 1699564800X-Weyl-Seed: 42X-Weyl-Duration-Ms: 847Content-Location: https://cdn.render.weyl.ai/...
-
+```http
+HTTP/1.1 303 See Other
+Location: https://cdn.render.weyl.ai/i/xyz.webp
 ```
 
-## Webhook Payloads#
+Or with body:
 
-## Job Complete
-
-```httpPOST /your-webhook-endpointX-Weyl-Signature: abc123...Content-Type: application/json{  "job_id": "j_abc123",  "status": "complete",  "output": "https://cdn.render.weyl.ai/i/xyz789.webp",  "seed": 42,  "created_at": "2024-12-01T17:00:00Z",  "completed_at": "2024-12-01T17:00:12Z",  "duration_ms": 12400}
-
-```#
-
-## Job Error
-
-```json{  "job_id": "j_abc123",  "status": "error",  "error": {    "code": "generation_failed",    "message": "CUDA out of memory",    "retriable": true  },  "created_at": "2024-12-01T17:00:00Z",  "completed_at": "2024-12-01T17:00:12Z"}
-
+```json
+{
+  "id": "j_abc123",
+  "status": "complete",
+  "output": "https://cdn.render.weyl.ai/i/xyz.webp",
+  "duration_ms": 2340,
+  "completed_at": "2024-01-15T10:31:23Z"
+}
 ```
 
-## Multi-Output ResponsesWhen `count > 1`:#
+### Failed
 
-## Sync TierCurrently returns first image only in body. Additional images available via headers or WebSocket.#
-
-## Async TierJob complete response includes array:
-
-```httpHTTP/1.1 303 See OtherLocation: https://cdn.render.weyl.ai/i/abc1.webpX-Weyl-Outputs: https://cdn.render.weyl.ai/i/abc1.webp,https://cdn.render.weyl.ai/i/abc2.webp,https://cdn.render.weyl.ai/i/abc3.webp
-
+```json
+{
+  "id": "j_abc123",
+  "status": "failed",
+  "error": {
+    "code": "nsfw_detected",
+    "message": "Content policy violation"
+  },
+  "failed_at": "2024-01-15T10:30:45Z"
+}
 ```
 
-## Content-Type Headers
+## Headers
 
-| Output     | Content-Type ||------------|--------------|| Image      | `image/webp` || Video      | `video/mp4`  || JSON       | `application/json` || SSE Stream | `text/event-stream` |
+### Response Headers
 
-## Rate Limit Headers
+- `Content-Location` - Permanent CDN URL
+- `X-Generation-Time` - Latency in milliseconds
+- `X-Seed` - Seed used for generation
+- `Retry-After` - Seconds to wait before retry
 
-```X-RateLimit-Remaining: 9950      # requests remainingX-RateLimit-Reset: 1699564800    # unix timestampX-RateLimit-Limit: 10000         # total limit
-
-```When rate limited (429):
-
-```httpHTTP/1.1 429 Too Many RequestsRetry-After: 60X-RateLimit-Remaining: 0X-RateLimit-Reset: 1699564860{  "error": "rate_limited",  "message": "rate limit exceeded, retry in 60s",  "retry_after": 60}
-
-```
-
-## Next Steps
-
-- [Request Schemas](/api/reference/requests/) 
-
-- Request formats
-
-- [Error Reference](/api/reference/errors/) 
-
-- Error codes
-
-- [Type Reference](/api/reference/types/) 
-
-- Type definitions

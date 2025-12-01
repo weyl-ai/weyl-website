@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '@/layouts/BaseHead.astro';
 import JsonLd from '@components/seo/JsonLd.astro';
+import CalendlyBadge from '@components/ui/CalendlyBadge.astro';
 import { articleSchema } from '@lib/seo/schema';
 
 // Import global styles
@@ -89,6 +90,7 @@ const schema = articleSchema({
         <Content />
       </div>
     </article>
+    <CalendlyBadge />
   </body>
 </html>
 

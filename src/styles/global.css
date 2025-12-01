@@ -103,3 +103,21 @@
   }
 }
 
+/* Calendly badge widget custom styling */
+.calendly-badge-widget {
+  font-family: var(--font-mono) !important;
+  letter-spacing: var(--tracking-normal) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--glow-sm) !important;
+  transition: all 0.2s ease !important;
+}
+
+.calendly-badge-widget:hover {
+  box-shadow: var(--glow-md) !important;
+  transform: translateY(-2px) !important;
+}
+
+.calendly-badge-widget .calendly-badge-content {
+  font-weight: 500 !important;
+}
+

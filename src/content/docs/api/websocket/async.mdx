@@ -1,147 +1,107 @@
 ---
 title: Async Tier WebSocket
-description: Queue management and batch workflows over WebSocket
-category: api
+description: Job progress events
 ---
 
-**Endpoint:*
+# Async Tier WebSocket
 
-* `wss://async.render.weyl.ai/ws`Queue-based generation with real-time progress updates. Ideal for batch workflows.
+**Endpoint:** `wss://async.render.weyl.ai/ws`
 
-## Use Cases
-
-- Batch processing workflows
-
-- Background job systems
-
-- High-volume generation
-
-- Long-running tasks
-
-- Multi-job management
+Subscribe to async job progress events.
 
 ## Connection Flow
 
-```
-1. Open WebSocket connection
-2. Authenticate with API key
-3. Enqueue jobs
-4. Receive queued confirmation with job_id
-5. Receive position/progress updates
-6. Receive complete with CDN URL
+```javascript
+const ws = new WebSocket('wss://async.render.weyl.ai/ws');
 
-```
+ws.onopen = () => {
+  // 1. Authenticate
+  ws.send(JSON.stringify({
+    type: 'auth',
+    token: API_KEY
+  }));
+  
+  // 2. Subscribe to job
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    job_id: 'j_abc123'
+  }));
+};
 
-## Basic Example
-
-```javascriptconst ws = new WebSocket('wss://async.render.weyl.ai/ws');ws.onopen = () => {  // Authenticate  ws.send(JSON.stringify({    type: 'auth',    token: process.env.WEYL_API_KEY  }));    // Enqueue job  ws.send(JSON.stringify({    type: 'enqueue',    modality: 'video',    family: 'wan',    model: 'default',    task: 'i2v',    format: '720p',    prompt: 'she turns to face the camera',    image: 'https://example.com/portrait.jpg'  }));};ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    switch (msg.type) {    case 'authenticated':      console.log('Authenticated');      break;        case 'queued':      console.log(`Job ${msg.job_id} queued at position ${msg.position}`);      break;        case 'started':      console.log(`Job ${msg.job_id} started`);      break;        case 'progress':      console.log(`Job ${msg.job_id}: ${(msg.progress 
-
-* 100).toFixed(0)}%`);      break;        case 'complete':      console.log(`Job ${msg.job_id} complete: ${msg.output}`);      break;        case 'error':      console.error(`Job ${msg.job_id} failed: ${msg.message}`);      break;  }};
-
-```
-
-## Batch SubmissionSubmit multiple jobs over single connection:
-
-```javascriptws.onopen = () => {  // Authenticate  ws.send(JSON.stringify({    type: 'auth',    token: API_KEY  }));    // Submit batch  const prompts = [    'portrait with natural lighting',    'portrait with dramatic lighting',    'portrait with soft lighting'  ];    prompts.forEach((prompt, i) => {    ws.send(JSON.stringify({      type: 'enqueue',      modality: 'image',      family: 'flux',      model: 'schnell',      task: 't2i',      format: '1024',      prompt,      idempotency_key: `batch_1_item_${i}`    }));  });};// Track completionsconst completed = new Set();ws.onmessage = (event) => {  const msg = JSON.parse(event.data);    if (msg.type === 'complete') {    completed.add(msg.job_id);    console.log(`Completed ${completed.size} jobs`);        if (completed.size === 3) {      console.log('Batch complete');      ws.close();    }  }};
-
-```
-
-## Job Management#
-
-## Cancel Job
-
-```javascriptws.send(JSON.stringify({  type: 'cancel',  job_id: 'j_abc123'}));
-
-```Response:
-
-```json{  "type": "cancelled",  "job_id": "j_abc123"}
-
-```or error if already running:
-
-```json{  "type": "error",  "job_id": "j_abc123",  "code": "cannot_cancel",  "message": "job already running"}
-
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  
+  switch (msg.type) {
+    case 'position':
+      console.log(`Queue position: ${msg.position}`);
+      break;
+    case 'started':
+      console.log('Generation started');
+      break;
+    case 'progress':
+      console.log(`Progress: ${msg.progress * 100}%`);
+      break;
+    case 'complete':
+      console.log(`Output: ${msg.output}`);
+      break;
+  }
+};
 ```
 
-## Message Types#
+## Message Types
 
-## Client → Server##
+### `position`
+Queue position update:
 
-## enqueue
-
-```json{  "type": "enqueue",  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "format": "1024",  "prompt": "...",  "idempotency_key": "optional_key",  "webhook": "https://myapp.com/callback",  "priority": "normal"}
-
-```##
-
-## cancel
-
-```json{  "type": "cancel",  "job_id": "j_abc123"}
-
-```#
-
-## Server → Client##
-
-## queued
-
-```json{  "type": "queued",  "job_id": "j_abc123",  "position": 5,  "eta_seconds": 75}
-
-```##
-
-## started
-
-```json{  "type": "started",  "job_id": "j_abc123"}
-
-```##
-
-## progress
-
-```json{  "type": "progress",  "job_id": "j_abc123",  "progress": 0.65,  "step": 20,  "eta_seconds": 8}
-
-```##
-
-## complete
-
-```json{  "type": "complete",  "job_id": "j_abc123",  "output": "https://cdn.render.weyl.ai/i/xyz.webp",  "seed": 42}
-
-```##
-
-## error
-
-```json{  "type": "error",  "job_id": "j_abc123",  "code": "generation_failed",  "message": "CUDA out of memory",  "retriable": true}
-
+```json
+{
+  "type": "position",
+  "position": 3,
+  "eta_seconds": 45
+}
 ```
 
-## Complete TypeScript Client
+### `started`
+Generation started:
 
-```typescriptinterface EnqueueRequest {  modality: 'image' | 'video';  family: string;  model: string;  task: string;  format?: string;  prompt: string;  [key: string]: unknown;}interface JobHandlers {  onQueued?: (position: number) => void;  onStarted?: () => void;  onProgress?: (progress: number) => void;}class AsyncWSClient {  private ws: WebSocket;  private authenticated = false;  private jobs = new Map<string, {    resolve: (url: string) => void;    reject: (error: Error) => void;    handlers?: JobHandlers;  }>();  constructor(private apiKey: string) {    this.ws = new WebSocket('wss://async.render.weyl.ai/ws');    this.setup();  }  private setup() {    this.ws.onopen = () => {      this.ws.send(JSON.stringify({        type: 'auth',        token: this.apiKey      }));    };    this.ws.onmessage = (event) => {      const msg = JSON.parse(event.data);            if (msg.type === 'authenticated') {        this.authenticated = true;        return;      }            const job = this.jobs.get(msg.job_id);      if (!job) return;            switch (msg.type) {        case 'queued':          job.handlers?.onQueued?.(msg.position);          break;                case 'started':          job.handlers?.onStarted?.();          break;                case 'progress':          job.handlers?.onProgress?.(msg.progress);          break;                case 'complete':          job.resolve(msg.output);          this.jobs.delete(msg.job_id);          break;                case 'error':          job.reject(new Error(msg.message));          this.jobs.delete(msg.job_id);          break;      }    };  }  async enqueue(    params: EnqueueRequest,    handlers?: JobHandlers  ): Promise<string> {    // Wait for auth    while (!this.authenticated) {      await new Promise(r => setTimeout(r, 100));    }        return new Promise((resolve, reject) => {      // Listen for ack to get job_id      const ackHandler = (event: MessageEvent) => {        const msg = JSON.parse(event.data);                if (msg.type === 'queued') {          this.jobs.set(msg.job_id, {            resolve,            reject,            handlers          });          this.ws.removeEventListener('message', ackHandler);        }      };            this.ws.addEventListener('message', ackHandler);            this.ws.send(JSON.stringify({        type: 'enqueue',        ...params      }));    });  }  async cancel(jobId: string): Promise<void> {    return new Promise((resolve, reject) => {      const handler = (event: MessageEvent) => {        const msg = JSON.parse(event.data);                if (msg.job_id === jobId) {          if (msg.type === 'cancelled') {            resolve();          } else if (msg.type === 'error') {            reject(new Error(msg.message));          }          this.ws.removeEventListener('message', handler);        }      };            this.ws.addEventListener('message', handler);            this.ws.send(JSON.stringify({        type: 'cancel',        job_id: jobId      }));    });  }  close() {    this.ws.close();  }}// Usageconst client = new AsyncWSClient(process.env.WEYL_API_KEY!);try {  const outputUrl = await client.enqueue(    {      modality: 'video',      family: 'wan',      model: 'default',      task: 'i2v',      format: '720p',      prompt: 'she turns to face the camera',      image: 'https://example.com/portrait.jpg'    },    {      onQueued: (position) => {        console.log(`Queue position: ${position}`);      },      onStarted: () => {        console.log('Generation started');      },      onProgress: (progress) => {        console.log(`Progress: ${(progress 
-
-* 100).toFixed(0)}%`);      }    }  );    console.log(`Complete: ${outputUrl}`);} catch (error) {  console.error('Generation failed:', error);} finally {  client.close();}
-
+```json
+{
+  "type": "started",
+  "started_at": "2024-01-15T10:30:00Z"
+}
 ```
 
-## Batch Processing
+### `progress`
+Generation progress:
 
-```typescriptasync function processBatch(items: string[]): Promise<string[]> {  const client = new AsyncWSClient(API_KEY);    try {    const results = await Promise.all(      items.map((prompt, i) =>        client.enqueue(          {            modality: 'image',            family: 'flux',            model: 'schnell',            task: 't2i',            format: '1024',            prompt,            idempotency_key: `batch_${Date.now()}_${i}`          },          {            onQueued: (pos) => console.log(`Item ${i}: position ${pos}`),            onProgress: (p) => console.log(`Item ${i}: ${(p 
-
-* 100).toFixed(0)}%`)          }        )      )    );        return results;  } finally {    client.close();  }}// Usageconst prompts = [  'portrait with natural lighting',  'portrait with dramatic lighting',  'portrait with soft lighting',  'portrait with golden hour lighting'];const outputs = await processBatch(prompts);console.log('All complete:', outputs);
-
+```json
+{
+  "type": "progress",
+  "progress": 0.65,
+  "step": 20,
+  "total_steps": 30
+}
 ```
 
-## Priority Queue
+### `complete`
+Job complete:
 
-```javascript// Normal priorityws.send(JSON.stringify({  type: 'enqueue',  modality: 'image',  family: 'flux',  model: 'dev',  task: 't2i',  prompt: '...',  priority: 'normal'}));// High priority (Pro+ only)ws.send(JSON.stringify({  type: 'enqueue',  modality: 'image',  family: 'flux',  model: 'dev',  task: 't2i',  prompt: '...',  priority: 'high'  // 1.5× cost}));
-
+```json
+{
+  "type": "complete",
+  "output": "https://cdn.render.weyl.ai/i/xyz.webp",
+  "duration_ms": 2340
+}
 ```
 
-## Next Steps
+### `error`
+Job failed:
 
-- [Sync WebSocket](/api/websocket/sync/) 
+```json
+{
+  "type": "error",
+  "code": "nsfw_detected",
+  "message": "Content policy violation"
+}
+```
 
-- Real-time streaming
-
-- [Protocol Reference](/api/websocket/protocol/) 
-
-- Complete message specs
-
-- [Async Tier](/api/async/) 
-
-- HTTP API reference

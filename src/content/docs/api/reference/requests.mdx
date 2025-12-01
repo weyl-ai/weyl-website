@@ -1,191 +1,95 @@
 ---
 title: Request Schemas
-description: Complete request body schemas
-category: api
+description: Complete request format reference
 ---
 
-Complete reference for request body schemas across all endpoints.
+# Request Schemas
 
-## Text-to-Image (t2i)
+Complete schemas for all API requests.
 
-```typescriptinterface T2IRequest {  prompt: string;                // 1-4000 characters  negative_prompt?: string;      // max 2000 characters  steps?: number;                // model-specific range  guidance?: number;             // 1.0-5.0 typically  cfg?: number;                  // alias for guidance  seed?: number;                 // 0-4294967295  sampler?: 'euler' 
+## Image Generation Request
 
-| 'res_2m' | 'res_3s';  scheduler?: 'simple' | 'beta' | 'exponential' | 'sgm_uniform';  count?: number;                // 1-4, number of images  lora?: LoRAConfig[];  detail_amount?: number;        // 0.0-1.0  detail_start?: number;         // 0.0-1.0  detail_end?: number;           // 0.0-1.0}
+```typescript
+interface ImageRequest {
+  prompt: string;
+  negative_prompt?: string;
+  steps?: number;
+  guidance?: number;
+  seed?: number;
+  sampler?: 'euler' | 'euler_a' | 'dpmpp_2m' | 'heun';
+  scheduler?: 'simple' | 'normal' | 'sgm';
+  loras?: LoRAConfig[];
+  upscale?: 1.5 | 2 | 4;
+  detail_enhance?: boolean;
+}
 
-```**Example:**
-
-```json{  "prompt": "portrait of a woman, natural lighting",  "negative_prompt": "blur, distortion, artifacts",  "steps": 25,  "guidance": 3.5,  "seed": 42,  "sampler": "res_2m",  "scheduler": "exponential"}
-
+interface LoRAConfig {
+  url: string;
+  weight: number;
+}
 ```
 
-## Image-to-Image (i2i)
+## Video Generation Request
 
-```typescriptinterface I2IRequest extends T2IRequest {  image: string;                 // URL or data URI  strength?: number;             // 0.0-1.0, default 0.7}
-
-```**Example:**
-
-```json{  "prompt": "convert to watercolor style",  "image": "https://example.com/photo.jpg",  "strength": 0.7,  "guidance": 3.5}
-
+```typescript
+interface VideoRequest {
+  prompt: string;
+  image: string;
+  duration?: number;
+  cfg?: number;
+  steps?: number;
+  seed?: number;
+}
 ```
 
-## Inpaint / Edit
+## Image-to-Image Request
 
-```typescriptinterface EditRequest extends T2IRequest {  image: string;                 // source image  mask: string;                  // mask image (white = edit, black = keep)}
-
-```**Example:**
-
-```json{  "prompt": "add neon sign saying OPEN",  "image": "https://example.com/storefront.jpg",  "mask": "https://example.com/mask.png"}
-
-```
-
-## Image-to-Video (i2v)
-
-```typescriptinterface I2VRequest {  prompt: string;                // motion description  image: string;                 // source image  duration?: number;             // 0.5-10.0 seconds  steps?: number;  cfg?: number;                  // 6.0-8.0 for WAN  sampler?: 'uni_pc' 
-
-| 'euler' | 'res_2m' | 'res_3s';  scheduler?: 'simple' | 'beta' | 'bong_tangent';  motion_strength?: number;      // 0.0-1.0  seed?: number;  lightning?: boolean;           // enable lightning mode  shift?: number;                // 0-10, for bong_tangent}
-
-```**Example:**
-
-```json{  "prompt": "she slowly turns to face the camera",  "image": "https://example.com/portrait.jpg",  "duration": 3,  "cfg": 7.0,  "sampler": "res_2m",  "scheduler": "bong_tangent"}
-
-```
-
-## Text-to-Video (t2v)
-
-```typescriptinterface T2VRequest {  prompt: string;  duration?: number;  steps?: number;  cfg?: number;  sampler?: string;  scheduler?: string;  seed?: number;}
-
-```**Currently not supported*
-
-* - WAN is i2v only.
-
-## LoRA Config
-
-```typescriptinterface LoRAConfig {  id: string;                    // LoRA identifier  weight: number;                // 0.0-1.0+, typically 0.7-0.9}
-
-```**Example:**
-
-```json{  "lora": [    {"id": "anti_blur", "weight": 0.8},    {"id": "realism_boost", "weight": 0.75}  ]}
-
+```typescript
+interface I2IRequest {
+  prompt: string;
+  image: string;
+  strength?: number;
+  steps?: number;
+  guidance?: number;
+  seed?: number;
+}
 ```
 
 ## Async Queue Request
 
-```typescriptinterface AsyncQueueRequest {  modality: 'image' 
-
-| 'video';  family: string;  model: string;  task: string;  format?: string;  prompt: string;  image?: string;  mask?: string;  [key: string]: unknown;        // generation params    // Queue-specific  idempotency_key?: string;  webhook?: string;  priority?: 'low' | 'normal' | 'high';  ttl?: number;                  // seconds}
-
-```**Example:**
-
-```json{  "modality": "video",  "family": "wan",  "model": "default",  "task": "i2v",  "format": "720p",  "prompt": "she turns to face camera",  "image": "https://example.com/portrait.jpg",  "cfg": 7.0,  "webhook": "https://myapp.com/callback",  "priority": "normal",  "idempotency_key": "batch_1_item_5"}
-
+```typescript
+interface QueueRequest {
+  modality: 'image' | 'video';
+  family: 'flux' | 'zimage' | 'wan';
+  model: string;
+  task: 't2i' | 'i2i' | 't2v' | 'i2v' | 'edit';
+  format: string;
+  prompt: string;
+  priority?: 'low' | 'normal' | 'high';
+  webhook?: string;
+  idempotency_key?: string;
+  // ... other generation params
+}
 ```
 
-## Validation Rules#
+## Validation Rules
 
-## Prompt
+### Prompt
+- **Min length:** 3 characters
+- **Max length:** 5000 characters
+- **Required:** Yes (except i2i with strength > 0.8)
 
-- Min length: 1 character
+### Steps
+- **FLUX Dev/Dev2:** 15-50
+- **FLUX Schnell:** 4 (fixed)
+- **Z-Image:** 5-12
 
-- Max length: 4000 characters
+### Guidance
+- **FLUX:** 1.0-5.0
+- **WAN:** 6.0-8.0
+- **Z-Image:** Ignored (fixed 1.0)
 
-- Must be valid UTF-8#
+### Seed
+- **Range:** 0 - 4294967295
+- **Default:** Random
 
-## Negative Prompt
-
-- Max length: 2000 characters
-
-- Optional#
-
-## Image URLs
-
-- Must be HTTPS (or data URI)
-
-- Max file size: 10 MB
-
-- Supported formats: JPEG, PNG, WebP#
-
-## Mask Images
-
-- Must match source image dimensions
-
-- White pixels = edit region
-
-- Black pixels = preserve region
-
-- Format: PNG or WebP#
-
-## Steps
-
-| Model        | Min | Max  | Default ||--------------|-----|------|---------|| flux/schnell | 4   | 4    | 4       || flux/dev     | 10  | 50   | 25      || flux/dev2    | 10  | 50   | 25      || zimage/turbo | 4   | 15   | 8       || wan/default  | 10  | 50   | 20      |#
-
-## Guidance / CFG
-
-| Model        | Min  | Max  | Default ||--------------|------|------|---------|| flux/schnell | 3.5  | 3.5  | 3.5     || flux/dev     | 1.0  | 5.0  | 3.5     || flux/dev2    | 1.0  | 5.0  | 3.5     || zimage/turbo | 1.0  | 1.0  | 1.0     || wan/default  | 6.0  | 9.0  | 7.0     |#
-
-## Duration (Video)
-
-- Min: 0.5 seconds
-
-- Max: 10.0 seconds
-
-- Default: 2.0 seconds#
-
-## Seed
-
-- Min: 0
-
-- Max: 4294967295 (2^32 
-
-- 1)
-
-- Optional 
-
-- random if not specified#
-
-## Count (Multi-image)
-
-- Min: 1
-
-- Max: 4
-
-- Default: 1
-
-## Common Errors#
-
-## 400 Bad Request
-
-```json{  "error": "validation_failed",  "message": "Invalid request format",  "details": {    "field": "prompt",    "reason": "prompt exceeds max length of 4000 characters"  }}
-
-```**Common validation errors:**
-
-- Prompt too long
-
-- Invalid image URL
-
-- Steps out of range
-
-- Guidance out of range
-
-- Invalid sampler/scheduler
-
-- Missing required field#
-
-## 413 Payload Too Large
-
-```json{  "error": "payload_too_large",  "message": "Request body exceeds 10MB limit"}
-
-```Use `/uploads` endpoint for large images.
-
-## Next Steps
-
-- [Response Schemas](/api/reference/responses/) 
-
-- Response formats
-
-- [Error Reference](/api/reference/errors/) 
-
-- Error handling
-
-- [Type Reference](/api/reference/types/) 
-
-- Type definitions

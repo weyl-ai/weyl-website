@@ -1,137 +1,51 @@
 ---
 title: Server-Sent Events (SSE)
 description: Real-time job progress via SSE streaming
-category: api
 ---
 
-**Endpoint:*
+# Server-Sent Events
 
-* `GET /jobs/{id}/events`Subscribe to job progress via Server-Sent Events. More efficient than polling.
+**Endpoint:** `GET /jobs/{id}/events`
+
+Subscribe to job progress via Server-Sent Events.
 
 ## Basic Usage
 
-```bashcurl -N "https://async.render.weyl.ai/jobs/j_abc123/events" \  -H "Authorization: Bearer $WEYL_API_KEY"
-
+```bash
+curl -N "https://async.render.weyl.ai/jobs/j_abc123/events" \
+  -H "Authorization: Bearer $WEYL_API_KEY"
 ```
 
 ## Event Stream
 
-```event: positiondata: {"position": 3, "eta_seconds": 45}event: starteddata: {}event: progressdata: {"progress": 0.25, "step": 8}event: progressdata: {"progress": 0.50, "step": 16}event: progressdata: {"progress": 0.75, "step": 24}event: previewdata: {"frame": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."}event: completedata: {"output": "https://cdn.render.weyl.ai/i/xyz.webp"}
-
 ```
+event: position
+data: {"position": 3, "eta_seconds": 45}
 
-## Event Types#
+event: started
+data: {}
 
-## positionJob is queued. Position updates as queue moves.
+event: progress
+data: {"progress": 0.65, "step": 20}
 
-```json{  "position": 3,  "eta_seconds": 45}
-
-```#
-
-## startedGeneration has begun.
-
-```json{}
-
-```#
-
-## progressGeneration progress update.
-
-```json{  "progress": 0.65,  "step": 20,  "eta_seconds": 8}
-
+event: complete
+data: {"output": "https://cdn.render.weyl.ai/i/xyz.webp"}
 ```
-
-- `progress` 
-
-- 0.0 to 1.0
-
-- `step` 
-
-- Current inference step
-
-- `eta_seconds` 
-
-- Estimated remaining time#
-
-## previewIntermediate frame (image generation only, opt-in).
-
-```json{  "frame": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."}
-
-```Base64-encoded JPEG preview. Enable with `previews: true` in request.#
-
-## completeGeneration finished successfully.
-
-```json{  "output": "https://cdn.render.weyl.ai/i/abc123.webp",  "seed": 42}
-
-```For multi-image requests (`count > 1`):
-
-```json{  "outputs": [    "https://cdn.render.weyl.ai/i/abc1.webp",    "https://cdn.render.weyl.ai/i/abc2.webp",    "https://cdn.render.weyl.ai/i/abc3.webp",    "https://cdn.render.weyl.ai/i/abc4.webp"  ],  "seed": 42}
-
-```#
-
-## errorGeneration failed.
-
-```json{  "code": "generation_failed",  "message": "CUDA out of memory",  "retriable": true}
-
-```Client should close connection after `complete` or `error`.
 
 ## Python Client
 
-```pythonimport requestsimport jsondef stream_job_events(job_id: str, on_event):    """Stream SSE events for a job."""    url = f"https://async.render.weyl.ai/jobs/{job_id}/events"    headers = {"Authorization": f"Bearer {API_KEY}"}        with requests.get(url, headers=headers, stream=True) as resp:        resp.raise_for_status()                event_type = None                for line in resp.iter_lines(decode_unicode=True):            if not line:                continue                        if line.startswith('event:'):                event_type = line[7:].strip()                        elif line.startswith('data:'):                if event_type:                    data = json.loads(line[6:])                                        should_continue = on_event(event_type, data)                    if should_continue is False:                        return# Usagedef handle_event(event: str, data: dict) -> bool:    """Return False to stop streaming."""        if event == 'position':        print(f"Queue position: {data['position']}, ETA: {data['eta_seconds']}s")        elif event == 'started':        print("Generation started")        elif event == 'progress':        progress_pct = data['progress'] 
+```python
+import requests
+import json
 
-* 100        print(f"Progress: {progress_pct:.0f}% (step {data.get('step', '?')})")        elif event == 'preview':        # Save intermediate preview        save_base64_image(data['frame'], f"preview.jpg")        elif event == 'complete':        print(f"Complete: {data['output']}")        return False  # Stop streaming        elif event == 'error':        print(f"Error: {data['message']}")        return False        return True  # Continue streamingjob_id = submit_async_job(...)stream_job_events(job_id, handle_event)
-
+def stream_job_events(job_id: str):
+    url = f"https://async.render.weyl.ai/jobs/{job_id}/events"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    
+    with requests.get(url, headers=headers, stream=True) as resp:
+        for line in resp.iter_lines(decode_unicode=True):
+            if line.startswith('data:'):
+                data = json.loads(line[6:])
+                print(data)
 ```
 
-## JavaScript/TypeScript Client
-
-```typescriptasync function subscribeToJob(jobId: string) {  const url = `https://async.render.weyl.ai/jobs/${jobId}/events`;    const response = await fetch(url, {    headers: {      'Authorization': `Bearer ${process.env.WEYL_API_KEY}`    }  });  if (!response.ok) {    throw new Error(`SSE connection failed: ${response.status}`);  }  const reader = response.body!.getReader();  const decoder = new TextDecoder();    let buffer = '';  let eventType = '';  while (true) {    const { done, value } = await reader.read();        if (done) break;        buffer += decoder.decode(value, { stream: true });    const lines = buffer.split('\n');    buffer = lines.pop() || '';        for (const line of lines) {      if (line.startsWith('event:')) {        eventType = line.slice(7).trim();      } else if (line.startsWith('data:')) {        const data = JSON.parse(line.slice(6));                switch (eventType) {          case 'position':            console.log(`Position: ${data.position}`);            break;          case 'started':            console.log('Started');            break;          case 'progress':            console.log(`Progress: ${(data.progress 
-
-* 100).toFixed(0)}%`);            break;          case 'complete':            console.log(`Complete: ${data.output}`);            return data.output;          case 'error':            throw new Error(data.message);        }      }    }  }}// Usageconst jobId = await submitAsyncJob({...});const outputUrl = await subscribeToJob(jobId);console.log(`Result: ${outputUrl}`);
-
-```
-
-## Preview FramesEnable intermediate previews during generation:
-
-```json{  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "prompt": "portrait with cinematic lighting",  "previews": true}
-
-```You'll receive `preview` events with base64-encoded JPEGs at ~25%, 50%, 75% progress.**Note:*
-
-* Previews add ~50-100ms overhead. Only enable when needed for UI feedback.
-
-## Connection Management#
-
-## HeartbeatServer sends `:keepalive` comments every 15 seconds to prevent timeout:
-
-```: keepalive: keepalive
-
-```#
-
-## TimeoutIf no events for 60 seconds, assume connection dead and reconnect.#
-
-## ReconnectionIf disconnected, reconnect and events will resume from current state:
-
-```pythondef subscribe_with_reconnect(job_id: str, max_reconnects: int = 5):    reconnects = 0        while reconnects < max_reconnects:        try:            stream_job_events(job_id, handle_event)            return  # Completed successfully        except requests.exceptions.ConnectionError:            reconnects += 1            print(f"Reconnecting ({reconnects}/{max_reconnects})...")            time.sleep(2 *
-
-* reconnects)  # Exponential backoff        raise Exception("Max reconnects exceeded")
-
-```
-
-## Error Handling
-
-```pythontry:    stream_job_events(job_id, handle_event)except requests.exceptions.HTTPError as e:    if e.response.status_code == 404:        print("Job not found (may have expired)")    else:        print(f"Error: {e}")except requests.exceptions.ConnectionError:    print("Connection lost, retry")
-
-```
-
-## Next Steps
-
-- [WebSocket](/api/websocket/async/) 
-
-- Alternative real-time protocol
-
-- [Job Management](/api/async/jobs/) 
-
-- Cancel, status checks
-
-- [Queue Submission](/api/async/queue/) 
-
-- Submit jobs

@@ -1,96 +1,60 @@
 ---
 title: API Overview
 description: Weyl Render API - Generative media at the speed of thought
-category: api
 ---
 
-> // the street finds its own uses for thingsGenerative media at the speed of thought. Images and video from the edge, served hot off Blackwell tensor cores.
+# Weyl Render API
+
+> // the street finds its own uses for things
+
+Generative media at the speed of thought. Images and video from the edge, served hot off Blackwell tensor cores.
 
 ## Quick Example
 
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{"prompt":"cyberpunk street at night, neon rain"}' \  -o output.webp
-
-```You POST. You get bytes. The `Content-Location` header points to the CDN.
-
-## Service Tiers#
-
-## sync.render.weyl.ai**Dedicated bare metal, SLA-backed.**
-
-- POST, receive bytes immediately
-
-- No queue, no polling
-
-- 503 if capacity exhausted
-
-- WebSocket available for streaming frames**Use when:*
-
-* Real-time preview, interactive tools, live generation#
-
-## async.render.weyl.ai**Queue-backed, CDN-arbitraged pricing.**
-
-- POST returns 202 with job ID
-
-- Poll, SSE, or WebSocket for progress
-
-- Equal quality, lower cost, higher latency**Use when:*
-
-* Batch workflows, cost optimization, non-critical timing#
-
-## cdn.render.weyl.ai**Immutable asset delivery.**
-
-- Every generated asset gets a permanent URL
-
-- Cache-forever semantics
-
-- Global CDN distribution
-
-## Architecture
-
-```                                ┌──────────────┐                                │   Client     │                                └──────┬───────┘                                       │                         ┌─────────────┴─────────────┐                         │                           │                    ┌────▼────┐                 ┌────▼────┐                    │  SYNC   │                 │  ASYNC  │                    │  Tier   │                 │  Tier   │                    └────┬────┘                 └────┬────┘                         │                           │                         │    ┌──────────────┐       │                         └────►  Blackwell   ◄───────┘                              │   GB200      │                              └──────┬───────┘                                     │                              ┌──────▼───────┐                              │  CDN Layer   │                              │ (permanent)  │                              └──────────────┘
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"cyberpunk street at night, neon rain"}' \
+  -o output.webp
 ```
 
-## URL Anatomy
+You POST. You get bytes. The `Content-Location` header points to the CDN.
 
-```/{modality}/{family}/{model}/{task}?format=...&backend=...     │         │       │       │     │         │       │       └─ operation: t2i, i2i, t2v, i2v, edit     │         │       └───────── variant: schnell, dev, default, base     │         └───────────────── backbone: flux, wan, qwen, sdxl, zimage     └─────────────────────────── output: video, image
+## Service Tiers
 
-```The path encodes **what*
+### sync.render.weyl.ai
 
-* you want. Query params tune **how*
-*.
+**Dedicated bare metal, SLA-backed.**
 
-## Tasks
+- POST, receive bytes immediately
+- No queue, no polling
+- 503 if capacity exhausted
+- WebSocket available for streaming frames
 
-| Task   | Requires            | Produces | Description                ||--------|---------------------|----------|----------------------------|| `t2v`  | prompt              | video    | text to video              || `i2v`  | prompt + image      | video    | animate a still            || `t2i`  | prompt              | image    | text to image              || `i2i`  | prompt + image      | image    | transform / style transfer || `edit` | prompt + image + mask | image  | inpaint / outpaint         |
+**Use when:** Real-time preview, interactive tools, live generation
 
-## HTTP Semantics#
+### async.render.weyl.ai
 
-## Sync Tier
+**Queue-backed, CDN-arbitraged pricing.**
 
-| Code  | Meaning                                            ||-------|----------------------------------------------------|| `200` | Done — bytes in body, CDN URL in `Content-Location`|| `503` | Capacity exhausted — `Retry-After` header set      |#
+- POST returns 202 with job ID
+- Poll, SSE, or WebSocket for progress
+- Equal quality, lower cost, higher latency
 
-## Async Tier
+**Use when:** Batch workflows, cost optimization, non-critical timing
 
-| Code  | Meaning                                            ||-------|----------------------------------------------------|| `202` | Accepted — job ID in body, poll or subscribe       || `303` | Complete — `Location` points to CDN                || `429` | Queue full — `Retry-After` header set              |
+### cdn.render.weyl.ai
+
+**Immutable asset delivery.**
+
+- Every generated asset gets a permanent URL
+- Cache-forever semantics
+- Global CDN distribution
 
 ## Next Steps
 
-- [Core Concepts](/api/concepts/) 
+- [Authentication](/api/authentication/) - Set up your API keys
+- [Sync Tier](/api/sync/) - Real-time generation
+- [Async Tier](/api/async/) - Queue-based workflows
 
-- Learn about families, backends, formats
-
-- [Authentication](/api/authentication/) 
-
-- Set up your API keys
-
-- [Sync Tier](/api/sync/) 
-
-- Real-time generation
-
-- [Async Tier](/api/async/) 
-
-- Queue-based workflows
-
-- [Models](/api/models/) 
-
-- Available models and capabilities

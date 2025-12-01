@@ -1,0 +1,81 @@
+---
+// src/components/ui/CalendlyBadge.astro
+// Calendly badge widget component with custom theming
+---
+
+<!-- Calendly badge widget -->
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+
+<script is:inline>
+  // Initialize Calendly badge after DOM is ready
+  function initCalendly() {
+    if (window.Calendly) {
+      // Get the current theme color from CSS variables
+      const primaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-brand-primary').trim();
+      const textColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-text-primary').trim();
+      
+      // Initialize with theme-aware colors
+      window.Calendly.initBadgeWidget({
+        url: 'https://calendly.com/harrison-weyl/30min',
+        text: 'Schedule a Call',
+        color: primaryColor || '#54aeff',
+        textColor: textColor || '#e6f7ff',
+        branding: true
+      });
+    }
+  }
+
+  // Try to init when the script loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCalendly);
+  } else {
+    initCalendly();
+  }
+
+  // Re-initialize when theme changes to update colors
+  if (typeof window !== 'undefined') {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          // Remove old badge
+          const oldBadge = document.querySelector('.calendly-badge-widget');
+          if (oldBadge) {
+            oldBadge.remove();
+          }
+          // Reinitialize with new theme colors
+          setTimeout(initCalendly, 100);
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+  }
+</script>
+
+<style>
+  /* Custom styling to match site theme */
+  :global(.calendly-badge-widget) {
+    font-family: var(--font-mono) !important;
+    letter-spacing: var(--tracking-normal) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--glow-sm) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  :global(.calendly-badge-widget:hover) {
+    box-shadow: var(--glow-md) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  /* Remove branding for cleaner look if needed */
+  :global(.calendly-badge-widget .calendly-badge-content) {
+    font-weight: 500 !important;
+  }
+</style>
+

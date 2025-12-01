@@ -1,266 +1,118 @@
 ---
 title: WebSocket Protocol Reference
-description: Complete message format specifications
-category: api
+description: Complete message specification
 ---
 
-Complete reference for WebSocket message formats and protocol behavior.
+# WebSocket Protocol Reference
 
-## Connection Lifecycle
+Complete specification for WebSocket message types.
 
-```
-1. Client opens WebSocket connection
-2. Server accepts, connection established
-3. Client sends auth message
-4. Server responds with authenticated
-5. Client sends requests (generate/enqueue)
-6. Server sends updates (progress/complete/error)
-7. Client/server closes connection
+## Client → Server
 
-```
+### `auth`
+Authenticate the connection:
 
-## Authentication#
-
-## Request
-
-```json{  "type": "auth",  "token": "wyl_sk_prod_1234567890abcdef"}
-
-```#
-
-## Response (Success)
-
-```json{  "type": "authenticated",  "user_id": "u_xyz789",  "plan": "pro"}
-
-```#
-
-## Response (Failure)
-
-```json{  "type": "error",  "code": "unauthorized",  "message": "Invalid API key"}
-
+```json
+{
+  "type": "auth",
+  "token": "wyl_sk_..."
+}
 ```
 
-## Sync Tier Messages#
+### `generate` (Sync)
+Submit generation request:
 
-## generate (Client → Server)
-
-```typescript{  type: 'generate';  id: string;                    // client-provided request ID  modality: 'image' | 'video';  family: string;  model: string;  task: string;  format?: string;  request: {    prompt: string;    image?: string;              // for i2v, i2i, edit    mask?: string;               // for edit    [key: string]: unknown;      // other generation params  };}
-
-```**Example:**
-
-```json{  "type": "generate",  "id": "req_1",  "modality": "image",  "family": "flux",  "model": "dev",  "task": "t2i",  "format": "1024",  "request": {    "prompt": "cyberpunk street scene",    "guidance": 3.5,    "steps": 25,    "seed": 42  }}
-
-```#
-
-## ack (Server → Client)
-
-```typescript{  type: 'ack';  request_id: string;}
-
-```#
-
-## progress (Server → Client)
-
-```typescript{  type: 'progress';  request_id: string;  progress: number;              // 0.0 to 1.0  step: number;                  // current inference step  eta_seconds: number;           // estimated remaining time}
-
-```#
-
-## frame (Server → Client)
-
-```typescript{  type: 'frame';  request_id: string;  frame: string;                 // data:image/jpeg;base64,...  progress: number;  step: number;}
-
-```#
-
-## complete (Server → Client)
-
-```typescript{  type: 'complete';  request_id: string;  output: string;                // CDN URL  seed: number;                  // seed used  duration_ms: number;           // generation time}
-
-```For multi-output requests:
-
-```typescript{  type: 'complete';  request_id: string;  outputs: string[];             // array of CDN URLs  seed: number;}
-
-```#
-
-## error (Server → Client)
-
-```typescript{  type: 'error';  request_id: string;  code: string;  message: string;  retriable?: boolean;  retry_after?: number;          // seconds to wait}
-
+```json
+{
+  "type": "generate",
+  "modality": "image",
+  "family": "flux",
+  "model": "dev",
+  "task": "t2i",
+  "format": "1024",
+  "prompt": "description",
+  "stream_frames": true
+}
 ```
 
-## Async Tier Messages#
+### `subscribe` (Async)
+Subscribe to job events:
 
-## enqueue (Client → Server)
-
-```typescript{  type: 'enqueue';  modality: 'image' 
-
-| 'video';  family: string;  model: string;  task: string;  format?: string;  prompt: string;  image?: string;  mask?: string;  [key: string]: unknown;        // generation params    // Optional  idempotency_key?: string;  webhook?: string;  priority?: 'low' | 'normal' | 'high';  ttl?: number;                  // seconds}
-
-```**Example:**
-
-```json{  "type": "enqueue",  "modality": "video",  "family": "wan",  "model": "default",  "task": "i2v",  "format": "720p",  "prompt": "she turns to face camera",  "image": "https://example.com/portrait.jpg",  "cfg": 7.0,  "priority": "normal",  "webhook": "https://myapp.com/callback"}
-
-```#
-
-## queued (Server → Client)
-
-```typescript{  type: 'queued';  job_id: string;  position: number;  eta_seconds: number;}
-
-```#
-
-## started (Server → Client)
-
-```typescript{  type: 'started';  job_id: string;}
-
-```#
-
-## progress (Server → Client)
-
-```typescript{  type: 'progress';  job_id: string;  progress: number;              // 0.0 to 1.0  step?: number;  eta_seconds?: number;}
-
-```#
-
-## complete (Server → Client)
-
-```typescript{  type: 'complete';  job_id: string;  output: string;                // CDN URL  seed: number;  created_at: string;            // ISO 8601  completed_at: string;}
-
-```#
-
-## error (Server → Client)
-
-```typescript{  type: 'error';  job_id: string;  code: string;  message: string;  retriable: boolean;}
-
-```#
-
-## cancel (Client → Server)
-
-```typescript{  type: 'cancel';  job_id: string;}
-
-```#
-
-## cancelled (Server → Client)
-
-```typescript{  type: 'cancelled';  job_id: string;}
-
+```json
+{
+  "type": "subscribe",
+  "job_id": "j_abc123"
+}
 ```
 
-## Universal Messages#
+### `unsubscribe` (Async)
+Unsubscribe from job:
 
-## ping (Client → Server)
-
-```json{  "type": "ping"}
-
-```#
-
-## pong (Server → Client)
-
-```json{  "type": "pong"}
-
-```#
-
-## close (Client → Server)
-
-```json{  "type": "close",  "reason": "optional message"}
-
+```json
+{
+  "type": "unsubscribe",
+  "job_id": "j_abc123"
+}
 ```
 
-## Error Codes
+### `cancel` (Async)
+Cancel running job:
 
-| Code                  | Description                      | Retriable ||-----------------------|----------------------------------|-----------|| `unauthorized`        | Invalid API key                  | No        || `validation_failed`   | Request validation error         | No        || `capacity_exhausted`  | Sync tier at capacity            | Yes       || `queue_full`          | Async queue at capacity          | Yes       || `generation_failed`   | Model generation error           | Maybe     || `timeout`             | Request timeout                  | Yes       || `rate_limited`        | Rate limit exceeded              | Yes       || `model_unavailable`   | Model temporarily unavailable    | Yes       |
+```json
+{
+  "type": "cancel",
+  "job_id": "j_abc123"
+}
+```
 
-## Close Codes
+## Server → Client
 
-| Code | Name             | Description                    ||------|------------------|--------------------------------|| 1000 | Normal           | Clean disconnect               || 1001 | Going Away       | Server shutdown                || 1002 | Protocol Error   | Invalid message format         || 1003 | Unsupported Data | Invalid data type              || 1008 | Policy Violation | Rate limit, auth failure       || 1011 | Internal Error   | Server error                   |
+### `authenticated`
+Auth successful:
 
-## Rate LimitsWebSocket connections are subject to limits:
+```json
+{
+  "type": "authenticated",
+  "user_id": "usr_xyz"
+}
+```
 
-| Limit                  | Value      ||------------------------|------------|| Max concurrent connections | 10     || Max messages/second    | 100        || Max pending requests   | 50         || Connection timeout     | 5 minutes  || Idle timeout           | 10 minutes |
+### `error`
+Error occurred:
 
-## Keepalive#
+```json
+{
+  "type": "error",
+  "code": "invalid_token",
+  "message": "Authentication failed"
+}
+```
 
-## Client-SideSend ping every 30 seconds:
+### `frame` (Sync)
+Progressive frame:
 
-```javascriptconst pingInterval = setInterval(() => {  if (ws.readyState === WebSocket.OPEN) {    ws.send(JSON.stringify({ type: 'ping' }));  }}, 30000);
+```json
+{
+  "type": "frame",
+  "step": 15,
+  "total_steps": 25,
+  "data": "base64_jpeg..."
+}
+```
 
-```#
+### `complete`
+Generation complete:
 
-## Server-SideServer sends pong in response to ping.Server may send unsolicited pings. Client should respond with pong.
+```json
+{
+  "type": "complete",
+  "output": "https://cdn.render.weyl.ai/i/xyz.webp"
+}
+```
 
-## Message Ordering
+## Connection Limits
 
-- Messages are delivered in order within a single WebSocket connection
+- **Max connections per API key:** 10
+- **Idle timeout:** 5 minutes
+- **Max message size:** 10 MB
 
-- Multiple concurrent requests may complete out of order
-
-- Use `request_id` or `job_id` to match requests/responses
-
-## Reconnection#
-
-## Exponential Backoff
-
-```javascriptfunction connect(retries = 0) {  const ws = new WebSocket('wss://sync.render.weyl.ai/ws');    ws.onerror = () => {    if (retries < 5) {      const delay = Math.min(1000 
-
-* Math.pow(2, retries), 30000);      console.log(`Reconnecting in ${delay}ms...`);      setTimeout(() => connect(retries + 1), delay);    }  };    return ws;}
-
-```#
-
-## IdempotencyFor async tier, use `idempotency_key` to safely retry:
-
-```json{  "type": "enqueue",  "modality": "image",  "family": "flux",  "model": "schnell",  "task": "t2i",  "prompt": "...",  "idempotency_key": "req_abc123_retry_1"}
-
-```Same key returns existing job if already queued/running.
-
-## Best Practices
-1. **Always authenticate*
-
-* before sending requests
-2. **Use request/job IDs*
-
-* to track completions
-3. **Implement keepalive*
-
-* to prevent idle disconnect
-4. **Handle reconnection*
-
-* with exponential backoff
-5. **Use idempotency keys*
-
-* for retry safety
-6. **Close cleanly*
-
-* with close message before disconnect
-7. **Rate limit client-side*
-
-* to avoid server throttling
-8. **Validate messages*
-
-* before sending
-9. **Handle errors gracefully*
-
-* with retry logic1
-0. **Monitor connection state*
-
-* (readyState)
-
-## Security
-
-- Always use `wss://` (TLS-encrypted WebSocket)
-
-- Never log or expose API keys
-
-- Validate all incoming messages
-
-- Implement timeout for responses
-
-- Close idle connections
-
-## Next Steps
-
-- [Sync WebSocket](/api/websocket/sync/) 
-
-- Sync tier implementation
-
-- [Async WebSocket](/api/websocket/async/) 
-
-- Async tier implementation
-
-- [Error Reference](/api/reference/errors/) 
-
-- Error handling

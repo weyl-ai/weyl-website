@@ -1,242 +1,49 @@
 ---
 title: WAN Video Models
-description: Video generation with WAN (coming soon)
-category: api
+description: Video generation (coming soon)
 ---
 
-**Family:*
+# WAN Video Models
 
-* `wan`  **Model:*
+**Family:** `wan`  
+**Model:** `default` (WAN 2.2)  
+**Modality:** Video generation  
+**Status:** Coming Soon
 
-* `default` (WAN 2.2)  **Modality:*
-
-* Video generation  **Status:*
-
-* Coming SoonImage-to-video generation with high motion coherence and quality.
-
-## OverviewWAN (Wunsch AutoregressiveNetwork) is a Mixture-of-Experts architecture for animating still images. Generate 0.5-10 second video clips from a source image and motion prompt.
+Image-to-video generation with high motion coherence.
 
 ## Basic Usage (When Available)
 
-```bashcurl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "she slowly turns to face the camera, subtle smile",    "image": "https://example.com/portrait.jpg",    "duration": 3,    "cfg": 7.0  }' \  -o output.mp4
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "she turns to face camera",
+    "image": "https://example.com/portrait.jpg",
+    "duration": 3,
+    "cfg": 7.0
+  }' \
+  -o output.mp4
 ```
 
-## Tasks#
+## Parameters
 
-## Image-to-Video (i2v)Animate a still image with motion:
+**Required:**
+- `prompt` - Motion description
+- `image` - Source image
 
-```json{  "prompt": "camera slowly pushes in on the subject",  "image": "https://example.com/scene.jpg",  "duration": 4,  "cfg": 7.0,  "sampler": "res_2m",  "scheduler": "bong_tangent"}
-
-```#
-
-## Text-to-Video (t2v)**Not supported*
-
-* - WAN is i2v only. Use another model for t2v (coming soon).
-
-## Parameters#
-
-## Required
-
-```json{  "prompt": "motion description",  "image": "https://example.com/image.jpg"}
-
-```#
-
-## Optional
-
-```json{  "duration": 3,           // 0.5-10 seconds  "cfg": 7.0,              // 6-8 recommended  "steps": 20,             // inference steps  "motion_strength": 0.8,  // 0-1, amount of motion  "seed": 42,  "sampler": "res_2m",  "scheduler": "bong_tangent",  "lightning": false       // enable for faster generation}
-
-```
+**Optional:**
+- `duration` - 0.5-10 seconds
+- `cfg` - 6-8 recommended
+- `steps` - inference steps
+- `seed` - random seed
 
 ## Format Support
 
-| Format          | Dimensions | Aspect | Use Case             ||-----------------|------------|--------|----------------------|| `720p`          | 1280×720   | 16:9   | YouTube, landscape   || `720p-portrait` | 720×1280   | 9:16   | TikTok, Instagram    || `480p`          | 832×480    | ~16:9  | Faster generation    || `480p-portrait` | 480×832    | ~9:16  | Mobile portrait      || `square`        | 640×640    | 1:1    | Social media square  |
+| Format          | Dimensions | Aspect |
+|-----------------|------------|--------|
+| `720p`          | 1280×720   | 16:9   |
+| `480p`          | 832×480    | ~16:9  |
+| `square`        | 640×640    | 1:1    |
 
-## Performance**Expected latency (sync tier):**
-
-| Format          | Duration | Steps | Latency  ||-----------------|----------|-------|----------|| 480p            | 2s       | 20    | ~8s      || 720p            | 2s       | 20    | ~12s     || 480p            | 4s       | 20    | ~15s     || 720p            | 4s       | 20    | ~22s     || 720p (⚡)       | 2s       | 8     | ~5s      |⚡ = Lightning mode (distilled weights)
-
-## Lightning ModeDistilled WAN weights for faster generation:
-
-```json{  "prompt": "character waves at camera",  "image": "https://example.com/portrait.jpg",  "lightning": true,  "shift": 5,  "cfg": 1.0,  "steps": 8}
-
-```**Requirements:**
-
-- `lightning: true`
-
-- `shift: 5` (bidirectional attention shift)
-
-- `cfg: 1.0` (fixed for lightning)
-
-- `steps: 8` (4+4 split workflow)**Tradeoff:*
-
-* ~50% faster with minimal quality loss.
-
-## CFG TuningWAN is sensitive to CFG values:
-
-| CFG   | Motion | Color Stability | Use Case              ||-------|--------|-----------------|----------------------|| 6.0   | Subtle | Very stable     | Minimal motion       || 7.0   | Moderate | Stable        | **Recommended*
-
-*      
-
-|| 8.0   | Strong | Good            | High motion          || 9.0+  | Extreme | Unstable       | ⚠️ Not recommended   |**Best practice:*
-
-* Start with `cfg: 7.0`, adjust down for subtle motion or up for stronger motion.
-
-## Samplers & Schedulers#
-
-## Recommended Combination
-
-```json{  "sampler": "res_2m",  "scheduler": "bong_tangent"}
-
-```This combo provides best quality for WAN.#
-
-## Sampler Options
-
-| Sampler   | Speed | Quality | Notes                    ||-----------|-------|---------|--------------------------|| `uni_pc`  | Fast  | Good    | Default, stable          || `euler`   | Fast  | Good    | General purpose          || `res_2m`  | Medium| Better  | **Recommended for WAN*
-
-*  
-
-|| `res_3s`  | Slow  | Best    | Maximum quality          |#
-
-## Scheduler Options
-
-| Scheduler      | Notes                              ||----------------|------------------------------------|| `simple`       | Fast iteration                     || `beta`         | Good default                       || `bong_tangent` | **Recommended for WAN**, bidirectional || `exponential`  | Smooth gradients                   |
-
-## Motion StrengthControl how much the image changes:
-
-| Value | Motion Level | Use Case                        ||-------|--------------|----------------------------------|| 0.3   | Minimal      | Subtle animation, breathing      || 0.5   | Moderate     | Head turns, small movements      || 0.7   | Standard     | **Default**, typical motion      || 0.9   | Strong       | Large movements, action          || 1.0   | Maximum      | Dramatic transformation          |
-
-## Duration Limits
-
-```json{  "duration": 2.0  // 0.5 to 10.0 seconds}
-
-```**Practical limits:**
-
-- **0.5-2s*
-
-* - Quick animations, fast generation
-
-- **2-5s*
-
-* - Standard clips, good balance
-
-- **5-10s*
-
-* - Long clips, may lose coherenceLonger durations increase generation time linearly.
-
-## Prompt Engineering#
-
-## Good Motion Prompts
-
-```"she slowly turns to face the camera""camera pushes in on the subject""wind gently blows through her hair""he looks up and smiles""camera orbits around the character"
-
-```#
-
-## Bad Motion Prompts
-
-```"beautiful portrait, high quality, detailed"  // describes image, not motion"make it better"  // too vague"add effects"  // unclear
-
-```**Key:*
-
-* Describe **motion*
-
-* and **camera movement**, not image qualities.
-
-## Image Requirements#
-
-## Source Image
-
-- **Resolution:*
-
-* Any standard format, will be resized
-
-- **Quality:*
-
-* Higher quality in = higher quality out
-
-- **Aspect:*
-
-* Match video format for best results
-
-- **Content:*
-
-* Clear subject works best#
-
-## Format Matching
-
-| Video Format    | Best Source Aspect ||-----------------|---------------------|| 720p            | 16:9 landscape      || 720p-portrait   | 9:16 portrait       || square          | 1:1 square          |Source images will be center-cropped if aspect doesn't match.
-
-## Complete Example
-
-```pythonimport requestsimport osdef animate_image(    image_url: str,    motion_prompt: str,    duration: float = 3.0,    format: str = "720p",    use_lightning: bool = False) -> bytes:    """Animate image with WAN."""        url = f"https://sync.render.weyl.ai/video/wan/default/i2v"        headers = {        "Authorization": f"Bearer {os.environ['WEYL_API_KEY']}",        "Content-Type": "application/json"    }        payload = {        "prompt": motion_prompt,        "image": image_url,        "duration": duration,        "sampler": "res_2m",        "scheduler": "bong_tangent"    }        if use_lightning:        payload.update({            "lightning": True,            "shift": 5,            "cfg": 1.0,            "steps": 8        })    else:        payload.update({            "cfg": 7.0,            "steps": 20        })        params = {"format": format}        resp = requests.post(        url,        headers=headers,        json=payload,        params=params    )        if resp.status_code == 503:        print("Sync tier at capacity, use async tier for video")        # Fallback to async tier        async_url = "https://async.render.weyl.ai/queue"        async_payload = {            "modality": "video",            "family": "wan",            "model": "default",            "task": "i2v",            "format": format,            **payload        }        resp = requests.post(async_url, headers=headers, json=async_payload)        resp.raise_for_status()        job = resp.json()        print(f"Queued as job: {job['id']}")        return None        resp.raise_for_status()        cdn_url = resp.headers.get('Content-Location')    print(f"CDN URL: {cdn_url}")        return resp.content# Usagevideo = animate_image(    image_url="https://example.com/portrait.jpg",    motion_prompt="she slowly turns and smiles at camera",    duration=3.0,    format="720p",    use_lightning=False  # True for 50% faster)if video:    with open("output.mp4", "wb") as f:        f.write(video)
-
-```
-
-## Quality Tips
-1. **Use high-quality source images*
-
-* - Garbage in, garbage out
-2. **Match aspect ratios*
-
-* - Avoid cropping losses
-3. **Start with 480p*
-
-* - Iterate faster, then upscale to 720p
-4. **Keep CFG at 7.0*
-
-* - Higher values cause color instability
-5. **Use res_2m + bong_tangent*
-
-* - Best quality combo
-6. **Enable lightning for iteration*
-
-* - 50% faster with minimal loss
-7. **Describe motion clearly*
-
-* - Specific motion prompts work best
-
-## Limitations
-
-- **i2v only*
-
-* - No text-to-video (yet)
-
-- **0.5-10s maximum*
-
-* - No long-form video
-
-- **Sync tier may 503*
-
-* - Video is compute-intensive, use async tier
-
-- **Camera motion artifacts*
-
-* - Complex camera moves may have issues
-
-- **Subject consistency*
-
-* - Very long clips may drift
-
-## Async Tier RecommendedVideo generation is compute-intensive. For production, use async tier:
-
-```bashcurl -X POST "https://async.render.weyl.ai/queue" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "modality": "video",    "family": "wan",    "model": "default",    "task": "i2v",    "format": "720p",    "prompt": "she turns to face the camera",    "image": "https://example.com/portrait.jpg",    "duration": 4,    "cfg": 7.0,    "webhook": "https://myapp.com/callback"  }'
-
-```
-
-## Next Steps
-
-- [Video Generation](/api/sync/video/) 
-
-- Video API reference
-
-- [Async Tier](/api/async/) 
-
-- Queue-based workflows
-
-- [Samplers](/api/advanced/samplers/) 
-
-- Algorithm details
-
-- [Schedulers](/api/advanced/schedulers/) 
-
-- Noise schedule tuning

@@ -1,56 +1,90 @@
 ---
 title: Quick Start
-description: Get started with Weyl in 5 minutes
+description: Get up and running in 5 minutes
 category: guide
 ---
 
-Get your first inference request running in under 5 minutes.
+# Quick Start
 
-## 
-1. Get API KeySign up at [weyl.ai/signup](https://weyl.ai/signup) to get your API key.
+Get your first image generated in under 5 minutes.
 
-```bashexport WEYL_API_KEY="your_api_key_here"
+## 1. Get an API Key
 
+Sign up at [console.weyl.ai](https://console.weyl.ai) and create an API key.
+
+```bash
+export WEYL_API_KEY=wyl_sk_prod_1234567890abcdef
 ```
 
-## 
-2. Make Your First Request
+## 2. Generate Your First Image
 
-```bashcurl -X POST https://api.weyl.ai/v1/generate \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "a hypermodern datacenter at night",    "model": "sdxl",    "width": 1024,    "height": 1024,    "steps": 30  }'
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"cyberpunk street at night, neon rain"}' \
+  -o output.webp
 ```
 
-## 
-3. Handle the Response
+The response body contains the image bytes. The `Content-Location` header points to the permanent CDN URL.
 
-```json{  "id": "gen_abc123",  "status": "completed",  "image_url": "https://cdn.weyl.ai/outputs/gen_abc123.png",  "latency_ms": 47,  "model": "sdxl"}
+## 3. Try Different Models
 
+### FLUX.2 Dev (32B, highest quality)
+
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/dev2/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"portrait of a woman, rembrandt lighting"}' \
+  -o portrait.webp
 ```
 
-## SDKs#
+### Z-Image Turbo (sub-second generation)
 
-## Python
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/zimage/turbo/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"mountain landscape, golden hour"}' \
+  -o landscape.webp
+```
 
-```pythonfrom weyl import WeylClientclient = WeylClient(api_key="your_api_key")result = client.generate(    prompt="a hypermodern datacenter at night",    model="sdxl",    width=1024,    height=1024)print(f"Image URL: {result.image_url}")print(f"Latency: {result.latency_ms}ms")
+## 4. Use with Python
 
-```#
+```python
+import requests
+import os
 
-## TypeScript
+def generate_image(prompt: str) -> bytes:
+    url = "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024"
+    
+    headers = {
+        "Authorization": f"Bearer {os.environ['WEYL_API_KEY']}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {"prompt": prompt}
+    
+    resp = requests.post(url, headers=headers, json=payload)
+    resp.raise_for_status()
+    
+    # Get permanent CDN URL
+    cdn_url = resp.headers.get('Content-Location')
+    print(f"Permanent URL: {cdn_url}")
+    
+    return resp.content
 
-```typescriptimport { WeylClient } from '@weyl/sdk';const client = new WeylClient({ apiKey: 'your_api_key' });const result = await client.generate({  prompt: 'a hypermodern datacenter at night',  model: 'sdxl',  width: 1024,  height: 1024,});console.log(`Image URL: ${result.imageUrl}`);console.log(`Latency: ${result.latencyMs}ms`);
+# Generate
+image_bytes = generate_image("neon city at night")
 
+with open("output.webp", "wb") as f:
+    f.write(image_bytes)
 ```
 
 ## Next Steps
 
-- [Authentication](/docs/getting-started/auth/) 
-
-- API key management
-
-- [API Reference](/docs/api/) 
-
-- Complete API documentation
-
-- [Examples](https://github.com/weyl-ai/examples) 
-
-- Sample applications
+- [Authentication](/getting-started/auth/) - API keys and best practices
+- [Sync Tier](/api/sync/) - Real-time generation
+- [Async Tier](/api/async/) - Queue-based workflows
+- [Models](/api/models/) - Available models

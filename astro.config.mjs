@@ -11,12 +11,21 @@ export default defineConfig({
     starlight({
       title: 'Weyl',
       logo: {
-        src: './src/assets/monotile.svg',
+        src: './public/weyl-logo.svg',
+        replacesTitle: true,
+      },
+      defaultLocale: 'root',
+      locales: {
+        root: {
+          label: 'English',
+          lang: 'en',
+        },
       },
       customCss: [
         './src/styles/tokens.css',
         './src/styles/global.css',
         './src/styles/typography.css',
+        './src/styles/starlight.css',
       ],
       social: {
         github: 'https://github.com/weyl-ai',
@@ -106,8 +115,9 @@ export default defineConfig({
         },
       ],
       components: {
-        Header: './src/components/overrides/Header.astro',
-        Footer: './src/components/overrides/Footer.astro',
+        // Custom Banner component to show llms.txt links at the top of doc pages
+        Banner: './src/components/overrides/Banner.astro',
+        ThemeSelect: './src/components/overrides/ThemeSelect.astro',
       },
       expressiveCode: {
         themes: ['github-dark', 'github-light'],
@@ -124,6 +134,68 @@ export default defineConfig({
         {
           tag: 'link',
           attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        },
+        // Calendly widget styles and script
+        {
+          tag: 'link',
+          attrs: { 
+            href: 'https://assets.calendly.com/assets/external/widget.css',
+            rel: 'stylesheet'
+          },
+        },
+        {
+          tag: 'script',
+          attrs: { 
+            src: 'https://assets.calendly.com/assets/external/widget.js',
+            type: 'text/javascript',
+            async: true
+          },
+        },
+        {
+          tag: 'script',
+          content: `
+            function initCalendly() {
+              if (window.Calendly) {
+                const primaryColor = getComputedStyle(document.documentElement)
+                  .getPropertyValue('--color-brand-primary').trim();
+                const textColor = getComputedStyle(document.documentElement)
+                  .getPropertyValue('--color-text-primary').trim();
+                
+                window.Calendly.initBadgeWidget({
+                  url: 'https://calendly.com/harrison-weyl/30min',
+                  text: 'Schedule a Call',
+                  color: primaryColor || '#54aeff',
+                  textColor: textColor || '#e6f7ff',
+                  branding: true
+                });
+              }
+            }
+
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', initCalendly);
+            } else {
+              initCalendly();
+            }
+
+            if (typeof window !== 'undefined') {
+              const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                  if (mutation.attributeName === 'data-theme') {
+                    const oldBadge = document.querySelector('.calendly-badge-widget');
+                    if (oldBadge) {
+                      oldBadge.remove();
+                    }
+                    setTimeout(initCalendly, 100);
+                  }
+                });
+              });
+
+              observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+              });
+            }
+          `,
         },
       ],
     }),

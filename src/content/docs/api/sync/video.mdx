@@ -1,178 +1,50 @@
 ---
 title: Video Generation (Sync)
-description: Synchronous video generation on the sync tier
-category: api
+description: Synchronous video generation
 ---
 
-**Endpoint:*
+# Video Generation (Sync)
 
-* `POST /video/{family}/{model}/{task}`Generate video with immediate response. Bytes in body, CDN URL in headers.
+**Endpoint:** `POST /video/{family}/{model}/{task}`
 
-## URL Structure
+Generate video with immediate response.
 
-```https://sync.render.weyl.ai/video/{family}/{model}/{task}?format={format}&backend={backend}
+## Image-to-Video (i2v)
 
-```**Path Parameters:**
+Animate a still image with motion.
 
-- `family` 
-
-- Model family (`wan`, `ltx`)
-
-- `model` 
-
-- Model variant (`default`)
-
-- `task` 
-
-- Operation (`t2v`, `i2v`)**Query Parameters:**
-
-- `format` 
-
-- Output dimensions (`720p`, `480p`, `square`, etc)
-
-- `backend` 
-
-- Inference backend override (optional)
-
-## Tasks#
-
-## Image-to-Video (i2v)Animate a still image with motion.
-
-```bashcurl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "she slowly turns to face the camera, subtle smile",    "image": "https://example.com/portrait.jpg",    "duration": 3,    "cfg": 7.0  }' \  -o output.mp4
-
-```**Required Fields:**
-
-- `prompt` 
-
-- Motion description
-
-- `image` 
-
-- Source image URL or data URI**Optional Fields:**
-
-- `duration` 
-
-- Video length in seconds (0.5-10, default: 2)
-
-- `steps` 
-
-- Inference steps (model-specific defaults)
-
-- `cfg` 
-
-- Guidance scale (6-8 for WAN)
-
-- `seed` 
-
-- Random seed for reproducibility
-
-- `motion_strength` 
-
-- Amount of motion (0-1, model-dependent)#
-
-## Text-to-Video (t2v)Generate video from text prompt only.
-
-```bashcurl -X POST "https://sync.render.weyl.ai/video/wan/default/t2v?format=480p" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "ocean waves crashing on beach, golden hour, aerial view",    "duration": 4  }' \  -o output.mp4
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "she slowly turns to face the camera",
+    "image": "https://example.com/portrait.jpg",
+    "duration": 3,
+    "cfg": 7.0
+  }' \
+  -o output.mp4
 ```
+
+## Parameters
+
+**Required:**
+- `prompt` - Motion description
+- `image` - Source image URL or data URI
+
+**Optional:**
+- `duration` - Video length in seconds (0.5-10, default: 2)
+- `cfg` - Guidance scale (6-8 for WAN)
+- `steps` - Inference steps
+- `seed` - Random seed
 
 ## Response
 
-```httpHTTP/1.1 200 OKContent-Type: video/mp4Content-Location: https://cdn.render.weyl.ai/v/xyz123.mp4X-Weyl-Request-Id: req_abc789X-Weyl-Seed: 18472X-Weyl-Duration-Ms: 12400<video bytes>
+```http
+HTTP/1.1 200 OK
+Content-Type: video/mp4
+Content-Location: https://cdn.render.weyl.ai/v/xyz123.mp4
 
+<video bytes>
 ```
 
-## Format Options
-
-| Format          | Dimensions | Aspect | Use Case             ||-----------------|------------|--------|----------------------|| `720p`          | 1280×720   | 16:9   | YouTube, landscape   || `720p-portrait` | 720×1280   | 9:16   | TikTok, Instagram    || `480p`          | 832×480    | ~16:9  | Faster generation    || `480p-portrait` | 480×832    | ~9:16  | Mobile portrait      || `square`        | 640×640    | 1:1    | Social media square  |
-
-## Advanced Options#
-
-## Sampler & Scheduler
-
-```json{  "prompt": "camera pushes in on character",  "image": "https://cdn.render.weyl.ai/a/abc123",  "sampler": "res_2m",  "scheduler": "bong_tangent",  "steps": 20}
-
-```**Samplers:**
-
-- `uni_pc` 
-
-- Default for WAN, fast
-
-- `euler` 
-
-- General purpose
-
-- `res_2m` 
-
-- RES4LYF, better detail than uni_pc
-
-- `res_3s` 
-
-- Best quality, slower**Schedulers:**
-
-- `simple` 
-
-- Fast iteration
-
-- `beta` 
-
-- Good default
-
-- `bong_tangent` 
-
-- Bidirectional, best quality for WAN#
-
-## Lightning Mode (WAN)Use distilled weights for 4+4 split workflow:
-
-```json{  "prompt": "character waves at camera",  "image": "https://example.com/photo.jpg",  "lightning": true,  "shift": 5,  "cfg": 1.0}
-
-```Requires:
-
-- `lightning: true`
-
-- `shift: 5`
-
-- `cfg: 1.0`Reduces to ~8 total steps, much faster with minimal quality loss.
-
-## Complete Example (Python)
-
-```pythonimport requestsdef generate_i2v(    image_url: str,    prompt: str,    duration: float = 2.0,    format: str = "720p") -> bytes:    """Generate video from image using sync tier."""        url = f"https://sync.render.weyl.ai/video/wan/default/i2v"        headers = {        "Authorization": f"Bearer {os.environ['WEYL_API_KEY']}",        "Content-Type": "application/json"    }        payload = {        "prompt": prompt,        "image": image_url,        "duration": duration,        "cfg": 7.0,        "sampler": "res_2m",        "scheduler": "bong_tangent"    }        params = {"format": format}        resp = requests.post(        url,        headers=headers,        json=payload,        params=params    )        if resp.status_code == 503:        retry_after = int(resp.headers.get('Retry-After', 30))        raise Exception(f"Capacity exhausted, retry in {retry_after}s")        resp.raise_for_status()        cdn_url = resp.headers.get('Content-Location')    print(f"Permanent URL: {cdn_url}")        return resp.content# Usagevideo_bytes = generate_i2v(    image_url="https://example.com/portrait.jpg",    prompt="she turns and smiles at the camera",    duration=3.0,    format="720p")with open("output.mp4", "wb") as f:    f.write(video_bytes)
-
-```
-
-## Error Handling
-
-```pythontry:    video = generate_i2v(...)except requests.exceptions.HTTPError as e:    if e.response.status_code == 400:        # Validation error        error = e.response.json()        print(f"Validation failed: {error['message']}")        print(f"Field: {error['details']['field']}")    elif e.response.status_code == 503:        # Capacity exhausted        print("Sync tier at capacity, use async tier")    else:        raise
-
-```
-
-## Performance Tips
-1. **Use 480p for iteration*
-
-* - 2-3× faster than 720p
-2. **Enable lightning mode*
-
-* - 50% faster with minimal quality loss
-3. **Reduce duration*
-
-* - Shorter videos = faster generation
-4. **Try res_2m sampler*
-
-* - Better quality than uni_pc default
-5. **Keep CFG ≤8*
-
-* - Higher values cause color instability in WAN
-
-## Next Steps
-
-- [Image Generation](/api/sync/image/) 
-
-- Image tasks
-
-- [Advanced Tuning](/api/advanced/samplers/) 
-
-- Samplers and schedulers
-
-- [Model Reference](/api/models/wan/) 
-
-- WAN model details

@@ -1,127 +1,55 @@
 ---
 title: Job Management
-description: Check status, cancel jobs, retrieve outputs
-category: api
+description: Check status and retrieve outputs
 ---
+
+# Job Management
 
 Manage async jobs: check status, cancel, retrieve outputs.
 
-## Get Job Status**Endpoint:*
+## Get Job Status
 
-* `GET /jobs/{id}
+**Endpoint:** `GET /jobs/{id}`
 
-````bashcurl "https://async.render.weyl.ai/jobs/j_7Xy9kL2mN4pQ" \  -H "Authorization: Bearer $WEYL_API_KEY"
-
-```#
-
-## Response States##
-
-## Queued
-
-```json{  "id": "j_7Xy9kL2mN4pQ",  "status": "queued",  "position": 3,  "eta_seconds": 45,  "created_at": "2024-12-01T17:00:00Z"}
-
-```##
-
-## Running
-
-```json{  "id": "j_7Xy9kL2mN4pQ",  "status": "running",  "progress": 0.65,  "eta_seconds": 8,  "started_at": "2024-12-01T17:00:32Z",  "created_at": "2024-12-01T17:00:00Z"}
-
-```##
-
-## Complete (303 Redirect)
-
-```httpHTTP/1.1 303 See OtherLocation: https://cdn.render.weyl.ai/i/abc123.webp
-
-```Follow redirect to retrieve output:
-
-```bashcurl -L "https://async.render.weyl.ai/jobs/j_abc123" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -o output.webp
-
-```##
-
-## Error
-
-```json{  "id": "j_7Xy9kL2mN4pQ",  "status": "error",  "error": {    "code": "generation_failed",    "message": "CUDA out of memory",    "retriable": true  },  "created_at": "2024-12-01T17:00:00Z",  "started_at": "2024-12-01T17:00:32Z",  "completed_at": "2024-12-01T17:00:45Z",  "request": {    "prompt": "...",    "image": "..."  }}
-
+```bash
+curl "https://async.render.weyl.ai/jobs/j_abc123" \
+  -H "Authorization: Bearer $WEYL_API_KEY"
 ```
 
-## Cancel Job**Endpoint:*
+### States
 
-* `DELETE /jobs/{id}
-
-````bashcurl -X DELETE "https://async.render.weyl.ai/jobs/j_7Xy9kL2mN4pQ" \  -H "Authorization: Bearer $WEYL_API_KEY"
-
-```#
-
-## Success (204)
-
-```httpHTTP/1.1 204 No Content
-
-```Job cancelled successfully.#
-
-## Already Running/Complete (409)
-
-```httpHTTP/1.1 409 Conflict{  "error": "cannot_cancel",  "message": "job already running or complete",  "request_id": "req_xyz"}
-
-```Can only cancel jobs with `status: "queued"`.
-
-## Job Object Schema
-
-```typescriptinterface Job {  id: string;              // j_...  status: 'queued' 
-
-| 'running' | 'complete' | 'error' | 'cancelled';    // Queue info  position?: number;       // when queued  eta_seconds?: number;    // estimated time    // Progress  progress?: number;       // 0.0 to 1.0 when running    // Output  output?: string;         // CDN URL when complete  outputs?: string[];      // multiple outputs when count > 1  seed?: number;           // seed used    // Error  error?: {    code: string;    message: string;    retriable: boolean;  };    // Timestamps  created_at: string;  started_at?: string;  completed_at?: string;    // Debug  request?: object;        // original request}
-
+**Queued:**
+```json
+{
+  "id": "j_abc123",
+  "status": "queued",
+  "position": 3,
+  "eta_seconds": 45
+}
 ```
 
-## Complete Example (Python)
-
-```pythonimport requestsimport timefrom typing import Optionalclass AsyncJobManager:    def __init__(self, api_key: str):        self.api_key = api_key        self.base_url = "https://async.render.weyl.ai"        def submit(self, **kwargs) -> str:        """Submit job and return job ID."""        resp = requests.post(            f"{self.base_url}/queue",            headers={                "Authorization": f"Bearer {self.api_key}",                "Content-Type": "application/json"            },            json=kwargs        )        resp.raise_for_status()        return resp.json()['id']        def get_status(self, job_id: str) -> dict:        """Get current job status."""        resp = requests.get(            f"{self.base_url}/jobs/{job_id}",            headers={"Authorization": f"Bearer {self.api_key}"},            allow_redirects=False        )                if resp.status_code == 303:            return {                "status": "complete",                "output": resp.headers['Location']            }                resp.raise_for_status()        return resp.json()        def cancel(self, job_id: str) -> bool:        """Cancel a queued job."""        resp = requests.delete(            f"{self.base_url}/jobs/{job_id}",            headers={"Authorization": f"Bearer {self.api_key}"}        )        return resp.status_code == 204        def wait_for_completion(        self,         job_id: str,        poll_interval: float = 2.0,        timeout: Optional[float] = None    ) -> str:        """Poll until complete, return output URL."""        start_time = time.time()                while True:            if timeout and (time.time() 
-
-- start_time > timeout):                raise TimeoutError(f"Job {job_id} exceeded timeout")                        status = self.get_status(job_id)                        if status['status'] == 'complete':                return status['output']                        if status['status'] == 'error':                raise Exception(                    f"Job failed: {status['error']['message']}"                )                        print(f"Status: {status['status']}, Progress: {status.get('progress', 0):.0%}")            time.sleep(poll_interval)# Usagemanager = AsyncJobManager(os.environ['WEYL_API_KEY'])job_id = manager.submit(    modality='image',    family='flux',    model='dev',    task='t2i',    format='1024',    prompt='cyberpunk street scene',    webhook='https://myapp.com/callback')print(f"Job submitted: {job_id}")# Option 1: Wait synchronouslyoutput_url = manager.wait_for_completion(job_id, timeout=300)print(f"Complete: {output_url}")# Option 2: Check laterstatus = manager.get_status(job_id)if status['status'] == 'complete':    print(f"Ready: {status['output']}")
-
+**Running:**
+```json
+{
+  "id": "j_abc123",
+  "status": "running",
+  "progress": 0.65,
+  "eta_seconds": 8
+}
 ```
 
-## Batch ProcessingSubmit and track multiple jobs:
-
-```pythondef process_batch(items: list[dict]) -> dict[str, str]:    """Process batch of generation requests."""    manager = AsyncJobManager(os.environ['WEYL_API_KEY'])        # Submit all jobs    jobs = {}    for item in items:        job_id = manager.submit(            idempotency_key=item['id'],            webhook=f"https://myapp.com/webhook?item={item['id']}",            **item['request']        )        jobs[job_id] = item['id']        print(f"Submitted {item['id']} as {job_id}")        # Wait for all to complete    results = {}    pending = set(jobs.keys())        while pending:        for job_id in list(pending):            status = manager.get_status(job_id)                        if status['status'] == 'complete':                item_id = jobs[job_id]                results[item_id] = status['output']                pending.remove(job_id)                print(f"Completed: {item_id}")                        elif status['status'] == 'error':                item_id = jobs[job_id]                print(f"Failed: {item_id} 
-
-- {status['error']['message']}")                pending.remove(job_id)                if pending:            time.sleep(2)        return results# Usagebatch = [    {        'id': 'portrait_1',        'request': {            'modality': 'image',            'family': 'flux',            'model': 'schnell',            'task': 't2i',            'prompt': 'portrait of a person, natural lighting'        }    },    {        'id': 'portrait_2',        'request': {            'modality': 'image',            'family': 'flux',            'model': 'schnell',            'task': 't2i',            'prompt': 'portrait of a person, dramatic lighting'        }    }]results = process_batch(batch)for item_id, url in results.items():    print(f"{item_id}: {url}")
-
+**Complete (303 Redirect):**
+```http
+HTTP/1.1 303 See Other
+Location: https://cdn.render.weyl.ai/i/abc123.webp
 ```
 
-## Queue Behavior#
+## Cancel Job
 
-## Position UpdatesQueue position decreases as jobs ahead complete:
+**Endpoint:** `DELETE /jobs/{id}`
 
-```position: 10 → 8 → 5 → 3 → 1 → running
-
-```#
-
-## ETA Calculation`eta_seconds` is dynamic, based on:
-
-- Current queue depth
-
-- Average job duration for model
-
-- Available workersNot a guarantee, just an estimate.#
-
-## Job RetentionCompleted jobs retained for 7 days, then purged. Save CDN URLs permanently.
-
-## Error Recovery
-
-```pythondef submit_with_retry(request: dict, max_retries: int = 3):    manager = AsyncJobManager(API_KEY)        for attempt in range(max_retries):        try:            job_id = manager.submit(**request)            return job_id        except requests.exceptions.HTTPError as e:            if e.response.status_code == 429:                # Queue full, wait and retry                retry_after = int(e.response.headers.get('Retry-After', 60))                print(f"Queue full, waiting {retry_after}s...")                time.sleep(retry_after)                continue            raise        raise Exception("Failed to submit after retries")
-
+```bash
+curl -X DELETE "https://async.render.weyl.ai/jobs/j_abc123" \
+  -H "Authorization: Bearer $WEYL_API_KEY"
 ```
 
-## Next Steps
-
-- [SSE Streaming](/api/async/sse/) 
-
-- Real-time updates instead of polling
-
-- [WebSocket](/api/websocket/async/) 
-
-- Batch workflows over persistent connection
-
-- [Error Reference](/api/reference/errors/) 
-
-- Complete error code list

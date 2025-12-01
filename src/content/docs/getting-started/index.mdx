@@ -4,44 +4,36 @@ description: Get started with Weyl inference infrastructure
 category: guide
 ---
 
+# Introduction to Weyl
+
 Weyl is purpose-built inference infrastructure for generative media. We provide sub-100ms latency for diffusion models running on Blackwell architecture with FP4 precision.
 
 ## Why Weyl?
 
 - **Low Latency**: Sub-100ms p99 latency with optimized CUDA kernels
-
 - **Cost Optimized**: FP4 quantization delivers 4x throughput improvement
-
 - **Reliable**: Multi-region redundancy with 99.99% uptime SLA
-
 - **Scalable**: From prototype to production with automatic scaling
 
-## Key Features#
+## Key Features
 
-## Hardware AccelerationBuilt on NVIDIA Blackwell GB200 with custom kernels for FP4 Tensor Cores. Direct NVLink fabric access for zero-copy memory transfers.#
+### Hardware Acceleration
 
-## Model Support
+Built on NVIDIA Blackwell GB200 with custom kernels for FP4 Tensor Cores. Direct NVLink fabric access for zero-copy memory transfers.
+
+### Model Support
 
 - Stable Diffusion XL
-
 - FLUX.1
-
 - Custom fine-tuned models
+- Bring your own weights
 
-- Bring your own weights#
+### API Design
 
-## API DesignREST and gRPC endpoints with WebSocket streaming for real-time generation. OpenAPI 3.1 specification with full TypeScript types.
+REST and gRPC endpoints with WebSocket streaming for real-time generation. OpenAPI 3.1 specification with full TypeScript types.
 
 ## Next Steps
 
-- [Quick Start](/docs/getting-started/quick-start/) 
-
-- Get up and running in 5 minutes
-
-- [Authentication](/docs/getting-started/auth/) 
-
-- Set up your API keys
-
-- [API Reference](/docs/api/) 
-
-- Complete API documentation
+- [Quick Start](/getting-started/quick-start/) - Get up and running in 5 minutes
+- [Authentication](/getting-started/auth/) - Set up your API keys
+- [API Reference](/api/) - Complete API documentation

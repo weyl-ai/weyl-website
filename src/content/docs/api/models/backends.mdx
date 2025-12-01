@@ -1,310 +1,67 @@
 ---
 title: Backend Comparison
-description: Nunchaku vs Torch vs TensorRT inference backends
-category: api
+description: Nunchaku vs Torch vs TensorRT
 ---
 
-Weyl supports three inference backends. Each has different characteristics and tradeoffs.
+# Backend Comparison
+
+Weyl supports three inference backends with different characteristics.
 
 ## Overview
 
-| Backend    | Precision | Stack             | Speed | Flexibility | Models Supported ||------------|-----------|-------------------|-------|-------------|------------------|| `nunchaku` | FP4       | NVFP4 + Blackwell | ⚡⚡⚡ | Medium      | Most             || `torch`    | FP16      | diffusers + CUDA  | ⚡⚡   | High        | All              || `tensorrt` | Mixed     | TRT-LLM + ModelOpt| ⚡⚡⚡ | Low         | FLUX only        |
+| Backend    | Precision | Speed      | Models              |
+|------------|-----------|------------|---------------------|
+| `nunchaku` | FP4       | ⚡⚡⚡       | FLUX, Z-Image       |
+| `torch`    | FP16      | ⚡⚡         | FLUX, WAN           |
+| `tensorrt` | Mixed     | ⚡⚡⚡       | FLUX Dev/Schnell    |
 
-## Nunchaku**NVIDIA FP4 quantization on Blackwell GB200**#
+## Nunchaku
 
-## Characteristics
+**NVIDIA FP4 quantization on Blackwell GB200**
 
-- **Precision:*
+- **Precision:** FP4 (4-bit floating point)
+- **Speed:** Fastest (3-4× faster than FP16)
+- **Quality:** Minimal loss vs FP16
 
-* FP4 (4-bit floating point)
-
-- **Hardware:*
-
-* GB200 Blackwell
-
-- **Quantization:*
-
-* NVFP4 format
-
-- **Speed:*
-
-* Fastest (3-4× faster than FP16)
-
-- **Quality:*
-
-* Minimal loss vs FP16#
-
-## When to Use
-
-- ✓ Default choice for most workloads
-
-- ✓ Speed-critical applications
-
-- ✓ High-throughput batch processing
-
-- ✓ Cost optimization (faster = cheaper)#
-
-## Supported Models
-
+**Supported Models:**
 - FLUX Dev2 ✓
-
 - FLUX Dev ✓
-
 - FLUX Schnell ✓
-
 - Z-Image Turbo ✓
 
-- WAN ✗#
+## Torch
 
-## Performance**FLUX @ 1024×1024:**
+**PyTorch diffusers with CUDA**
 
-| Model   | Steps | Latency | vs Torch ||---------|-------|---------|----------|| Schnell | 4     | 450ms   | 3.2× faster || Dev     | 25    | 1.8s    | 3.8× faster || Dev2    | 25    | 2.4s    | 4.1× faster |#
+- **Precision:** FP16 (half precision)
+- **Framework:** diffusers + transformers
+- **Flexibility:** Maximum flexibility
 
-## QualityFP4 quantization has minimal perceptual quality loss:
-
-- **PSNR:*
-
-* ~0.5 dB loss vs FP16
-
-- **SSIM:*
-
-* 0.998 vs FP16
-
-- **Human eval:*
-
-* Indistinguishable in most cases
-
-## Torch**PyTorch diffusers with CUDA**#
-
-## Characteristics
-
-- **Precision:*
-
-* FP16 (half precision)
-
-- **Framework:*
-
-* diffusers + transformers
-
-- **Hardware:*
-
-* H100/A100 GPUs
-
-- **Flexibility:*
-
-* Maximum flexibility
-
-- **Quality:*
-
-* Reference quality#
-
-## When to Use
-
-- ✓ Reference quality needed
-
-- ✓ Maximum flexibility
-
-- ✓ Debugging / development
-
-- ✓ Models not yet supported on nunchaku
-
-- ✓ Custom modifications#
-
-## Supported Models
-
+**Supported Models:**
 - FLUX Dev2 ✓
-
 - FLUX Dev ✓
+- FLUX Schnell ✓
+- WAN ✓
 
+## TensorRT
+
+**NVIDIA TensorRT-LLM with ModelOpt**
+
+- **Precision:** Mixed (INT8 + FP16)
+- **Optimization:** Ahead-of-time compilation
+
+**Supported Models:**
+- FLUX Dev ✓
 - FLUX Schnell ✓
 
-- Z-Image Turbo ✗
+## Performance
 
-- WAN ✓#
+**FLUX @ 1024×1024:**
 
-## Performance**FLUX @ 1024×1024:**
+| Model   | Backend    | Latency |
+|---------|------------|---------|
+| schnell | nunchaku   | 450ms   |
+| schnell | tensorrt   | 380ms   |
+| dev     | nunchaku   | 1.8s    |
+| dev     | tensorrt   | 1.5s    |
 
-| Model   | Steps | Latency ||---------|-------|---------|| Schnell | 4     | 620ms   || Dev     | 25    | 3.1s    || Dev2    | 25    | 4.2s    |**WAN @ 720p, 2s:**| Steps | Latency ||-------|---------|| 20    | ~12s    || 8 (⚡) | ~5s     |
-
-## TensorRT**NVIDIA TensorRT-LLM with ModelOpt**#
-
-## Characteristics
-
-- **Precision:*
-
-* Mixed (INT8 + FP16)
-
-- **Framework:*
-
-* TensorRT-LLM
-
-- **Hardware:*
-
-* H100/A100 with TensorCore
-
-- **Optimization:*
-
-* Ahead-of-time compilation
-
-- **Quality:*
-
-* Comparable to FP16#
-
-## When to Use
-
-- ✓ FLUX Dev/Schnell specifically
-
-- ✓ Stable production workloads
-
-- ✓ When nunchaku unavailable
-
-- ✓ Maximum performance on older hardware#
-
-## Supported Models
-
-- FLUX Dev2 ✗
-
-- FLUX Dev ✓
-
-- FLUX Schnell ✓
-
-- Z-Image Turbo ✗
-
-- WAN ✗#
-
-## Performance**FLUX @ 1024×1024:**
-
-| Model   | Steps | Latency | vs Torch ||---------|-------|---------|----------|| Schnell | 4     | 380ms   | 1.6× faster || Dev     | 25    | 1.5s    | 2.1× faster |#
-
-## Limitations
-
-- Model-specific compilation required
-
-- Limited model support
-
-- Less flexible than torch
-
-- Longer cold-start times
-
-## Backend Selection#
-
-## Automatic (Default)Each model has a default backend:
-
-| Model         | Default Backend ||---------------|-----------------|| flux/dev2     | nunchaku        || flux/dev      | nunchaku        || flux/schnell  | nunchaku        || zimage/turbo  | nunchaku        || wan/default   | torch           |No `?backend=` parameter needed.#
-
-## Manual OverrideOverride when alternatives exist:
-
-```bash# Use TensorRT instead of nunchaku for FLUX Devcurl -X POST "https://sync.render.weyl.ai/image/flux/dev/t2i?format=1024&backend=tensorrt" \  ...# Use torch for FLUX Dev2 (for reference quality)curl -X POST "https://sync.render.weyl.ai/image/flux/dev2/t2i?format=1024&backend=torch" \  ...
-
-```
-
-## Performance Matrix#
-
-## Image Generation (1024×1024, p50)
-
-| Model        | Nunchaku | Torch | TensorRT ||--------------|----------|-------|----------|| flux/schnell | 450ms    | 620ms | 380ms    || flux/dev     | 1.8s     | 3.1s  | 1.5s     || flux/dev2    | 2.4s     | 4.2s  | 
-
--        
-
-|| zimage/turbo | 320ms    | 
-
--     | 
-
--        |#
-
-## Video Generation (720p, 2s)
-
-| Model       | Torch | Nunchaku | TensorRT ||-------------|-------|----------|----------|| wan/default | ~12s  | 
-
--        | 
-
--        |
-
-## Quality Comparison#
-
-## Quantization Impact**FP16 (Torch/TensorRT Baseline):**
-
-- Reference quality
-
-- No quantization artifacts**FP4 (Nunchaku):**
-
-- ~0.5 dB PSNR loss
-
-- Perceptually lossless in most cases
-
-- Rare subtle texture differences**INT8 (TensorRT Mixed):**
-
-- Comparable to FP16
-
-- Careful calibration minimizes loss#
-
-## Visual ComparisonFor most use cases, backend differences are imperceptible. Consider using nunchaku by default unless:
-
-- Debugging quality issues → torch
-
-- Need absolute reference → torch
-
-- Specific TensorRT optimization → tensorrt
-
-## Cost ImplicationsFaster backends = lower cost per request:
-
-| Backend    | Relative Speed | Relative Cost ||------------|----------------|---------------|| nunchaku   | 1.0× (fastest) | 1.0× (cheapest) || tensorrt   | ~1.2×          | ~1.2×         || torch      | ~3.5×          | ~3.5×         |Use nunchaku for cost optimization.
-
-## Availability#
-
-## By RegionAll backends available in all regions. Automatic failover if specific backend unavailable.#
-
-## By Tier
-
-- **Sync tier:*
-
-* All backends
-
-- **Async tier:*
-
-* All backends#
-
-## By ModelCheck `/models` endpoint for current availability:
-
-```bashcurl "https://sync.render.weyl.ai/models" \  -H "Authorization: Bearer $WEYL_API_KEY"
-
-```
-
-## Best Practices
-1. **Use defaults*
-
-* - Backend is auto-selected per model
-2. **Override for specific needs*
-
-* - torch for debugging, tensorrt for older hardware
-3. **Benchmark your use case*
-
-* - Test backends for your specific prompts
-4. **Don't micro-optimize*
-
-* - Backend choice matters less than model choice
-5. **Monitor quality*
-
-* - If artifacts appear, try torch backend
-
-## Example: Backend Testing
-
-```pythonimport requestsimport timedef benchmark_backends(prompt: str, model: str = "dev"):    """Compare backends for FLUX Dev."""        backends = ["nunchaku", "tensorrt", "torch"]    results = {}        for backend in backends:        url = f"https://sync.render.weyl.ai/image/flux/{model}/t2i?format=1024&backend={backend}"                headers = {            "Authorization": f"Bearer {API_KEY}",            "Content-Type": "application/json"        }                payload = {            "prompt": prompt,            "seed": 42  # Same seed for fair comparison        }                start = time.time()        resp = requests.post(url, headers=headers, json=payload)        elapsed = time.time() 
-
-- start                if resp.status_code == 200:            results[backend] = {                "latency": elapsed,                "cdn_url": resp.headers.get('Content-Location')            }            print(f"{backend}: {elapsed:.2f}s")        else:            print(f"{backend}: FAILED ({resp.status_code})")        return results# Usageresults = benchmark_backends("portrait of a woman, natural lighting")# Compare outputs manuallyfor backend, data in results.items():    print(f"{backend}: {data['cdn_url']}")
-
-```
-
-## Next Steps
-
-- [Models Overview](/api/models/) 
-
-- Available models
-
-- [FLUX Models](/api/models/flux/) 
-
-- FLUX-specific details
-
-- [Performance](/api/sync/) 
-
-- Sync tier characteristics

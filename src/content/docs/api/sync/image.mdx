@@ -1,160 +1,49 @@
 ---
 title: Image Generation (Sync)
-description: Synchronous image generation - t2i, i2i, edit
-category: api
+description: Synchronous image generation
 ---
 
-**Endpoint:*
+# Image Generation (Sync)
 
-* `POST /image/{family}/{model}/{task}`Generate images with immediate response. Supports text-to-image, image-to-image, and inpainting.
+**Endpoint:** `POST /image/{family}/{model}/{task}`
 
-## Tasks#
+Generate images with immediate response.
 
-## Text-to-Image (t2i)Generate image from text prompt.
+## Text-to-Image (t2i)
 
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "neon-lit alley in the rain, cyberpunk, film noir",    "steps": 4,    "guidance": 3.5,    "seed": 42  }' \  -o output.webp
-
-```#
-
-## Image-to-Image (i2i)Transform an existing image.
-
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/dev/i2i?format=landscape" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "convert to anime style, studio ghibli aesthetic",    "image": "https://example.com/photo.jpg",    "strength": 0.7,    "guidance": 3.5  }' \  -o transformed.webp
-
-```**Strength Parameter:**
-
-- `0.1-0.3` 
-
-- Subtle changes, preserve most details
-
-- `0.4-0.6` 
-
-- Balanced transformation
-
-- `0.7-0.9` 
-
-- Heavy transformation
-
-- `1.0` 
-
-- Maximum change (nearly ignores source)#
-
-## Inpainting / EditEdit specific regions using a mask.
-
-```bashcurl -X POST "https://sync.render.weyl.ai/image/qwen/edit/edit?format=1024" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "add a glowing neon sign saying OPEN",    "image": "https://example.com/storefront.jpg",    "mask": "https://example.com/mask.png"  }' \  -o edited.webp
-
-```**Mask Format:**
-
-- White pixels = change this area
-
-- Black pixels = keep original
-
-- PNG or WebP format
-
-- Must match source image dimensions
-
-## Common Parameters#
-
-## Required
-
-- `prompt` 
-
-- Generation/transformation prompt (1-4000 chars)#
-
-## Optional
-
-- `negative_prompt` 
-
-- What to avoid (max 2000 chars)
-
-- `steps` 
-
-- Inference steps (model-specific defaults)
-
-- `guidance` 
-
-- Prompt adherence (see model guides)
-
-- `cfg` 
-
-- Classifier-free guidance scale
-
-- `seed` 
-
-- Random seed (0-4294967295)
-
-- `count` 
-
-- Number of images (1-4, default: 1)
-
-## Model-Specific GuidanceDifferent models need different guidance values:
-
-```json// FLUX.2 Dev (dev2){  "guidance": 3.5  // for short prompts}{  "guidance": 1.5  // for detailed prompts}// FLUX.1 Dev{  "guidance": 3.5  // standard}{  "guidance": 2.8  // for photorealism}// FLUX.1 Schnell{  "guidance": 3.5  // fixed, always 3.5}// Z-Image Turbo{  // guidance ignored, uses CFG 1.0 internally}
-
-```See [Guidance Tuning](/api/advanced/guidance/) for detailed tables.
-
-## Multiple ImagesRequest multiple variations with `count`:
-
-```bashcurl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=512" \  -H "Authorization: Bearer $WEYL_API_KEY" \  -H "Content-Type: application/json" \  -d '{    "prompt": "portrait of a cyberpunk character",    "count": 4,    "seed": 12345  }'
-
-```Response contains multiple images. Parse multipart response or use WebSocket for individual callbacks.
-
-## Response Headers
-
-```httpHTTP/1.1 200 OKContent-Type: image/webpContent-Location: https://cdn.render.weyl.ai/i/abc123.webpX-Weyl-Request-Id: req_xyz789X-Weyl-Seed: 42X-Weyl-Duration-Ms: 847
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "cyberpunk street at night",
+    "guidance": 3.5,
+    "seed": 42
+  }' \
+  -o output.webp
 ```
 
-## TypeScript SDK Example
+## Image-to-Image (i2i)
 
-```typescriptimport { WeylClient } from '@weyl/sdk';const client = new WeylClient({  apiKey: process.env.WEYL_API_KEY,  tier: 'sync'});// Text to imageconst result = await client.image.generate({  family: 'flux',  model: 'schnell',  task: 't2i',  format: '1024',  request: {    prompt: 'cyberpunk street at night',    steps: 4,    guidance: 3.5  }});console.log(`Image URL: ${result.cdnUrl}`);console.log(`Latency: ${result.durationMs}ms`);// Save locallyawait result.saveToFile('output.webp');
+Transform an existing image.
 
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/dev/i2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "convert to watercolor style",
+    "image": "https://example.com/photo.jpg",
+    "strength": 0.7
+  }' \
+  -o transformed.webp
 ```
 
-## Advanced: LoRAsApply LoRA adapters for enhanced results:
+## Common Parameters
 
-```json{  "prompt": "portrait of a woman, natural lighting",  "lora": [    {      "id": "anti_blur",      "weight": 0.8    },    {      "id": "amateur_snapshot",      "weight": 0.9    }  ]}
+- `prompt` - Generation prompt (required)
+- `negative_prompt` - What to avoid
+- `steps` - Inference steps
+- `guidance` - Prompt adherence (1.0-5.0)
+- `seed` - Random seed
 
-```See [LoRA documentation](/api/advanced/loras/) for available adapters.
-
-## Advanced: Detail EnhancementUse detail daemon for fine-grained control:
-
-```json{  "prompt": "macro photography of flower petals",  "detail_amount": 0.5,  "detail_start": 0.2,  "detail_end": 0.8}
-
-```Values:
-
-- `detail_amount` 
-
-- Enhancement strength (0.1-1.0 recommended)
-
-- `detail_start` 
-
-- When to start enhancing (0.0-1.0)
-
-- `detail_end` 
-
-- When to stop enhancing (0.0-1.0)
-
-## Error Handling
-
-```typescripttry {  const image = await client.image.generate({...});} catch (error) {  if (error.status === 400) {    console.error('Validation error:', error.details);  } else if (error.status === 503) {    console.error('Capacity exhausted, use async tier');  } else {    console.error('Generation failed:', error.message);  }}
-
-```
-
-## Performance by Model
-
-| Model          | Format | Steps | Typical Latency ||----------------|--------|-------|-----------------|| flux/schnell   | 1024   | 4     | 450ms          || flux/schnell   | 512    | 4     | 180ms          || flux/dev       | 1024   | 25    | 1.8s           || flux/dev2      | 1024   | 25    | 2.4s           || zimage/turbo   | 1024   | 8     | 320ms          || zimage/turbo   | 512    | 5     | 140ms          |*Measured on nunchaku backend, p50 latency
-*
-
-## Next Steps
-
-- [Video Generation](/api/sync/video/) 
-
-- Video tasks
-
-- [Models Reference](/api/models/) 
-
-- Model capabilities
-
-- [Advanced Tuning](/api/advanced/samplers/) 
-
-- Optimization techniques

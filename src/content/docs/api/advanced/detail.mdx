@@ -1,223 +1,64 @@
 ---
 title: Detail Enhancement
-description: Fine-grained detail control with detail daemon
-category: api
+description: Upscaling and detail recovery
 ---
 
-The detail enhancement daemon provides fine-grained control over detail preservation and enhancement during generation.
+# Detail Enhancement
 
-## OverviewDetail enhancement works by applying differential feedback during specific portions of the generation process, preserving or enhancing high-frequency content.
+Upscale and enhance generated images post-processing.
 
-## Basic Usage
+## Basic Upscaling
 
-```json{  "prompt": "macro photography of flower petals",  "detail_amount": 0.5,  "detail_start": 0.2,  "detail_end": 0.8}
-
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/dev/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "portrait",
+    "upscale": 2
+  }' \
+  -o output.webp
 ```
 
-## Parameters#
+**Scales:** 1.5×, 2×, 4×
 
-## detail_amount**Range:*
+## Latent Upscaling
 
-* 0.0 to 1.0  **Default:*
+Generate at higher resolution by upscaling latents before final decode.
 
-* 0.0 (disabled)  **Recommended:*
-
-* 0.3 to 0.7Strength of detail enhancement:
-
-| Value | Effect                          ||-------|---------------------------------|| 0.0   | Disabled (no enhancement)       || 0.3   | Subtle detail boost             || 0.5   | Moderate enhancement            || 0.7   | Strong detail preservation      || 1.0   | Maximum (may cause artifacts)   |#
-
-## detail_start**Range:*
-
-* 0.0 to 1.0  **Default:*
-
-* 0.0  **Recommended:*
-
-* 0.1 to 0.3When to start enhancing (normalized step progress):
-
-- `0.0` 
-
-- From first step
-
-- `0.2` 
-
-- After 20% of steps
-
-- `0.5` 
-
-- Halfway through**Best practice:*
-
-* Start after initial structure forms (`0.2`)#
-
-## detail_end**Range:*
-
-* 0.0 to 1.0  **Default:*
-
-* 1.0  **Recommended:*
-
-* 0.7 to 0.9When to stop enhancing:
-
-- `0.8` 
-
-- Stop at 80% progress
-
-- `1.0` 
-
-- Until last step**Best practice:*
-
-* Stop before final steps to avoid over-sharpening (`0.8`)
-
-## Use Cases#
-
-## Macro Photography
-
-```json{  "prompt": "extreme macro shot of butterfly wing, intricate patterns",  "detail_amount": 0.6,  "detail_start": 0.2,  "detail_end": 0.85,  "steps": 30}
-
-```Preserves fine textures and patterns.#
-
-## Product Photography
-
-```json{  "prompt": "product shot of watch, studio lighting, high detail",  "detail_amount": 0.5,  "detail_start": 0.25,  "detail_end": 0.8,  "steps": 28}
-
-```Sharp product details without artifacts.#
-
-## Portraits
-
-```json{  "prompt": "portrait, natural lighting, skin texture",  "detail_amount": 0.3,  "detail_start": 0.3,  "detail_end": 0.7,  "steps": 28}
-
-```Subtle enhancement, preserves natural skin texture.#
-
-## Textures
-
-```json{  "prompt": "close-up of wood grain texture",  "detail_amount": 0.7,  "detail_start": 0.15,  "detail_end": 0.9,  "steps": 35}
-
-```Maximum texture detail.
-
-## Detail Enhancement Phases
-
-```Generation Progress0%        20%      80%     100%│─────────│────────│───────││  Setup  │ Detail │ Final ││         │ Active │Refine │
-
-```**Setup (0-20%):*
-
-* Structure formation  **Detail Active (20-80%):*
-
-* Enhancement applied  **Final Refine (80-100%):*
-
-* Smoothing
-
-## Recommended Settings by Subject
-
-| Subject             | Amount | Start | End  | Steps ||---------------------|--------|-------|------|-------|| Portraits           | 0.3    | 0.3   | 0.7  | 28    || Product shots       | 0.5    | 0.25  | 0.8  | 28    || Macro photography   | 0.6    | 0.2   | 0.85 | 30    || Textures            | 0.7    | 0.15  | 0.9  | 35    || Landscapes          | 0.4    | 0.25  | 0.75 | 25    || Architecture        | 0.5    | 0.2   | 0.8  | 30    |
-
-## Combining with LoRAsDetail enhancement works well with LoRAs:
-
-```json{  "prompt": "macro shot of gemstone",  "lora": [    {"id": "detail_enhance", "weight": 0.7}  ],  "detail_amount": 0.5,  "detail_start": 0.2,  "detail_end": 0.8}
-
-```**Best practice:*
-
-* Lower detail_amount when using detail LoRAs (0.3-0.5).
-
-## Performance ImpactDetail enhancement adds overhead:
-
-| Detail Amount | Overhead   ||---------------|------------|| 0.0           | 0%         || 0.3           | +3-5%      || 0.5           | +5-8%      || 0.7           | +8-12%     |Impact increases with (end 
-
-- start) range.
-
-## Troubleshooting#
-
-## Over-Sharpening**Symptom:*
-
-* Unnatural sharpness, halos, artifacts**Solution:**
-
-- Lower `detail_amount` (try 0.3 instead of 0.7)
-
-- End earlier (`detail_end: 0.7`)
-
-- Reduce step count slightly#
-
-## No Visible Effect**Symptom:*
-
-* Detail enhancement not apparent**Solution:**
-
-- Increase `detail_amount` (try 0.6)
-
-- Extend range (start: 0.1, end: 0.9)
-
-- Increase total steps (30+)
-
-- Ensure prompt mentions detail/texture#
-
-## Artifacts**Symptom:*
-
-* Strange patterns, noise**Solution:**
-
-- Start later (`detail_start: 0.3`)
-
-- End earlier (`detail_end: 0.7`)
-
-- Lower amount
-
-- Use better sampler (res_2m)
-
-## Advanced: Per-Region DetailApply different detail levels to regions (coming soon):
-
-```json{  "prompt": "portrait with background",  "detail_amount": 0.3,  "detail_regions": [    {      "mask": "https://example.com/face_mask.png",      "detail_amount": 0.5  // More detail on face    }  ]}
-
+```json
+{
+  "prompt": "detailed landscape",
+  "format": "1024",
+  "latent_upscale": 1.5
+}
 ```
 
-## Complete Example
+**Output:** 1536×1536 (1024 × 1.5)
 
-```pythonimport requestsdef generate_with_detail(    prompt: str,    detail_config: dict,    model: str = "dev2") -> bytes:    """Generate image with detail enhancement."""        url = f"https://sync.render.weyl.ai/image/flux/{model}/t2i?format=1024"        headers = {        "Authorization": f"Bearer {API_KEY}",        "Content-Type": "application/json"    }        payload = {        "prompt": prompt,        "guidance": 3.5,        "steps": 30,        "sampler": "res_2m",        **detail_config    }        resp = requests.post(url, headers=headers, json=payload)    resp.raise_for_status()        return resp.content# Usage 
+## Detail Recovery
 
-- Macro photographyimage = generate_with_detail(    prompt="extreme macro shot of butterfly wing, intricate patterns, vibrant colors",    detail_config={        "detail_amount": 0.6,        "detail_start": 0.2,        "detail_end": 0.85    },    model="dev2")with open("macro_detail.webp", "wb") as f:    f.write(image)
+Add fine details after generation:
 
+```json
+{
+  "prompt": "portrait",
+  "detail_enhance": true,
+  "detail_strength": 0.5
+}
 ```
 
-## Comparison: Detail Enhancement vs LoRAs
+**Strength range:** 0.0 - 1.0
+- `0.3` - Subtle sharpening
+- `0.5` - Balanced (default)
+- `0.8` - Strong detail
 
-| Feature              | Detail Daemon | Detail LoRA ||----------------------|---------------|-------------|| Control granularity  | High          | Medium      || Step-specific        | Yes           | No          || Performance impact   | 5-10%         | 2-5%        || Flexibility          | High          | Medium      || Ease of use          | Complex       | Simple      |**Use detail daemon when:**
+## Performance Impact
 
-- Need fine-grained control
+| Operation        | Latency Increase |
+|------------------|------------------|
+| 1.5× upscale     | +20%             |
+| 2× upscale       | +40%             |
+| 4× upscale       | +150%            |
+| Detail enhance   | +15%             |
 
-- Want step-specific enhancement
-
-- Working with specific detail requirements**Use detail LoRA when:**
-
-- Want simple enhancement
-
-- Don't need step control
-
-- Prefer simpler API
-
-## Best Practices
-1. **Start conservative*
-
-* - Begin with amount 0.3-0.5
-2. **Match to subject*
-
-* - Portraits need less than product shots
-3. **Don't enhance entire generation*
-
-* - Use start/end windows
-4. **Combine with right sampler*
-
-* - res_2m works best
-5. **Increase steps*
-
-* - Detail needs more steps (28-35)
-6. **Test systematically*
-
-* - Change one parameter at a time
-
-## Next Steps
-
-- [LoRAs](/api/advanced/loras/) 
-
-- Alternative detail control
-
-- [Samplers](/api/advanced/samplers/) 
-
-- res_2m recommended
-
-- [FLUX Models](/api/models/flux/) 
-
-- Model capabilities

@@ -1,256 +1,57 @@
 ---
 title: Guidance Tuning
-description: CFG and guidance scale optimization per model
-category: api
+description: CFG scale optimization
 ---
 
-Guidance scale (CFG 
+# Guidance Tuning
 
-- Classifier-Free Guidance) controls how closely the model follows your prompt. Higher = stronger adherence, lower = more freedom.
+Control prompt adherence with classifier-free guidance (CFG).
 
-## Quick Reference
+## Understanding Guidance
 
-| Model        | Short Prompt | Detailed Prompt | Photorealism ||--------------|--------------|-----------------|--------------|| FLUX Dev2    | 3.5          | 1.5             | 2.8          || FLUX Dev     | 3.5          | 3.5             | 2.8          || FLUX Schnell | 3.5 (fixed)  | 3.5 (fixed)     | 3.5 (fixed)  || WAN          | 7.0          | 7.0             | 7.0          || Z-Image      | 1.0 (fixed)  | 1.0 (fixed)     | 1.0 (fixed)  |
+**Low guidance (1.0-2.0):** Loose interpretation, more creative  
+**Medium guidance (2.5-4.0):** Balanced  
+**High guidance (4.5-10.0):** Strict adherence, can over-saturate
 
-## FLUX.2 Dev (dev2)**Guidance varies by prompt length.**#
+## FLUX Family
 
-## Short Prompts (1-10 words)
+### FLUX Dev2
+**Range:** 1.0 - 5.0  
+**Sweet spots:**
+- Short prompts: `3.5` - strong adherence
+- Medium prompts: `2.5` - balanced
+- Detailed prompts: `1.5` - let model breathe
+- Very detailed: `1.0` - maximum freedom
 
-```json{  "prompt": "portrait of a woman",  "guidance": 3.5}
-
-```Use higher guidance for simple prompts.#
-
-## Detailed Prompts (30-50+ words)
-
-```json{  "prompt": "portrait of a woman in her thirties, natural window lighting from the left, subtle smile, eyes looking at camera, soft focus background with bokeh, 85mm lens, f/1.4, slight film grain, warm color grading",  "guidance": 1.5}
-
-```Use lower guidance for detailed prompts. Dev2's Mistral-3 encoder provides strong prompt understanding even at low guidance.#
-
-## Very Detailed Prompts (50+ words)
-
-```json{  "guidance": 1.0}
-
-```For extremely detailed prompts, use minimal guidance.#
-
-## Guidance Curve
-
-```Prompt Length (words)       0-10:  guidance = 3.5      10-20:  guidance = 2.8      20-30:  guidance = 2.2      30-50:  guidance = 1.5        50+:  guidance = 1.0
-
+```bash
+# Detailed prompt with low guidance
+curl -X POST "..." \
+  -d '{
+    "prompt": "portrait, 35mm, natural light, golden hour, ...",
+    "guidance": 1.5
+  }'
 ```
 
-## FLUX.1 Dev (dev)**Standard guidance: 3.5**
+### FLUX Dev
+**Range:** 2.0 - 5.0  
+**Default:** `3.5`  
+**Recommendation:** Stay at 3.5 for consistency
 
-```json{  "prompt": "...",  "guidance": 3.5}
+### FLUX Schnell
+**Fixed:** `3.5`  
+Cannot be changed (distilled for this value).
 
-```FLUX Dev uses T5-XXL encoder. Less sensitive to prompt length than Dev2.#
+## Z-Image
 
-## Variations**Photorealism:**
+**Fixed:** `1.0` (internally)  
+The `guidance` parameter is ignored. Z-Image uses fixed CFG.
 
-```json{  "guidance": 2.8}
+## WAN Video
 
-```**Abstract/Artistic:**
+**Range:** 6.0 - 8.0  
+**Default:** `7.0`  
+**Recommendation:**
+- Subtle motion: `6.0`
+- Normal: `7.0`
+- Strong motion: `8.0`
 
-```json{  "guidance": 4.0}
-
-```**Maximum Adherence:**
-
-```json{  "guidance": 5.0}
-
-```Higher than 5.0 not recommended 
-
-- causes artifacts.
-
-## FLUX.1 Schnell (schnell)**Fixed guidance: 3.5**
-
-```json{  // guidance parameter ignored for schnell  "steps": 4}
-
-```Schnell is distilled for 4 steps with fixed guidance 3.
-5. Cannot be changed.
-
-## WAN Models**Recommended: 7.0**
-
-```json{  "prompt": "she turns to face the camera",  "image": "...",  "cfg": 7.0  // Note: 'cfg' not 'guidance' for WAN}
-
-```#
-
-## CFG Range
-
-| CFG   | Motion | Color Stability | Recommendation ||-------|--------|-----------------|----------------|| 6.0   | Subtle | Very stable     | Minimal motion || 7.0   | Moderate | Stable        | ✓ Recommended  || 8.0   | Strong | Good            | High motion    || 9.0+  | Extreme | Unstable       | ⚠️ Avoid       |**Warning:*
-
-* CFG >8.0 can cause color instability and artifacts in WAN.#
-
-## Lightning Mode
-
-```json{  "lightning": true,  "cfg": 1.0  // Fixed for lightning}
-
-```Lightning mode uses fixed CFG 1.0 (distilled).
-
-## Z-Image Turbo**Fixed CFG: 1.0**
-
-```json{  // guidance/cfg ignored for Z-Image Turbo  "prompt": "...",  "steps": 8}
-
-```Z-Image uses internal fixed CFG 1.
-0. Cannot be changed.
-
-## Negative GuidanceAll FLUX models support negative guidance:
-
-```json{  "prompt": "portrait of a woman, natural lighting",  "negative_prompt": "blur, distortion, artifacts, low quality, bad anatomy",  "guidance": 3.5}
-
-```**Effective negative prompts:**
-
-- Quality issues: `blur, distortion, artifacts, low quality`
-
-- Anatomical: `bad anatomy, deformed, malformed`
-
-- Composition: `cropped, out of frame, cut off`
-
-- Artifacts: `watermark, text, signature`Keep negative prompts concise. Long negative prompts can be counterproductive.
-
-## Guidance vs StepsHigher guidance requires more steps for convergence:#
-
-## FLUX Dev
-
-| Guidance | Min Steps | Optimal Steps ||----------|-----------|---------------|| 1.5      | 20        | 25            || 2.8      | 20        | 28            || 3.5      | 20        | 25            || 4.5      | 25        | 30            || 5.0      | 30        | 35            |#
-
-## FLUX Dev2
-
-| Guidance | Min Steps | Optimal Steps ||----------|-----------|---------------|| 1.0      | 20        | 25            || 1.5      | 20        | 25            || 2.8      | 22        | 28            || 3.5      | 22        | 28            |
-
-## Visual Examples#
-
-## FLUX Dev2: Prompt Length Impact**Prompt:*
-
-* "portrait"  **Guidance 3.5:*
-
-* Strong, coherent result**Prompt:*
-
-* "portrait of a woman in natural window lighting, soft focus background, 85mm lens, f/1.4, warm color grading, subtle smile, eyes looking at camera, bokeh, film grain"  **Guidance 3.5:*
-
-* Over-sharpened, artifacts  **Guidance 1.5:*
-
-* Natural, balanced result#
-
-## FLUX Dev: Guidance Sweep**Guidance 2.0:*
-
-* Soft, artistic, less prompt adherence  **Guidance 3.5:*
-
-* Balanced, strong prompt following  **Guidance 5.0:*
-
-* Very sharp, over-saturated, artifacts#
-
-## WAN: CFG Impact**CFG 6.0:*
-
-* Subtle motion, very stable colors  **CFG 7.0:*
-
-* Good motion, stable, recommended  **CFG 8.5:*
-
-* Strong motion, color shifts, artifacts
-
-## Troubleshooting#
-
-## Over-Sharpening**Symptom:*
-
-* Images too sharp, unnatural, artifacts**Solution:**
-
-- Lower guidance (try 2.8 instead of 3.5)
-
-- For Dev2 with detailed prompt, use 1.5
-
-- Increase steps#
-
-## Under-Adherence**Symptom:*
-
-* Model ignoring parts of prompt**Solution:**
-
-- Increase guidance (try 4.0)
-
-- Simplify prompt
-
-- Use negative prompt to exclude unwanted elements
-
-- For Dev2, ensure guidance matches prompt length#
-
-## Color Instability (Video)**Symptom:*
-
-* Colors shift between frames**Solution:**
-
-- Lower CFG to 7.0 or 6.0
-
-- Use bong_tangent scheduler
-
-- Increase steps#
-
-## Artifacts**Symptom:*
-
-* Strange artifacts, distortions**Solution:**
-
-- Lower guidance
-
-- Increase steps
-
-- Try different sampler (res_2m)
-
-- Check negative prompt isn't too complex
-
-## Advanced Tuning#
-
-## Dynamic Guidance (Coming Soon)Start with high guidance, lower during generation:
-
-```json{  "guidance_start": 5.0,  "guidance_end": 2.5,  "guidance_steps": [0, 15]  // Apply from step 0 to 15}
-
-```Strong adherence early, more freedom later.#
-
-## Per-Region Guidance (Future)Apply different guidance to different regions:
-
-```json{  "guidance": 3.5,  "regions": [    {      "mask": "...",      "guidance": 5.0  // Stronger adherence in masked region    }  ]}
-
-```
-
-## Best Practices
-1. **Start with defaults*
-
-* - Use recommended values first
-2. **FLUX Dev2: Match guidance to prompt*
-
-* - Detailed prompts need lower guidance
-3. **WAN: Stay at 7.0*
-
-* - Don't go above 8.0
-4. **Test systematically*
-
-* - Change one parameter at a time
-5. **Use negative prompts*
-
-* - Better than high guidance for avoiding issues
-6. **Monitor artifacts*
-
-* - Lower guidance if you see artifacts
-7. **Increase steps with guidance*
-
-* - Higher guidance needs more steps
-
-## Complete Example
-
-```pythondef get_guidance(model: str, prompt: str, use_case: str = "general") -> float:    """Calculate optimal guidance based on model and prompt."""        word_count = len(prompt.split())        if model == "dev2":        # FLUX.2 Dev 
-
-- prompt length dependent        if word_count < 10:            return 3.5        elif word_count < 20:            return 2.8        elif word_count < 30:            return 2.2        elif word_count < 50:            return 1.5        else:            return 1.0        elif model == "dev":        # FLUX.1 Dev        if use_case == "photorealism":            return 2.8        elif use_case == "abstract":            return 4.0        else:            return 3.5        elif model == "schnell":        # Fixed        return 3.5        elif model == "wan":        # WAN video        return 7.0        else:        return 3.5  # Safe default# Usageguidance = get_guidance("dev2", "portrait of a woman in natural lighting, 85mm lens, bokeh background, film grain")print(f"Recommended guidance: {guidance}")  # 2.2
-
-```
-
-## Next Steps
-
-- [Samplers](/api/advanced/samplers/) 
-
-- Sampling algorithms
-
-- [Schedulers](/api/advanced/schedulers/) 
-
-- Noise schedules
-
-- [FLUX Models](/api/models/flux/) 
-
-- Model-specific guides
-
-- [WAN Models](/api/models/wan/) 
-
-- Video generation
