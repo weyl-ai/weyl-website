@@ -1,0 +1,39 @@
+# Weyl Site Development Rules
+
+## Stack
+- Astro 5.x with Starlight
+- TypeScript strict mode (no escape hatches)
+- Tailwind CSS 4.x with CSS custom properties
+- Bun as package manager and runtime
+
+## Code Style
+- Use Astro components (.astro) for static content
+- Use React (.tsx) only for interactive islands
+- All colors via CSS custom properties, never hardcoded hex values
+- Font: monospace (Iosevka) for everything in dark mode
+- Status indicators use █ (U+2588) block character
+
+## Type Safety
+- No `any` types
+- No `// @ts-ignore`
+- Use Zod for all runtime validation
+- Branded types for IDs and domain primitives
+- Result types over try/catch where practical
+
+## Component Patterns
+- Props interfaces defined inline in frontmatter
+- Use class:list for conditional classes
+- Semantic HTML with aria labels
+- JSON-LD for all pages
+
+## File Naming
+- Components: PascalCase.astro
+- Utilities: kebab-case.ts
+- Content: kebab-case.mdx
+
+## Brand Rules
+- Dark mode (Hypermodern): border-radius 4px, glow effects
+- Light mode (High Modernism): border-radius 0, no glow
+- Navigation uses // delimiters: "// docs // api // blog //"
+- Never mix themes within a component
+

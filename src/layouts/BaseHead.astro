@@ -58,3 +58,13 @@ const ogImage = new URL(image, siteUrl).href;
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Aldrich&display=swap" rel="stylesheet" />
 
+<script>
+  // View Transitions support
+  if (document.startViewTransition) {
+    document.addEventListener('astro:before-swap', (e) => {
+      // @ts-ignore
+      e.viewTransition = document.startViewTransition();
+    });
+  }
+</script>
+

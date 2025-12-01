@@ -383,12 +383,12 @@ starlight-toc nav {
 
 starlight-toc h2 {
   font-family: var(--font-mono) !important;
-  font-size: var(--text-small);
-  font-weight: 600;
+  font-size: var(--text-micro); /* 10px - smallest size */
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-primary);
-  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted); /* More subtle color */
+  margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-border-default);
 }

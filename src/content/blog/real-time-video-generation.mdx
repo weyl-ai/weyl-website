@@ -1,0 +1,176 @@
+---
+title: "Building Real-Time Video Generation: Technical Deep Dive"
+description: "How we achieve sub-100ms latency for frame-by-frame video generation using streaming inference and custom kernels."
+pubDate: 2024-10-28
+author: "Alex Chen"
+tags: ["video", "real-time", "streaming", "engineering"]
+---
+
+# Building Real-Time Video Generation: Technical Deep Dive
+
+Real-time video generation has been the holy grail of generative AI. Today, we're pulling back the curtain on how Weyl makes it possible.
+
+## The 60 FPS Challenge
+
+To achieve 60 frames per second video generation, each frame must be generated in under 16.67ms. That's not just fast—it's *extremely* fast for a diffusion model that typically takes seconds per frame.
+
+### The Math
+
+```
+60 FPS = 1000ms / 60 = 16.67ms per frame
+50 denoising steps / 16.67ms = 0.33ms per step (!!)
+```
+
+Clearly, standard approaches won't work.
+
+## Our Solution: Streaming Diffusion
+
+Instead of generating frames independently, we use a streaming architecture:
+
+### 1. Latent Recycling
+
+Each frame's latent representation bootstraps the next:
+
+```python
+# Conceptual (simplified)
+latent_t = alpha * latent_t-1 + (1 - alpha) * noise
+```
+
+This reduces required denoising steps from 50 to ~8.
+
+### 2. KV-Cache for Text Conditioning
+
+Text embeddings are computed once and reused:
+- First frame: Full CLIP encoding (~12ms)
+- Subsequent frames: Cached embeddings (~0ms)
+
+### 3. Temporal Consistency
+
+We inject motion vectors between frames:
+```python
+motion_vector = optical_flow(frame_t-1, frame_t)
+latent_t = warp(latent_t-1, motion_vector) + delta
+```
+
+This maintains coherence while allowing changes.
+
+## Architecture
+
+### Pipeline Stages
+
+Our inference pipeline is fully pipelined:
+
+```
+[Frame N-1: VAE Decode] → [Frame N: UNet] → [Frame N+1: Encode]
+      ↓                         ↓                    ↓
+   Output               Compute              Input
+```
+
+Each stage runs concurrently on different GPU SMs (streaming multiprocessors).
+
+### Memory Layout
+
+Critical optimization: All tensors are pre-allocated in a ring buffer:
+
+```
+GPU Memory Layout:
+┌─────────────────────────────┐
+│ Latent Ring Buffer (8 slots)│  ← Circular buffer
+├─────────────────────────────┤
+│ Model Weights (FP4)         │  ← Static, loaded once
+├─────────────────────────────┤
+│ KV-Cache (Text embeddings)  │  ← Computed once
+└─────────────────────────────┘
+```
+
+Zero allocations during generation = zero memory fragmentation.
+
+## Benchmarks
+
+On Blackwell GB200:
+
+| Resolution | FPS | Latency (P99) | Quality (LPIPS ↓) |
+|------------|-----|---------------|-------------------|
+| 512x512    | 60  | 16.2ms       | 0.042             |
+| 768x768    | 30  | 32.1ms       | 0.038             |
+| 1024x1024  | 15  | 65.8ms       | 0.035             |
+
+## Latency Breakdown
+
+Where does the time go for a single 512x512 frame?
+
+```
+Total: 16.2ms
+├─ UNet Forward (8 steps):  11.4ms  (70%)
+├─ VAE Decode:              3.2ms   (20%)
+├─ Preprocessing:           0.9ms   (5%)
+└─ Memory Transfers:        0.7ms   (5%)
+```
+
+The UNet is still the bottleneck—more optimization coming.
+
+## API: WebSocket Streaming
+
+We use WebSockets for bidirectional streaming:
+
+```javascript
+const ws = new WebSocket('wss://api.weyl.ai/v1/stream');
+
+ws.send(JSON.stringify({
+  type: 'start',
+  prompt: 'a cat walking through a garden',
+  fps: 60,
+  duration: 10  // seconds
+}));
+
+ws.onmessage = (event) => {
+  const frame = new Uint8Array(event.data);
+  // Display frame
+  displayFrame(frame);
+};
+```
+
+Frames arrive as raw RGB24 data—no codec overhead.
+
+## Challenges & Solutions
+
+### Challenge 1: Thermal Throttling
+
+**Problem**: Sustained 100% GPU utilization causes thermal throttling after ~30 seconds.
+
+**Solution**: Dynamic batch size adjustment:
+- Monitor GPU temperature
+- Reduce batch size if temp > 82°C
+- Gracefully degrade FPS instead of crashing
+
+### Challenge 2: Network Bandwidth
+
+**Problem**: 60 FPS × 512×512×3 bytes = 47 MB/s minimum bandwidth.
+
+**Solution**: Optional H.264 encoding:
+- Client requests encoded stream
+- We encode on-GPU using NVENC
+- Bandwidth drops to ~2 MB/s
+
+### Challenge 3: Cold Start Latency
+
+**Problem**: First frame takes 200ms (model loading, compilation).
+
+**Solution**: Keep warm pools of pre-initialized inference contexts.
+
+## What's Next
+
+We're working on:
+
+- **1080p @ 60 FPS**: Requires next-gen hardware (Rubin?)
+- **Temporal LoRAs**: Style transfer that maintains consistency
+- **Interactive editing**: Modify prompts mid-stream
+
+## Try It
+
+Real-time video is available in private beta. Join the waitlist: [weyl.ai/video-beta](https://weyl.ai/video-beta)
+
+---
+
+*Read the technical RFC: [github.com/weyl-ai/rfcs/001-streaming-video](https://github.com/weyl-ai/rfcs)*
+

@@ -1,0 +1,9 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#090b0e"/>
+  <text x="80" y="180" font-family="monospace" font-size="96" font-weight="600" fill="#54aeff" letter-spacing="8">WEYL</text>
+  <text x="80" y="260" font-family="monospace" font-size="36" fill="#c9d1d9">The render layer for generative media</text>
+  <g transform="translate(80, 550)">
+    <text font-family="monospace" font-size="32" fill="#3fb950">█</text>
+    <text x="50" font-family="monospace" font-size="28" fill="#8b949e">OPERATIONAL | 47ms p99 | 1,071 TFLOPS</text>
+  </g>
+</svg>

@@ -2,14 +2,7 @@
 // src/pages/blog/[...slug].astro
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
-import BaseHead from '@/layouts/BaseHead.astro';
-import JsonLd from '@components/seo/JsonLd.astro';
-import { articleSchema } from '@lib/seo/schema';
-
-// Import global styles
-import '@/styles/tokens.css';
-import '@/styles/global.css';
-import '@/styles/typography.css';
+import Blog from '@/layouts/Blog.astro';
 
 export async function getStaticPaths() {
   const blogPosts = await getCollection('blog');
@@ -25,177 +18,16 @@ interface Props {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
-
-const schema = articleSchema({
-  title: post.data.title,
-  description: post.data.description,
-  datePublished: post.data.pubDate.toISOString(),
-  dateModified: post.data.updatedDate?.toISOString(),
-  author: post.data.author,
-  url: Astro.url.href,
-  image: post.data.image?.src,
-});
 ---
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <BaseHead 
-      title={post.data.title}
-      description={post.data.description}
-      image={post.data.image?.src}
-      type="article"
-    />
-    <JsonLd schema={schema} />
-  </head>
-  <body class="bg-bg-primary min-h-screen">
-    <article class="max-w-3xl mx-auto px-6 py-24">
-      <header class="mb-12">
-        <a 
-          href="/blog" 
-          class="font-mono text-small text-text-muted hover:text-brand-primary mb-6 inline-block"
-        >
-          ← Back to blog
-        </a>
-        
-        <h1 class="font-display text-hero font-semibold tracking-wide text-text-primary mb-6">
-          {post.data.title}
-        </h1>
-        
-        <div class="flex gap-4 text-caption text-text-muted mb-4">
-          <time datetime={post.data.pubDate.toISOString()}>
-            {post.data.pubDate.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </time>
-          <span>•</span>
-          <span>{post.data.author}</span>
-        </div>
-        
-        {post.data.tags.length > 0 && (
-          <div class="flex gap-2 flex-wrap">
-            {post.data.tags.map((tag: string) => (
-              <span class="px-2 py-1 bg-bg-surface border border-border text-text-muted text-caption rounded-sm">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </header>
-
-      <div class="prose prose-invert max-w-none font-mono text-body text-text-secondary">
-        <Content />
-      </div>
-    </article>
-  </body>
-</html>
-
-<style is:global>
-  .prose {
-    color: var(--color-text-secondary);
-  }
-  
-  .prose h1,
-  .prose h2,
-  .prose h3,
-  .prose h4,
-  .prose h5,
-  .prose h6 {
-    color: var(--color-text-primary);
-    font-family: var(--font-display);
-    letter-spacing: 0.025em;
-  }
-  
-  .prose h2 {
-    font-size: var(--text-headline);
-    margin-top: 3rem;
-    margin-bottom: 1rem;
-  }
-  
-  .prose h3 {
-    font-size: var(--text-subhead);
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  .prose p {
-    margin-bottom: 1.5rem;
-  }
-  
-  .prose a {
-    color: var(--color-brand-primary);
-    text-decoration: underline;
-  }
-  
-  .prose a:hover {
-    color: var(--color-brand-hover);
-  }
-  
-  .prose code {
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-sm);
-    padding: 0.125rem 0.375rem;
-    font-size: 0.875em;
-  }
-  
-  .prose pre {
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    overflow-x: auto;
-    margin: 1.5rem 0;
-  }
-  
-  .prose pre code {
-    background: none;
-    border: none;
-    padding: 0;
-  }
-  
-  .prose ul,
-  .prose ol {
-    margin-left: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .prose li {
-    margin-bottom: 0.5rem;
-  }
-  
-  .prose blockquote {
-    border-left: 4px solid var(--color-brand-primary);
-    padding-left: 1rem;
-    margin: 1.5rem 0;
-    color: var(--color-text-muted);
-    font-style: italic;
-  }
-  
-  .prose table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-  }
-  
-  .prose th,
-  .prose td {
-    border: 1px solid var(--color-border-default);
-    padding: 0.75rem;
-    text-align: left;
-  }
-  
-  .prose th {
-    background-color: var(--color-bg-surface);
-    font-weight: 600;
-  }
-  
-  .prose hr {
-    border: none;
-    border-top: 1px solid var(--color-border-default);
-    margin: 3rem 0;
-  }
-</style>
-
+<Blog
+  title={post.data.title}
+  description={post.data.description}
+  pubDate={post.data.pubDate}
+  updatedDate={post.data.updatedDate}
+  author={post.data.author}
+  tags={post.data.tags}
+  image={post.data.image}
+>
+  <Content />
+</Blog>

@@ -11,7 +11,7 @@ export default defineConfig({
     starlight({
       title: 'Weyl',
       logo: {
-        src: './public/weyl-logo.svg',
+        src: './src/assets/monotile.svg',
         replacesTitle: true,
       },
       defaultLocale: 'root',
