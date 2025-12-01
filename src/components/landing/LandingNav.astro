@@ -1,6 +1,6 @@
 ---
-// src/components/overrides/Header.astro
-import LogoLockup from '@components/brand/LogoLockup.astro';
+// src/components/landing/LandingNav.astro
+// Minimal nav for landing page following Vercel/GitHub style
 import SocialIcons from '@components/ui/SocialIcons.astro';
 
 const navItems = [
@@ -10,12 +10,14 @@ const navItems = [
 ];
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-border bg-bg-primary">
+<header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-bg-primary/80 backdrop-blur-md">
   <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-      <LogoLockup size="small" variant="stroke" glow />
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <img src="/weyl-logo.svg" alt="WEYL" class="h-8 w-auto" />
     </a>
     
+    <!-- Navigation with // delimiters -->
     <nav class="font-mono text-small flex items-center gap-6">
       <ul class="flex items-center gap-1">
         {navItems.map((item, index) => (
@@ -24,7 +26,7 @@ const navItems = [
             <li>
               <a 
                 href={item.href}
-                class="text-text-secondary hover:text-brand-primary transition-colors px-3 py-2"
+                class="text-text-secondary hover:text-brand-primary transition-colors px-3 py-2 block"
               >
                 {item.label}
               </a>

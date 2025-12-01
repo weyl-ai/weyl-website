@@ -2,6 +2,8 @@
 // src/layouts/Blog.astro
 import BaseHead from '@/layouts/BaseHead.astro';
 import JsonLd from '@components/seo/JsonLd.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
 import { articleSchema } from '@lib/seo/schema';
 
 // Import global styles
@@ -60,7 +62,8 @@ const schema = articleSchema({
     <JsonLd schema={schema} />
   </head>
   <body class="bg-bg-primary min-h-screen">
-    <article class="max-w-3xl mx-auto px-6 py-24">
+    <LandingNav />
+    <article class="max-w-3xl mx-auto px-6 py-24 pt-32">
       <header class="mb-12">
         <a 
           href="/blog" 
@@ -101,6 +104,7 @@ const schema = articleSchema({
         <slot />
       </div>
     </article>
+    <LandingFooter />
   </body>
 </html>
 

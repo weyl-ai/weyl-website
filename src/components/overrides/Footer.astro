@@ -1,5 +1,6 @@
 ---
 // src/components/overrides/Footer.astro
+import SocialIcons from '@components/ui/SocialIcons.astro';
 
 const footerLinks = {
   Product: [
@@ -14,8 +15,8 @@ const footerLinks = {
   ],
   Resources: [
     { label: 'GitHub', href: 'https://github.com/weyl-ai' },
-    { label: 'Twitter', href: 'https://twitter.com/weyl_ai' },
-    { label: 'Discord', href: 'https://discord.gg/weyl' },
+    { label: 'Examples', href: 'https://github.com/weyl-ai/examples' },
+    { label: 'Slack', href: 'https://weyl-ai.slack.com' },
   ],
 };
 ---
@@ -24,12 +25,15 @@ const footerLinks = {
   <div class="max-w-7xl mx-auto px-6 py-12">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
       <div>
-        <h3 class="font-display text-subhead font-semibold tracking-widest text-brand-primary mb-4">
+        <h3 class="font-mono text-small font-semibold text-brand-primary mb-4">
           WEYL
         </h3>
-        <p class="font-mono text-caption text-text-muted">
+        <p class="font-mono text-caption text-text-muted mb-6">
           The render layer for generative media
         </p>
+        
+        <!-- Social icons using shared component -->
+        <SocialIcons size="md" />
       </div>
       
       {Object.entries(footerLinks).map(([category, links]) => (
@@ -55,7 +59,7 @@ const footerLinks = {
     
     <div class="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
       <p class="font-mono text-caption text-text-muted">
-        © {new Date().getFullYear()} Weyl AI Labs. All rights reserved.
+        © {new Date().getFullYear()} Weyl AI Labs // All rights reserved
       </p>
       
       <div class="flex gap-6">
