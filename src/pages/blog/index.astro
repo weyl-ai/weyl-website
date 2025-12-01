@@ -4,7 +4,6 @@ import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '@/layouts/BaseHead.astro';
 import Card from '@components/ui/Card.astro';
-import CalendlyBadge from '@components/ui/CalendlyBadge.astro';
 
 // Import global styles
 import '@/styles/tokens.css';
@@ -73,7 +72,5 @@ const blogPosts = (await getCollection('blog'))
         ))}
       </div>
     </main>
-    <CalendlyBadge />
   </body>
 </html>
-

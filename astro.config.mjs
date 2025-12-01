@@ -135,68 +135,6 @@ export default defineConfig({
           tag: 'link',
           attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         },
-        // Calendly widget styles and script
-        {
-          tag: 'link',
-          attrs: { 
-            href: 'https://assets.calendly.com/assets/external/widget.css',
-            rel: 'stylesheet'
-          },
-        },
-        {
-          tag: 'script',
-          attrs: { 
-            src: 'https://assets.calendly.com/assets/external/widget.js',
-            type: 'text/javascript',
-            async: true
-          },
-        },
-        {
-          tag: 'script',
-          content: `
-            function initCalendly() {
-              if (window.Calendly) {
-                const primaryColor = getComputedStyle(document.documentElement)
-                  .getPropertyValue('--color-brand-primary').trim();
-                const textColor = getComputedStyle(document.documentElement)
-                  .getPropertyValue('--color-text-primary').trim();
-                
-                window.Calendly.initBadgeWidget({
-                  url: 'https://calendly.com/harrison-weyl/30min',
-                  text: 'Schedule a Call',
-                  color: primaryColor || '#54aeff',
-                  textColor: textColor || '#e6f7ff',
-                  branding: true
-                });
-              }
-            }
-
-            if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', initCalendly);
-            } else {
-              initCalendly();
-            }
-
-            if (typeof window !== 'undefined') {
-              const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                  if (mutation.attributeName === 'data-theme') {
-                    const oldBadge = document.querySelector('.calendly-badge-widget');
-                    if (oldBadge) {
-                      oldBadge.remove();
-                    }
-                    setTimeout(initCalendly, 100);
-                  }
-                });
-              });
-
-              observer.observe(document.documentElement, {
-                attributes: true,
-                attributeFilter: ['data-theme']
-              });
-            }
-          `,
-        },
       ],
     }),
     react(),

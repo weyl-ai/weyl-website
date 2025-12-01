@@ -5,7 +5,7 @@
 
 <!-- Calendly badge widget -->
 <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
-<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+<script is:inline src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 
 <script is:inline>
   // Initialize Calendly badge after DOM is ready
@@ -23,7 +23,7 @@
         text: 'Schedule a Call',
         color: primaryColor || '#54aeff',
         textColor: textColor || '#e6f7ff',
-        branding: true
+        branding: false
       });
     }
   }
@@ -58,24 +58,47 @@
   }
 </script>
 
-<style>
-  /* Custom styling to match site theme */
-  :global(.calendly-badge-widget) {
+<style is:global>
+  /* Override default Calendly styles to match brand */
+  .calendly-badge-widget {
     font-family: var(--font-mono) !important;
     letter-spacing: var(--tracking-normal) !important;
     border-radius: var(--radius-md) !important;
-    box-shadow: var(--glow-sm) !important;
+    box-shadow: 0 0 0 1px var(--color-border-default), var(--glow-sm) !important;
     transition: all 0.2s ease !important;
+    right: 20px !important;
+    bottom: 20px !important;
+    padding: 0 !important;
   }
 
-  :global(.calendly-badge-widget:hover) {
-    box-shadow: var(--glow-md) !important;
+  .calendly-badge-widget:hover {
+    box-shadow: 0 0 0 1px var(--color-brand-primary), var(--glow-md) !important;
     transform: translateY(-2px) !important;
   }
 
-  /* Remove branding for cleaner look if needed */
-  :global(.calendly-badge-widget .calendly-badge-content) {
+  .calendly-badge-widget .calendly-badge-content {
     font-weight: 500 !important;
+    font-size: var(--text-secondary) !important;
+    padding: 12px 20px !important;
+    border-radius: var(--radius-md) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* Remove the default rounded corners on inner elements */
+  .calendly-badge-widget .calendly-badge-content,
+  .calendly-badge-widget .calendly-badge-content span {
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Light mode adjustments */
+  [data-theme="light"] .calendly-badge-widget {
+    box-shadow: 0 0 0 1px var(--color-border-default), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  [data-theme="light"] .calendly-badge-widget:hover {
+    box-shadow: 0 0 0 1px var(--color-brand-primary), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   }
 </style>
 

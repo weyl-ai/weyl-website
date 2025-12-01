@@ -55,16 +55,63 @@
   font-family: var(--font-mono) !important;
 }
 
-/* Headers with display font */
-h1, h2, h3, h4, h5, h6,
-.sl-markdown-content h1,
-.sl-markdown-content h2,
-.sl-markdown-content h3,
-.sl-markdown-content h4,
-.sl-markdown-content h5,
-.sl-markdown-content h6 {
+/* Headers with proper sizing hierarchy */
+h1, .sl-markdown-content h1 {
   font-family: var(--font-mono) !important;
+  font-size: var(--text-headline) !important;  /* 32px */
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+h2, .sl-markdown-content h2 {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-subhead) !important;  /* 24px */
   font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-top: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+h3, .sl-markdown-content h3 {
+  font-family: var(--font-mono) !important;
+  font-size: 1.25rem !important;  /* 20px */
+  font-weight: 600;
+  line-height: var(--leading-normal);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+h4, .sl-markdown-content h4 {
+  font-family: var(--font-mono) !important;
+  font-size: 1.125rem !important;  /* 18px */
+  font-weight: 600;
+  line-height: var(--leading-normal);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+h5, .sl-markdown-content h5 {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-body) !important;  /* 16px */
+  font-weight: 600;
+  line-height: var(--leading-normal);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+h6, .sl-markdown-content h6 {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-secondary) !important;  /* 14px */
+  font-weight: 600;
+  line-height: var(--leading-normal);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Code blocks */
