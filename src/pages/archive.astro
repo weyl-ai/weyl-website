@@ -1,0 +1,263 @@
+---
+// src/pages/archive.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+import SpeedInsights from '@/components/analytics/SpeedInsights.astro';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+const title = 'Historical Research Documents';
+const description = 'Weyl AI Research Archive — canonical documents from the Weyl AI research program, preserved in their original institutional format for historical reference.';
+const ogImage = '/og-default.png';
+
+// Archive documents data
+const documents = [
+  {
+    type: 'TECHNICAL MEMORANDUM',
+    number: '2024-001',
+    title: 'On the Symmetry-Complete Representation of Tensor Layouts',
+    description: 'This memorandum establishes the theoretical foundation for s₄\'s treatment of tensor permutations as elements of the symmetric group S₄. The 24 possible layouts of a 4-dimensional tensor are enumerated, with guidance on selection criteria for production deployment.',
+    department: 'DEPT. OF NUMERICAL ARCHITECTURE',
+    classification: 'PUBLIC',
+    date: '2024-03-15',
+  },
+  {
+    type: 'RESEARCH BULLETIN',
+    number: '2024-007',
+    title: 'Block-Scale Quantization: A Survey of Precision Economics',
+    description: 'This bulletin surveys the emerging field of block-scale quantization, examining the tradeoffs between BF16, FP8, and NVFP4 representations. Particular attention is given to outlier lane preservation and its impact on model fidelity.',
+    department: 'OFFICE OF PRECISION STANDARDS',
+    classification: 'PUBLIC',
+    date: '2024-05-22',
+  },
+  {
+    type: 'POLICY DIRECTIVE',
+    number: '2024-012',
+    title: 'Persistent Kernel Protocol for Inference Operations',
+    description: 'This directive establishes mandatory protocols for persistent kernel deployment in production inference systems. All sanctioned operations shall maintain GPU-resident state with zero per-token launch overhead.',
+    department: 'MISSION ARCHITECTURE OFFICE',
+    classification: 'PUBLIC',
+    date: '2024-08-01',
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <BaseHead title={title} description={description} image={ogImage} />
+    <style is:global>
+      /* Force light theme logo display */
+      [data-theme="light"] .logo-dark {
+        display: none !important;
+      }
+
+      [data-theme="light"] .logo-light {
+        display: block !important;
+      }
+    </style>
+    <style>
+      /* Archive-specific high modernism styling */
+      body {
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        line-height: 1.6;
+      }
+
+      .archive-header {
+        border-bottom: 2px solid var(--color-border-default);
+        padding-bottom: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .archive-title {
+        font-family: var(--font-serif);
+        font-size: 2.5rem;
+        font-weight: normal;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.5rem;
+      }
+
+      .archive-subtitle {
+        font-size: 0.875rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--color-heritage);
+      }
+
+      .archive-intro {
+        max-width: 65ch;
+        margin-bottom: 4rem;
+        line-height: 1.8;
+      }
+
+      .document-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        margin-bottom: 2rem;
+        padding: 2rem;
+        transition: box-shadow 0.2s ease;
+      }
+
+      .document-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .document-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--color-bg-elevated);
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .document-type {
+        color: var(--color-administration);
+        font-weight: 600;
+      }
+
+      .document-classification {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .classification-badge {
+        padding: 0.25rem 0.5rem;
+        background: var(--color-text-primary);
+        color: var(--color-bg-surface);
+        font-weight: 600;
+      }
+
+      .document-title {
+        font-family: var(--font-serif);
+        font-size: 1.5rem;
+        font-weight: normal;
+        margin-bottom: 1rem;
+        color: var(--color-text-primary);
+      }
+
+      .document-description {
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        color: var(--color-text-secondary);
+      }
+
+      .document-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-bg-elevated);
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+
+      .document-department {
+        color: var(--color-heritage);
+        text-transform: uppercase;
+      }
+
+      .document-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        opacity: 0.4;
+      }
+
+      .monotile-icon {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        opacity: 0.15;
+      }
+
+      @media (max-width: 768px) {
+        .archive-title {
+          font-size: 2rem;
+        }
+
+        .document-meta {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .document-footer {
+          flex-direction: column;
+          gap: 0.5rem;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <LandingNav />
+    
+    <!-- Watermark monotile -->
+    <svg class="monotile-icon" viewBox="0 0 172 118" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M31.4798 31.5351V67.9491L0 86.1561L18.1751 117.691H90.8755L109.051 86.1561L140.53 104.363L172.01 86.1561L153.835 54.621H117.485V18.207L86.0051 0L67.83 31.5351H31.4798Z" fill="currentColor"/>
+    </svg>
+
+    <!-- Main content -->
+    <main class="max-w-4xl mx-auto px-6 py-24 pt-32">
+      <!-- Header -->
+      <header class="archive-header">
+        <h1 class="archive-title">Historical Research Documents</h1>
+        <p class="archive-subtitle">Bureau of Computational History</p>
+      </header>
+
+      <!-- Introduction -->
+      <div class="archive-intro">
+        This archive contains canonical documents from the Weyl AI research program, preserved in their original institutional format for historical reference.
+      </div>
+
+      <!-- Document list -->
+      <section>
+        {documents.map((doc) => (
+          <article class="document-card">
+            <div class="document-meta">
+              <div>
+                <span class="document-type">{doc.type} № {doc.number}</span>
+              </div>
+              <div class="document-classification">
+                <span>DATE: {doc.date}</span>
+                <span class="classification-badge">{doc.classification}</span>
+              </div>
+            </div>
+
+            <h2 class="document-title">{doc.title}</h2>
+            
+            <p class="document-description">{doc.description}</p>
+
+            <div class="document-footer">
+              <span class="document-department">{doc.department}</span>
+              <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <!-- Footer note -->
+      <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--color-border-default); font-size: 0.75rem; color: var(--color-text-muted); text-align: center; letter-spacing: 0.05em;">
+        Documents are preserved in their original format for historical accuracy. <br>
+        For current research, please consult the active research portal.
+      </footer>
+    </main>
+
+    <LandingFooter />
+    <SpeedInsights />
+  </body>
+</html>
+
