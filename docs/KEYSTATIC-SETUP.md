@@ -18,7 +18,7 @@ Keystatic is configured to use GitHub as the storage backend, which means:
    - **Application name:** `Weyl CMS` (or any name you prefer)
    - **Homepage URL:** `https://weyl-website-pink.vercel.app` (or your custom domain)
    - **Application description:** `Content management for Weyl website`
-   - **Authorization callback URL:** `https://weyl-website-pink.vercel.app/api/keystatic/github/oauth/callback`
+   - **Authorization callback URL:** `https://weyl-website-pink.vercel.app/api/keystatic/github/callback`
 4. Click **"Register application"**
 5. You'll see your **Client ID** - copy this
 6. Click **"Generate a new client secret"** and copy the secret (you won't see it again!)
@@ -34,6 +34,7 @@ Keystatic is configured to use GitHub as the storage backend, which means:
    |------|-------|-------------|
    | `KEYSTATIC_GITHUB_CLIENT_ID` | `your_client_id_from_step_1` | Production, Preview, Development |
    | `KEYSTATIC_GITHUB_CLIENT_SECRET` | `your_client_secret_from_step_1` | Production, Preview, Development |
+   | `KEYSTATIC_SECRET` | `any-random-secret-string-here` | Production, Preview, Development |
 
 5. Click **"Save"**
 
@@ -95,7 +96,7 @@ When you set up your custom domain, update:
    - Go back to [GitHub Developer Settings](https://github.com/settings/developers)
    - Edit your OAuth app
    - Update **Homepage URL** to `https://yourcustomdomain.com`
-   - Update **Authorization callback URL** to `https://yourcustomdomain.com/api/keystatic/github/oauth/callback`
+   - Update **Authorization callback URL** to `https://yourcustomdomain.com/api/keystatic/github/callback`
 
 2. **Astro Config** (optional, for SEO):
    - Update `site` in `astro.config.mjs` to your custom domain
