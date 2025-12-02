@@ -17,6 +17,7 @@ export default defineConfig({
     },
   }),
   integrations: [
+    react(),
     keystatic(),
     starlight({
       title: 'Weyl',
@@ -160,7 +161,6 @@ export default defineConfig({
         },
       ],
     }),
-    react(),
     sitemap(),
     mdx(),
     tailwind({ applyBaseStyles: false }),
