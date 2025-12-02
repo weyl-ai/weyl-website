@@ -43,9 +43,15 @@ export function PosterModal({
     };
   }, [handleKeyDown]);
 
-  // Handle backdrop click
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+  // Handle backdrop click - close if clicking outside the poster image
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Close if clicking directly on the backdrop or outer container
+    // (not on the image, buttons, or their children)
+    const target = e.target as HTMLElement;
+    const isClickOnPoster = target.closest('img') !== null;
+    const isClickOnButton = target.closest('button') !== null;
+    
+    if (!isClickOnPoster && !isClickOnButton) {
       onClose();
     }
   };
