@@ -1,0 +1,44 @@
+---
+// src/components/content/LastUpdated.astro
+// Display last updated timestamp with schema
+
+interface Props {
+  date: Date;
+  showLabel?: boolean;
+}
+
+const { date, showLabel = true } = Astro.props;
+
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const isoDate = date.toISOString();
+---
+
+<div class="last-updated">
+  {showLabel && <span class="label">Last updated:</span>}
+  <time datetime={isoDate}>{formattedDate}</time>
+</div>
+
+<style>
+  .last-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--sl-color-text-accent);
+    opacity: 0.8;
+  }
+  
+  .label {
+    font-weight: 600;
+  }
+  
+  time {
+    font-style: italic;
+  }
+</style>
+

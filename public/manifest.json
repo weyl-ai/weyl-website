@@ -1,0 +1,27 @@
+{
+  "name": "Weyl",
+  "short_name": "Weyl",
+  "description": "Inference infrastructure for generative media",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090b0e",
+  "theme_color": "#090b0e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["developer", "tools", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
+

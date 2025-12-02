@@ -4,7 +4,7 @@ import BaseHead from '@/layouts/BaseHead.astro';
 import JsonLd from '@components/seo/JsonLd.astro';
 import LandingNav from '@components/landing/LandingNav.astro';
 import LandingFooter from '@components/landing/LandingFooter.astro';
-import { articleSchema } from '@lib/seo/schema';
+import { techArticleSchema } from '@lib/seo/schema';
 
 // Import global styles
 import '@/styles/tokens.css';
@@ -31,7 +31,8 @@ const {
   image 
 } = Astro.props;
 
-const schema = articleSchema({
+// Use TechArticle schema for technical blog posts
+const schema = techArticleSchema({
   title,
   description,
   datePublished: pubDate.toISOString(),
@@ -39,6 +40,7 @@ const schema = articleSchema({
   author,
   url: Astro.url.href,
   image: image?.src,
+  keywords: tags,
 });
 ---
 
@@ -51,12 +53,16 @@ const schema = articleSchema({
         description={description}
         image={image.src}
         type="article"
+        publishedTime={pubDate.toISOString()}
+        modifiedTime={updatedDate?.toISOString()}
       />
     ) : (
       <BaseHead 
         title={title}
         description={description}
         type="article"
+        publishedTime={pubDate.toISOString()}
+        modifiedTime={updatedDate?.toISOString()}
       />
     )}
     <JsonLd schema={schema} />

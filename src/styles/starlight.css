@@ -62,7 +62,7 @@ h1, .sl-markdown-content h1 {
   font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  margin-top: 2rem;
+  margin-top: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -72,7 +72,7 @@ h2, .sl-markdown-content h2 {
   font-weight: 600;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  margin-top: 1.75rem;
+  margin-top: 2.5rem;
   margin-bottom: 1rem;
 }
 
@@ -81,7 +81,7 @@ h3, .sl-markdown-content h3 {
   font-size: 1.25rem !important;  /* 20px */
   font-weight: 600;
   line-height: var(--leading-normal);
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   margin-bottom: 0.75rem;
 }
 
@@ -90,7 +90,7 @@ h4, .sl-markdown-content h4 {
   font-size: 1.125rem !important;  /* 18px */
   font-weight: 600;
   line-height: var(--leading-normal);
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
@@ -99,7 +99,7 @@ h5, .sl-markdown-content h5 {
   font-size: var(--text-body) !important;  /* 16px */
   font-weight: 600;
   line-height: var(--leading-normal);
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
 }
 
@@ -110,7 +110,7 @@ h6, .sl-markdown-content h6 {
   line-height: var(--leading-normal);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
 }
 
@@ -317,6 +317,34 @@ starlight-theme-select::after,
 /* Header styling for consistency */
 .header {
   background: var(--color-bg-surface);
+}
+
+/* Mobile menu button styling */
+.mobile-menu-toggle,
+button[aria-controls="starlight__sidebar"],
+.menu-button {
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--sl-color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-toggle:hover,
+button[aria-controls="starlight__sidebar"]:hover,
+.menu-button:hover {
+  color: var(--color-brand-primary);
+}
+
+.mobile-menu-toggle svg,
+button[aria-controls="starlight__sidebar"] svg,
+.menu-button svg {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .site-title {

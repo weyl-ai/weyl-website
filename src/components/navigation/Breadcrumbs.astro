@@ -1,0 +1,85 @@
+---
+// src/components/navigation/Breadcrumbs.astro
+// Universal breadcrumb component with JSON-LD
+
+import JsonLd from '@/components/seo/JsonLd.astro';
+import { breadcrumbSchema } from '@/lib/seo/schema';
+
+interface Props {
+  items: Array<{ name: string; url: string }>;
+}
+
+const { items } = Astro.props;
+
+// Always include home as first item
+const fullItems = [
+  { name: 'Home', url: 'https://weyl.ai/' },
+  ...items,
+];
+
+const schema = breadcrumbSchema(fullItems);
+---
+
+<nav aria-label="Breadcrumb" class="breadcrumbs">
+  <ol>
+    {fullItems.map((item, index) => (
+      <li>
+        {index < fullItems.length - 1 ? (
+          <>
+            <a href={item.url}>{item.name}</a>
+            <span class="separator" aria-hidden="true">/</span>
+          </>
+        ) : (
+          <span aria-current="page">{item.name}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<JsonLd schema={schema} />
+
+<style>
+  .breadcrumbs {
+    padding: 1rem 0;
+    font-size: 0.875rem;
+  }
+  
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .breadcrumbs li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .breadcrumbs a {
+    color: var(--sl-color-text-accent);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .breadcrumbs a:hover {
+    color: var(--sl-color-text);
+    text-decoration: underline;
+  }
+  
+  .breadcrumbs [aria-current="page"] {
+    color: var(--sl-color-text);
+    font-weight: 600;
+  }
+  
+  .separator {
+    opacity: 0.5;
+    user-select: none;
+  }
+</style>
+

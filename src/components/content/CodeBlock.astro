@@ -1,0 +1,141 @@
+---
+// src/components/content/CodeBlock.astro
+// Enhanced code block with proper schema markup
+
+interface Props {
+  language: string;
+  title?: string;
+}
+
+const { language, title } = Astro.props;
+
+// Generate unique ID for code block
+const id = `code-${Math.random().toString(36).substring(2, 11)}`;
+---
+
+<div class="code-block" itemscope itemtype="https://schema.org/SoftwareSourceCode">
+  {title && <div class="code-title">{title}</div>}
+  
+  <meta itemprop="programmingLanguage" content={language} />
+  <meta itemprop="codeRepository" content="https://github.com/weyl-ai" />
+  
+  <div class="code-wrapper">
+    <button 
+      class="copy-button" 
+      data-code={id}
+      aria-label="Copy code to clipboard"
+    >
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="16" 
+        height="16" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+      >
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span class="copy-text">Copy</span>
+    </button>
+    
+    <pre id={id} itemprop="text"><code class={`language-${language}`}><slot /></code></pre>
+  </div>
+</div>
+
+<style>
+  .code-block {
+    position: relative;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--sl-color-bg-inline-code);
+    border: 1px solid var(--sl-color-gray-5);
+  }
+  
+  .code-title {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  
+  .code-wrapper {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 4px;
+    color: var(--sl-color-text-accent);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-family: inherit;
+  }
+  
+  .copy-button:hover {
+    background: var(--sl-color-gray-6);
+    border-color: var(--sl-color-text-accent);
+  }
+  
+  .copy-button:active {
+    transform: scale(0.95);
+  }
+  
+  pre {
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0;
+  }
+  
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  // Copy to clipboard functionality
+  document.querySelectorAll('.copy-button').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const codeId = button.getAttribute('data-code');
+      const codeElement = document.getElementById(codeId!);
+      
+      if (codeElement) {
+        const code = codeElement.textContent || '';
+        
+        try {
+          await navigator.clipboard.writeText(code);
+          
+          // Update button text
+          const textSpan = button.querySelector('.copy-text');
+          if (textSpan) {
+            const originalText = textSpan.textContent;
+            textSpan.textContent = 'Copied!';
+            
+            setTimeout(() => {
+              textSpan.textContent = originalText;
+            }, 2000);
+          }
+        } catch (err) {
+          console.error('Failed to copy code:', err);
+        }
+      }
+    });
+  });
+</script>
+
