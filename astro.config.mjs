@@ -3,6 +3,7 @@ import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
+import markdoc from '@astrojs/markdoc';
 import tailwind from '@astrojs/tailwind';
 import keystatic from '@keystatic/astro';
 import vercel from '@astrojs/vercel';
@@ -18,6 +19,7 @@ export default defineConfig({
   }),
   integrations: [
     react(),
+    markdoc(),
     keystatic(),
     starlight({
       title: 'Weyl',
