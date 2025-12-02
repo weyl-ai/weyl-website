@@ -14,7 +14,7 @@ export const organizationSchema: WithContext<Organization> = {
   '@type': 'Organization',
   name: 'Weyl AI Labs',
   url: 'https://weyl.ai',
-  logo: 'https://weyl.ai/logo.svg',
+  logo: 'https://weyl.ai/weyl-logo.svg',
   description: 'Inference infrastructure for generative media',
   sameAs: [
     'https://twitter.com/weyl_ai',
@@ -59,7 +59,7 @@ export function articleSchema(props: {
       name: 'Weyl AI Labs',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://weyl.ai/logo.svg',
+        url: 'https://weyl.ai/weyl-logo.svg',
       },
     },
     mainEntityOfPage: props.url,

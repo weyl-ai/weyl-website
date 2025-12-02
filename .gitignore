@@ -39,7 +39,3 @@ Thumbs.db
 .temp/
 .tmp/
 
-# Bun
-bun.lockb
-
-
