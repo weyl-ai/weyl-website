@@ -10,7 +10,7 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   site: 'https://weyl-website.vercel.app',
   output: 'server',
-  trailingSlash: 'always',
+  trailingSlash: 'ignore',
   adapter: vercel({
     webAnalytics: {
       enabled: true,
