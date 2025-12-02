@@ -39,7 +39,6 @@ export default defineConfig({
       social: {
         github: 'https://github.com/weyl-ai',
         twitter: 'https://twitter.com/weyl_ai',
-        'x.com': 'https://weyl-ai.slack.com',
       },
       sidebar: [
         {
@@ -128,6 +127,7 @@ export default defineConfig({
         // Custom Banner component to show llms.txt links at the top of doc pages
         Banner: './src/components/overrides/Banner.astro',
         ThemeSelect: './src/components/overrides/ThemeSelect.astro',
+        SocialIcons: './src/components/overrides/SocialIcons.astro',
       },
       expressiveCode: {
         themes: ['github-dark', 'github-light'],
