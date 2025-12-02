@@ -17,13 +17,17 @@
     "@astrojs/starlight": "^0.30.0",
     "@astrojs/tailwind": "^6.0.0",
     "@fontsource/iosevka": "^5.1.0",
+    "@keystatic/astro": "^5.0.6",
+    "@keystatic/core": "^0.5.48",
     "@tailwindcss/typography": "^0.5.15",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.3",
     "@vercel/og": "^0.8.5",
     "astro": "^5.0.3",
     "astro-seo": "^0.8.4",
     "neverthrow": "^8.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "satori": "^0.18.3",
     "schema-dts": "^1.1.2",
     "sharp": "^0.33.5",
@@ -32,8 +36,10 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.13",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2"
+    "@types/bun": "^1.1.13"
+  },
+  "resolutions": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }

@@ -4,10 +4,12 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 import tailwind from '@astrojs/tailwind';
+import keystatic from '@keystatic/astro';
 
 export default defineConfig({
   site: 'https://weyl.ai',
   integrations: [
+    keystatic(),
     starlight({
       title: 'Weyl',
       logo: {
