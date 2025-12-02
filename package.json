@@ -5,14 +5,15 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "bun run generate:og && astro check && astro build",
-    "generate:og": "bun run scripts/generate-og-images.ts",
+    "build": "astro check && astro build",
+    "generate:og": "bun scripts/generate-og-images.ts",
     "build:fonts": "./scripts/build-fonts.sh",
     "preview": "astro preview",
     "check": "astro check"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/markdoc": "^0.15.9",
     "@astrojs/mdx": "^4.0.0",
     "@astrojs/react": "^4.0.0",
     "@astrojs/sitemap": "^3.2.1",
