@@ -8,7 +8,7 @@ import keystatic from '@keystatic/astro';
 import vercel from '@astrojs/vercel';
 
 export default defineConfig({
-  site: 'https://weyl.ai',
+  site: 'https://weyl-website.vercel.app',
   output: 'server',
   trailingSlash: 'always',
   adapter: vercel({

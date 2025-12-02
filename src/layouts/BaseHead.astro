@@ -23,7 +23,7 @@ const {
   modifiedTime,
 } = Astro.props;
 
-const siteUrl = 'https://weyl.ai';
+const siteUrl = Astro.site?.href || 'https://weyl-website.vercel.app';
 const fullTitle = title === 'Weyl' ? title : `${title} | Weyl`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, siteUrl).href;
 
