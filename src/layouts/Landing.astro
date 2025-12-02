@@ -5,6 +5,7 @@ import JsonLd from '@components/seo/JsonLd.astro';
 import CalendlyBadge from '@components/ui/CalendlyBadge.astro';
 import LandingNav from '@components/landing/LandingNav.astro';
 import LandingFooter from '@components/landing/LandingFooter.astro';
+import SpeedInsights from '@/components/analytics/SpeedInsights.astro';
 import { organizationSchema, websiteSchema } from '@lib/seo/schema';
 
 // Import global styles
@@ -35,6 +36,7 @@ const {
     <slot />
     <LandingFooter />
     <CalendlyBadge />
+    <SpeedInsights />
   </body>
 </html>
 
