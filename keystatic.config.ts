@@ -5,8 +5,8 @@ export default config({
   storage: {
     kind: 'github',
     repo: {
-      owner: 'weyl-ai', // TODO: Update this to your actual GitHub org/username
-      name: 'weyl-website', // TODO: Update this to your actual repo name
+      owner: 'weyl-ai',
+      name: 'weyl-website',
     },
   },
   
