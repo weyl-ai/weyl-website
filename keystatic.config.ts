@@ -1,5 +1,5 @@
 // keystatic.config.ts
-// Weyl CMS Configuration
+// Weyl CMS Configuration for GitHub mode
 import { config, fields, collection } from '@keystatic/core';
 
 export default config({
