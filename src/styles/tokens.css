@@ -51,9 +51,9 @@
   --color-border-default: #21262d;
   --color-border-hover: #54aeff;
   
-  /* Typography */
-  --font-mono: 'Iosevka', 'Berkeley Mono', 'SF Mono', monospace;
-  --font-display: 'Aldrich', 'Orbitron', sans-serif;
+  /* Typography - Optimized fallback stack */
+  --font-mono: 'Iosevka Web', 'Iosevka', ui-monospace, 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  --font-display: 'Aldrich Web', 'Aldrich', 'Orbitron', ui-sans-serif, system-ui, sans-serif;
   
   /* Scale */
   --text-hero: 3rem;         /* 48px */

@@ -1,6 +1,7 @@
 /* Global styles */
 
-@import '@fontsource/iosevka';
+/* Import optimized self-hosted fonts */
+@import './fonts.css';
 
 @tailwind base;
 @tailwind components;
@@ -19,6 +20,21 @@
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Prevent font flash during view transitions */
+  html::view-transition-old(root),
+  html::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  
+  /* Force font loading to complete before transition */
+  @supports (font-display: optional) {
+    html {
+      font-synthesis: none;
+    }
   }
 
   body {

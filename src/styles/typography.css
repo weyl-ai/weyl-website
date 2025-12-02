@@ -1,6 +1,6 @@
 /* Typography scale and utilities */
 
-@import url('https://fonts.googleapis.com/css2?family=Aldrich&display=swap');
+/* Aldrich already loaded via BaseHead.astro with font-display: optional */
 
 /* === TYPE SCALE === */
 
