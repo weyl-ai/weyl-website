@@ -1,0 +1,383 @@
+---
+// src/pages/brand.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+const logoAssets = [
+  {
+    name: 'Full Logo (Blue)',
+    filename: 'weyl-full-logo-blue.svg',
+    description: 'Primary logo with wordmark, blue monotile on dark backgrounds',
+    preview: '/brand/weyl-full-logo-blue.svg',
+    download: '/brand/weyl-full-logo-blue.svg',
+  },
+  {
+    name: 'Monotile (Blue)',
+    filename: 'weyl-monotile-blue.svg',
+    description: 'Icon-only mark, blue version for dark backgrounds',
+    preview: '/brand/weyl-monotile-blue.svg',
+    download: '/brand/weyl-monotile-blue.svg',
+  },
+  {
+    name: 'Full Logo (White)',
+    filename: 'weyl-full-logo-white.svg',
+    description: 'Primary logo with wordmark, white version for colored backgrounds',
+    preview: '/brand/weyl-full-logo-white.svg',
+    download: '/brand/weyl-full-logo-white.svg',
+  },
+  {
+    name: 'Monotile (White)',
+    filename: 'weyl-monotile-white.svg',
+    description: 'Icon-only mark, white version for colored backgrounds',
+    preview: '/brand/weyl-monotile-white.svg',
+    download: '/brand/weyl-monotile-white.svg',
+  },
+  {
+    name: 'Full Logo (Black)',
+    filename: 'weyl-full-logo-black.svg',
+    description: 'Primary logo with wordmark, black version for light backgrounds',
+    preview: '/brand/weyl-full-logo-black.svg',
+    download: '/brand/weyl-full-logo-black.svg',
+  },
+  {
+    name: 'Monotile (Black)',
+    filename: 'weyl-monotile-black.svg',
+    description: 'Icon-only mark, black version for light backgrounds',
+    preview: '/brand/weyl-monotile-black.svg',
+    download: '/brand/weyl-monotile-black.svg',
+  },
+];
+
+const colors = [
+  { name: 'Brand Primary', value: '#54aeff', usage: 'Primary brand color, links, interactive elements' },
+  { name: 'Brand Hover', value: '#8ecbff', usage: 'Hover states, highlights' },
+  { name: 'Background Primary', value: '#090b0e', usage: 'Main background' },
+  { name: 'Background Surface', value: '#13161a', usage: 'Cards, elevated surfaces' },
+  { name: 'Text Primary', value: '#e6f7ff', usage: 'Headlines, primary text' },
+  { name: 'Text Secondary', value: '#c9d1d9', usage: 'Body text' },
+  { name: 'Text Muted', value: '#8b949e', usage: 'Captions, secondary information' },
+  { name: 'Success', value: '#3fb950', usage: 'Nominal states, confirmations' },
+  { name: 'Warning', value: '#ffa657', usage: 'Caution, threshold alerts' },
+  { name: 'Error', value: '#ff7b72', usage: 'Critical states, errors' },
+  { name: 'Violet', value: '#a371f7', usage: 'Accent, highlights' },
+  { name: 'Gold', value: '#f0c020', usage: 'Feature emphasis, achievements' },
+];
+
+const fonts = [
+  { 
+    name: 'Iosevka', 
+    role: 'Primary Mono', 
+    usage: 'Body text, data display, code',
+    fallback: 'Berkeley Mono, SF Mono, JetBrains Mono, monospace'
+  },
+  { 
+    name: 'Aldrich', 
+    role: 'Display', 
+    usage: 'Headlines, hero text, section headers',
+    fallback: 'Orbitron, sans-serif'
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead 
+      title="Brand Kit" 
+      description="Weyl AI brand guidelines, logo downloads, and design resources"
+    />
+    <style>
+      .color-swatch {
+        width: 100%;
+        height: 80px;
+        border-radius: 4px;
+        border: 1px solid var(--color-border-default);
+      }
+      .logo-preview {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 120px;
+      }
+      .logo-preview.dark {
+        background: var(--color-bg-primary);
+      }
+      .logo-preview.light {
+        background: var(--color-bg-primary);
+      }
+      .logo-preview.black {
+        background: #ffffff;
+      }
+      .logo-preview img {
+        max-width: 200px;
+        max-height: 80px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body class="bg-bg-primary min-h-screen">
+    <LandingNav />
+    <main class="max-w-5xl mx-auto px-6 py-24 pt-32">
+      <header class="mb-16">
+        <h1 class="font-display text-hero font-semibold tracking-widest text-brand-primary mb-4">
+          // BRAND KIT
+        </h1>
+        <p class="font-mono text-body text-text-secondary max-w-2xl">
+          Official brand assets, guidelines, and design resources for Weyl AI. 
+          Use these assets when referencing or integrating with Weyl.
+        </p>
+      </header>
+
+      <!-- Philosophy Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Design Philosophy
+        </h2>
+        <div class="prose prose-invert max-w-none font-mono text-body text-text-secondary space-y-4">
+          <p>
+            Weyl's visual identity embodies <strong>hypermodern</strong> design principles—where 
+            technical precision meets aesthetic clarity. Our design language draws inspiration from 
+            terminal interfaces, data visualization, and the mathematical elegance of Hermann Weyl's work.
+          </p>
+          <blockquote class="border-l-4 border-brand-primary pl-4 text-text-muted italic">
+            "The terminal doesn't lie. The terminal doesn't comfort."
+          </blockquote>
+          <p>
+            Every element communicates data integrity. Monospace typography enforces alignment and 
+            scannability. The <code>//</code> convention references programming comments, creating 
+            visual rhythm and indicating machine-readable segments.
+          </p>
+        </div>
+      </section>
+
+      <!-- Logo Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Logo Assets
+        </h2>
+        <p class="font-mono text-body text-text-secondary mb-8">
+          Download official Weyl logos in SVG format. Use the blue version on dark backgrounds 
+          and the white version on colored or light backgrounds.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {logoAssets.map((asset) => (
+            <div class="bg-bg-surface border border-border rounded-lg p-6">
+              <div class={`logo-preview mb-4 ${asset.filename.includes('black') ? 'black' : asset.filename.includes('white') ? 'light' : 'dark'}`}>
+                <img src={asset.preview} alt={asset.name} />
+              </div>
+              <h3 class="font-mono text-subhead font-semibold text-text-primary mb-2">
+                {asset.name}
+              </h3>
+              <p class="font-mono text-small text-text-muted mb-4">
+                {asset.description}
+              </p>
+              <a 
+                href={asset.download}
+                download={asset.filename}
+                class="inline-flex items-center gap-2 font-mono text-small text-brand-primary hover:text-brand-hover transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download SVG
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- The Monotile Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // The Monotile
+        </h2>
+        <div class="prose prose-invert max-w-none font-mono text-body text-text-secondary space-y-4">
+          <p>
+            Our logo is based on the <strong>monotile</strong>—a mathematical shape that can tile 
+            the plane aperiodically without repetition. Discovered in 2023, it represents the 
+            intersection of mathematical elegance and computational possibility.
+          </p>
+          <p>
+            The monotile symbolizes Weyl's approach: finding elegant solutions to complex problems 
+            through mathematical rigor. Like Hermann Weyl's contributions to group theory that 
+            underpin modern deep learning, the monotile represents patterns that emerge from 
+            fundamental principles.
+          </p>
+        </div>
+      </section>
+
+      <!-- Colors Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Color Palette
+        </h2>
+        <p class="font-mono text-body text-text-secondary mb-8">
+          Our hypermodern color system uses semantic colors that encode meaning. 
+          Colors indicate state, hierarchy, and importance.
+        </p>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {colors.map((color) => (
+            <div class="bg-bg-surface border border-border rounded-lg p-4">
+              <div class="color-swatch mb-3" style={`background-color: ${color.value};`}></div>
+              <h4 class="font-mono text-small font-semibold text-text-primary mb-1">
+                {color.name}
+              </h4>
+              <code class="font-mono text-caption text-brand-primary block mb-2">
+                {color.value}
+              </code>
+              <p class="font-mono text-caption text-text-muted">
+                {color.usage}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Typography Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Typography
+        </h2>
+        <p class="font-mono text-body text-text-secondary mb-8">
+          Typography is epistemology made visible. Our monospace-first approach enforces 
+          data integrity—every character occupies the same width, making columns align, 
+          diffs visible, and data scannable.
+        </p>
+        
+        <div class="space-y-6">
+          {fonts.map((font) => (
+            <div class="bg-bg-surface border border-border rounded-lg p-6">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                <div>
+                  <h3 class="font-mono text-subhead font-semibold text-text-primary">
+                    {font.name}
+                  </h3>
+                  <span class="font-mono text-small text-brand-primary">
+                    {font.role}
+                  </span>
+                </div>
+                <code class="font-mono text-caption text-text-muted">
+                  {font.fallback}
+                </code>
+              </div>
+              <p class="font-mono text-body text-text-secondary mb-4">
+                {font.usage}
+              </p>
+              <div class="border-t border-border pt-4">
+                {font.name === 'Aldrich' ? (
+                  <p class="font-display text-headline text-text-primary">
+                    The quick brown fox jumps over the lazy dog
+                  </p>
+                ) : (
+                  <p class="font-mono text-body text-text-primary">
+                    The quick brown fox jumps over the lazy dog // 0123456789
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Type Scale Section -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Type Scale
+        </h2>
+        <div class="bg-bg-surface border border-border rounded-lg p-6 space-y-4">
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Hero / 48px</span>
+            <span class="font-display text-hero text-text-primary">// WEYL</span>
+          </div>
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Headline / 32px</span>
+            <span class="font-display text-headline text-text-primary">Section Header</span>
+          </div>
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Subhead / 24px</span>
+            <span class="font-mono text-subhead text-text-primary">Subsection Title</span>
+          </div>
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Body / 16px</span>
+            <span class="font-mono text-body text-text-secondary">Standard body text for reading</span>
+          </div>
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Small / 14px</span>
+            <span class="font-mono text-small text-text-secondary">Secondary information</span>
+          </div>
+          <div class="flex items-baseline gap-4">
+            <span class="font-mono text-caption text-text-muted w-24">Caption / 12px</span>
+            <span class="font-mono text-caption text-text-muted">Labels and captions</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Usage Guidelines -->
+      <section class="mb-16">
+        <h2 class="font-display text-headline font-semibold text-text-primary mb-6">
+          // Usage Guidelines
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-bg-surface border border-border rounded-lg p-6">
+            <h3 class="font-mono text-subhead font-semibold text-success mb-4">
+              ✓ Do
+            </h3>
+            <ul class="font-mono text-small text-text-secondary space-y-2">
+              <li>• Use the logo with adequate clear space</li>
+              <li>• Maintain aspect ratio when scaling</li>
+              <li>• Use blue logo on dark backgrounds</li>
+              <li>• Use white logo on colored backgrounds</li>
+              <li>• Reference Weyl in technical contexts</li>
+            </ul>
+          </div>
+          <div class="bg-bg-surface border border-border rounded-lg p-6">
+            <h3 class="font-mono text-subhead font-semibold text-error mb-4">
+              ✗ Don't
+            </h3>
+            <ul class="font-mono text-small text-text-secondary space-y-2">
+              <li>• Stretch or distort the logo</li>
+              <li>• Change the logo colors</li>
+              <li>• Add effects like shadows or gradients</li>
+              <li>• Place on busy or low-contrast backgrounds</li>
+              <li>• Recreate or modify the monotile shape</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section>
+        <div class="bg-bg-surface border border-border rounded-lg p-8 text-center">
+          <h2 class="font-display text-headline font-semibold text-text-primary mb-4">
+            // Questions?
+          </h2>
+          <p class="font-mono text-body text-text-secondary mb-6">
+            For brand inquiries, partnership requests, or press materials, reach out to us.
+          </p>
+          <a 
+            href="mailto:brand@weyl.ai"
+            class="inline-flex items-center gap-2 font-mono text-body text-brand-primary hover:text-brand-hover transition-colors"
+          >
+            brand@weyl.ai
+          </a>
+        </div>
+      </section>
+    </main>
+    <LandingFooter />
+  </body>
+</html>
+
