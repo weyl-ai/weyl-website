@@ -3,7 +3,7 @@ import { ImageResponse } from '@vercel/og';
 import type { APIRoute } from 'astro';
 import type { ReactElement } from 'react';
 
-export const prerender = true;
+export const prerender = false;
 
 export const GET: APIRoute = async ({ params, request }) => {
   const url = new URL(request.url);
@@ -200,13 +200,4 @@ export const GET: APIRoute = async ({ params, request }) => {
     }
   );
 };
-
-// Pre-render some common OG images at build time
-export function getStaticPaths() {
-  return [
-    { params: { slug: 'default' } },
-    { params: { slug: 'blog' } },
-    { params: { slug: 'docs' } },
-  ];
-}
 

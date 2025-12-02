@@ -15,7 +15,7 @@ interface Props {
 const { 
   title, 
   description, 
-  image = '/og/default.png',
+  image,
   canonicalUrl,
   noindex = false,
   type = 'website',
@@ -26,7 +26,10 @@ const {
 const siteUrl = 'https://weyl.ai';
 const fullTitle = title === 'Weyl' ? title : `${title} | Weyl`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, siteUrl).href;
-const ogImage = new URL(image, siteUrl).href;
+
+// Use dynamic OG image API if no custom image provided
+const defaultOgImage = `/api/og/default?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
+const ogImage = new URL(image ?? defaultOgImage, siteUrl).href;
 ---
 
 <meta charset="UTF-8" />

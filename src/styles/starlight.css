@@ -333,6 +333,19 @@ button[aria-controls="starlight__sidebar"],
   justify-content: center;
 }
 
+/* Hide mobile menu on desktop */
+@media (min-width: 50rem) {
+  .mobile-menu-toggle,
+  button[aria-controls="starlight__sidebar"],
+  .menu-button,
+  .mobile-starlight__sidebar,
+  .header button[aria-expanded],
+  .header button[aria-label*="menu" i],
+  .header button[aria-label*="navigation" i] {
+    display: none !important;
+  }
+}
+
 .mobile-menu-toggle:hover,
 button[aria-controls="starlight__sidebar"]:hover,
 .menu-button:hover {
