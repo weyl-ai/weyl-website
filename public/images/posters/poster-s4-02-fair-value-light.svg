@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e8e4d9" opacity="0.3"/>
+  
+  <!-- Subtle aging -->
+  <ellipse cx="150" cy="300" rx="200" ry="150" fill="#d4c9b0" opacity="0.12"/>
+  <ellipse cx="700" cy="800" rx="180" ry="200" fill="#c9b896" opacity="0.1"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner -->
+  <rect x="30" y="30" width="740" height="80" fill="#2d5a27"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="26" font-weight="900" letter-spacing="6">WEYL · FAIR VALUE BUREAU</text>
+  
+  <!-- Scale of justice illustration -->
+  <g transform="translate(400, 360)">
+    <!-- Central pillar -->
+    <rect x="-20" y="-120" width="40" height="280" fill="#1a1a1a"/>
+    <polygon points="-30,-120 30,-120 20,-100 -20,-100" fill="#1a1a1a"/>
+    
+    <!-- Base -->
+    <rect x="-100" y="150" width="200" height="20" fill="#1a1a1a"/>
+    
+    <!-- Beam (balanced) -->
+    <rect x="-220" y="-130" width="440" height="12" fill="#d4a017"/>
+    
+    <!-- Left pan: Cost -->
+    <g transform="translate(-180, -70)">
+      <line x1="0" y1="-60" x2="0" y2="0" stroke="#1a1a1a" stroke-width="4"/>
+      <ellipse cx="0" cy="10" rx="80" ry="20" fill="#1a1a1a"/>
+      <ellipse cx="0" cy="0" rx="80" ry="20" fill="#8b8b8b"/>
+      
+      <!-- Fair cost block -->
+      <rect x="-40" y="-60" width="80" height="50" fill="#2d5a27"/>
+      <text x="0" y="-30" fill="#f4f1eb" font-size="14" font-weight="700" text-anchor="middle">COST</text>
+      
+      <text x="0" y="55" fill="#1a1a1a" font-size="14" font-weight="700" text-anchor="middle">PRODUCER</text>
+    </g>
+    
+    <!-- Right pan: Price -->
+    <g transform="translate(180, -70)">
+      <line x1="0" y1="-60" x2="0" y2="0" stroke="#1a1a1a" stroke-width="4"/>
+      <ellipse cx="0" cy="10" rx="80" ry="20" fill="#1a1a1a"/>
+      <ellipse cx="0" cy="0" rx="80" ry="20" fill="#8b8b8b"/>
+      
+      <!-- Fair price block -->
+      <rect x="-40" y="-60" width="80" height="50" fill="#2d5a27"/>
+      <text x="0" y="-30" fill="#f4f1eb" font-size="14" font-weight="700" text-anchor="middle">PRICE</text>
+      
+      <text x="0" y="55" fill="#1a1a1a" font-size="14" font-weight="700" text-anchor="middle">CONSUMER</text>
+    </g>
+    
+    <!-- Equilibrium badge -->
+    <circle cx="0" cy="-130" r="35" fill="#d4a017"/>
+    <text x="0" y="-125" fill="#1a1a1a" font-size="11" font-weight="900" text-anchor="middle">FAIR</text>
+    <text x="0" y="-110" fill="#1a1a1a" font-size="11" font-weight="900" text-anchor="middle">VALUE</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="560" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">FAIR PRICE</text>
+  <text x="400" y="640" fill="#2d5a27" font-size="36" font-weight="400" text-anchor="middle" letter-spacing="4">— REFLECTS —</text>
+  <text x="400" y="740" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">FAIR COST</text>
+  
+  <!-- Institutional principles -->
+  <g transform="translate(100, 800)">
+    <rect x="0" y="0" width="600" height="120" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="300" y="30" fill="#1a5276" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="4">BUREAU PRINCIPLES</text>
+    <line x1="50" y1="45" x2="550" y2="45" stroke="#1a1a1a" stroke-width="1"/>
+    <text x="50" y="70" fill="#1a1a1a" font-size="12">I. Margins shall be transparent and justified</text>
+    <text x="50" y="90" fill="#1a1a1a" font-size="12">II. Efficiency gains shall pass to consumers</text>
+    <text x="50" y="110" fill="#1a1a1a" font-size="12">III. The common good takes precedence over extraction</text>
+  </g>
+  
+  <!-- Quote -->
+  <text x="400" y="960" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"In a well-ordered economy, price is a signal, not a weapon."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a1a1a"/>
+  <g transform="translate(55, 1010)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2;"/>
+  </g>
+  <text x="120" y="1038" fill="#f4f1eb" font-size="14" font-weight="600">WHAT IT COULD HAVE BEEN</text>
+  <text x="400" y="1055" fill="#c9b896" font-size="10" letter-spacing="4">WEYL RESEARCH DIVISION · ECONOMIC JUSTICE</text>
+  <text x="740" y="1055" fill="#f4f1eb" font-size="10" text-anchor="end">MCMLXV</text>
+</svg>

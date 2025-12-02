@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e8e4d9" opacity="0.3"/>
+  
+  <!-- Subtle aging -->
+  <ellipse cx="700" cy="300" rx="200" ry="150" fill="#d4c9b0" opacity="0.12"/>
+  <ellipse cx="100" cy="700" rx="180" ry="200" fill="#c9b896" opacity="0.1"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner -->
+  <rect x="30" y="30" width="740" height="80" fill="#1a5276"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="26" font-weight="900" letter-spacing="6">WEYL · PUBLIC WORKS</text>
+  
+  <!-- Building illustration: Public research facility -->
+  <g transform="translate(400, 350)">
+    <!-- Main building -->
+    <rect x="-200" y="-150" width="400" height="280" fill="#1a1a1a"/>
+    
+    <!-- Facade -->
+    <rect x="-180" y="-130" width="360" height="240" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    
+    <!-- Columns -->
+    <rect x="-160" y="-130" width="30" height="240" fill="#1a5276"/>
+    <rect x="-80" y="-130" width="30" height="240" fill="#1a5276"/>
+    <rect x="0" y="-130" width="30" height="240" fill="#1a5276"/>
+    <rect x="80" y="-130" width="30" height="240" fill="#1a5276"/>
+    <rect x="160" y="-130" width="30" height="240" fill="#1a5276"/>
+    
+    <!-- Pediment -->
+    <polygon points="-200,-150 0,-220 200,-150" fill="#1a1a1a"/>
+    <polygon points="-180,-150 0,-210 180,-150" fill="#d4a017"/>
+    
+    <!-- Central monotile in pediment -->
+    <use href="#monotile" x="-40" y="-200" width="80" height="55" 
+         style="fill: none; stroke: #1a1a1a; stroke-width: 3;"/>
+    
+    <!-- Windows (showing activity) -->
+    <g fill="#d4a017" opacity="0.8">
+      <rect x="-150" y="-100" width="40" height="50"/>
+      <rect x="-70" y="-100" width="40" height="50"/>
+      <rect x="10" y="-100" width="40" height="50"/>
+      <rect x="90" y="-100" width="40" height="50"/>
+      <rect x="-150" y="-20" width="40" height="50"/>
+      <rect x="-70" y="-20" width="40" height="50"/>
+      <rect x="10" y="-20" width="40" height="50"/>
+      <rect x="90" y="-20" width="40" height="50"/>
+    </g>
+    
+    <!-- Entrance -->
+    <rect x="-40" y="50" width="80" height="60" fill="#1a1a1a"/>
+    <text x="0" y="90" fill="#f4f1eb" font-size="10" font-weight="700" text-anchor="middle">OPEN</text>
+    
+    <!-- Steps -->
+    <rect x="-100" y="110" width="200" height="15" fill="#8b7355"/>
+    <rect x="-120" y="125" width="240" height="15" fill="#8b7355"/>
+    
+    <!-- People entering (simplified) -->
+    <circle cx="-60" cy="145" r="8" fill="#1a1a1a"/>
+    <rect x="-65" y="153" width="10" height="20" fill="#1a1a1a"/>
+    
+    <circle cx="0" cy="155" r="8" fill="#1a1a1a"/>
+    <rect x="-5" y="163" width="10" height="15" fill="#1a1a1a"/>
+    
+    <circle cx="50" cy="148" r="8" fill="#1a1a1a"/>
+    <rect x="45" y="156" width="10" height="18" fill="#1a1a1a"/>
+    
+    <!-- Sign -->
+    <rect x="-150" y="155" width="300" height="35" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="0" y="178" fill="#1a1a1a" font-size="12" font-weight="900" text-anchor="middle" letter-spacing="2">PUBLIC RESEARCH LABORATORY</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="590" fill="#1a1a1a" font-size="56" font-weight="900" text-anchor="middle" letter-spacing="2">THE PUBLIC</text>
+  <text x="400" y="680" fill="#1a5276" font-size="84" font-weight="900" text-anchor="middle" letter-spacing="2">LABORATORY</text>
+  <text x="400" y="760" fill="#1a1a1a" font-size="56" font-weight="900" text-anchor="middle" letter-spacing="2">FOR ALL</text>
+  
+  <!-- Principles -->
+  <g transform="translate(100, 810)">
+    <rect x="0" y="0" width="600" height="100" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="300" y="25" fill="#1a5276" font-size="12" font-weight="900" text-anchor="middle" letter-spacing="4">CHARTER OF ACCESS</text>
+    <line x1="50" y1="35" x2="550" y2="35" stroke="#1a1a1a" stroke-width="1"/>
+    <text x="50" y="55" fill="#1a1a1a" font-size="11">• Equipment available to every citizen</text>
+    <text x="50" y="75" fill="#1a1a1a" font-size="11">• Knowledge shared freely</text>
+    <text x="300" y="55" fill="#1a1a1a" font-size="11">• Training provided at no cost</text>
+    <text x="300" y="75" fill="#1a1a1a" font-size="11">• Discoveries belong to the commons</text>
+  </g>
+  
+  <!-- Quote -->
+  <text x="400" y="950" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"In a just society, the tools of discovery are not hoarded."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a1a1a"/>
+  <g transform="translate(55, 1010)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2;"/>
+  </g>
+  <text x="120" y="1038" fill="#f4f1eb" font-size="14" font-weight="600">WHAT IT COULD HAVE BEEN</text>
+  <text x="400" y="1055" fill="#c9b896" font-size="10" letter-spacing="4">WEYL RESEARCH DIVISION · PUBLIC ACCESS</text>
+  <text x="740" y="1055" fill="#f4f1eb" font-size="10" text-anchor="end">MCMLVIII</text>
+</svg>

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial Black', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e8e4d9" opacity="0.3"/>
+  
+  <!-- Subtle staining -->
+  <ellipse cx="650" cy="200" rx="200" ry="150" fill="#d4c9b0" opacity="0.2"/>
+  <ellipse cx="100" cy="900" rx="180" ry="200" fill="#c9b896" opacity="0.15"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner with monotile -->
+  <rect x="30" y="30" width="740" height="80" fill="#c41e3a"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5; stroke-linecap: butt; stroke-linejoin: miter;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="26" font-weight="900" letter-spacing="6">WEYL RESEARCH DIVISION</text>
+  
+  <!-- Main graphic: Scales/balance -->
+  <g transform="translate(400, 380)">
+    <!-- Central pillar -->
+    <rect x="-15" y="-80" width="30" height="280" fill="#1a1a1a"/>
+    <polygon points="-25,-80 25,-80 15,-60 -15,-60" fill="#1a1a1a"/>
+    
+    <!-- Balance beam -->
+    <rect x="-220" y="-90" width="440" height="12" fill="#1a1a1a" transform="rotate(-8)"/>
+    
+    <!-- Left pan (heavy - resources) -->
+    <g transform="translate(-180, 40)">
+      <line x1="0" y1="-130" x2="0" y2="0" stroke="#1a1a1a" stroke-width="3"/>
+      <ellipse cx="0" cy="10" rx="80" ry="20" fill="#1a1a1a"/>
+      <ellipse cx="0" cy="0" rx="80" ry="20" fill="#8b8b8b"/>
+      <rect x="-50" y="-60" width="40" height="40" fill="#c41e3a"/>
+      <rect x="-20" y="-70" width="40" height="50" fill="#c41e3a"/>
+      <rect x="10" y="-55" width="40" height="35" fill="#c41e3a"/>
+      <text x="0" y="55" fill="#1a1a1a" font-size="18" font-weight="700" text-anchor="middle">RESOURCES</text>
+    </g>
+    
+    <!-- Right pan (light - choices) -->
+    <g transform="translate(180, -30)">
+      <line x1="0" y1="-100" x2="0" y2="0" stroke="#1a1a1a" stroke-width="3"/>
+      <ellipse cx="0" cy="10" rx="80" ry="20" fill="#1a1a1a"/>
+      <ellipse cx="0" cy="0" rx="80" ry="20" fill="#8b8b8b"/>
+      <use href="#monotile" x="-40" y="-85" width="80" height="55" 
+           style="fill: none; stroke: #1a1a1a; stroke-width: 3;"/>
+      <text x="0" y="55" fill="#1a1a1a" font-size="18" font-weight="700" text-anchor="middle">CHOICES</text>
+    </g>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="680" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">CHOICES</text>
+  <text x="400" y="760" fill="#c41e3a" font-size="56" font-weight="900" text-anchor="middle" letter-spacing="4">DOMINATE</text>
+  <text x="400" y="840" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">RESOURCES</text>
+  
+  <!-- Subtext -->
+  <line x1="150" y1="890" x2="650" y2="890" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="400" y="940" fill="#1a1a1a" font-size="16" text-anchor="middle" font-style="italic">"The constraint you accept determines the solution you discover."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a1a1a"/>
+  <text x="400" y="1040" fill="#f4f1eb" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="6">OPTIMIZATION THROUGH CONSTRAINT</text>
+  
+  <!-- Corner markers -->
+  <rect x="50" y="130" width="30" height="4" fill="#c41e3a"/>
+  <rect x="50" y="130" width="4" height="30" fill="#c41e3a"/>
+  <rect x="720" y="130" width="30" height="4" fill="#c41e3a"/>
+  <rect x="746" y="130" width="4" height="30" fill="#c41e3a"/>
+</svg>

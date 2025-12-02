@@ -1,0 +1,49 @@
+---
+// src/pages/posters.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+import SpeedInsights from '@/components/analytics/SpeedInsights.astro';
+import { PosterGallery } from '@components/posters';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+const title = 'Propaganda Poster Gallery | Weyl';
+const description = 'Propaganda poster gallery — 20 posters across two epistemological modes: Hypermodern and Institutional.';
+const ogImage = '/og-default.png';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} image={ogImage} />
+  </head>
+  <body class="bg-bg-primary min-h-screen">
+    <LandingNav />
+    
+    <!-- Main content -->
+    <main class="pt-24 pb-16">
+      <div class="max-w-7xl mx-auto px-6">
+        <!-- Header -->
+        <header class="mb-12">
+          <h1 class="font-mono text-headline font-bold text-text-primary tracking-wide uppercase mb-4">
+            Digital Research Lab
+          </h1>
+          <p class="font-mono text-secondary text-text-secondary">
+            Propaganda poster gallery — 20 posters across two epistemological modes
+          </p>
+        </header>
+
+        <!-- Gallery component (client-side interactive) -->
+        <PosterGallery client:load />
+      </div>
+    </main>
+
+    <LandingFooter />
+    <SpeedInsights />
+  </body>
+</html>
+

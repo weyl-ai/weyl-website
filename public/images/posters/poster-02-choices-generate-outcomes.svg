@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial Black', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e0dcd0" opacity="0.4"/>
+  
+  <!-- Coffee ring stain -->
+  <circle cx="680" cy="950" r="60" fill="none" stroke="#c9b896" stroke-width="15" opacity="0.25"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner with monotile -->
+  <rect x="30" y="30" width="740" height="80" fill="#2d5a27"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="28" font-weight="900" letter-spacing="6">CAUSAL INFERENCE LAB</text>
+  
+  <!-- Main graphic: Flowchart/decision tree -->
+  <g transform="translate(400, 350)">
+    <!-- Root node: CHOICE as monotile -->
+    <rect x="-80" y="-180" width="160" height="60" fill="#1a1a1a"/>
+    <use href="#monotile" x="-30" y="-170" width="60" height="41" 
+         style="fill: rgba(244, 241, 235, 0.1); stroke: #f4f1eb; stroke-width: 2;"/>
+    
+    <!-- Branching lines -->
+    <line x1="0" y1="-120" x2="0" y2="-80" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="0" y1="-80" x2="-150" y2="-30" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="0" y1="-80" x2="150" y2="-30" stroke="#1a1a1a" stroke-width="4"/>
+    
+    <!-- Branch A -->
+    <circle cx="-150" cy="0" r="40" fill="#2d5a27"/>
+    <text x="-150" y="8" fill="#f4f1eb" font-size="16" font-weight="700" text-anchor="middle">A</text>
+    
+    <!-- Branch B -->
+    <circle cx="150" cy="0" r="40" fill="#2d5a27"/>
+    <text x="150" y="8" fill="#f4f1eb" font-size="16" font-weight="700" text-anchor="middle">B</text>
+    
+    <!-- More branches -->
+    <line x1="-150" y1="40" x2="-220" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+    <line x1="-150" y1="40" x2="-80" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+    <line x1="150" y1="40" x2="80" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+    <line x1="150" y1="40" x2="220" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+    
+    <!-- Outcome nodes -->
+    <rect x="-250" y="100" width="60" height="40" fill="#c41e3a"/>
+    <text x="-220" y="126" fill="#f4f1eb" font-size="12" font-weight="700" text-anchor="middle">O₁</text>
+    
+    <rect x="-110" y="100" width="60" height="40" fill="#c41e3a"/>
+    <text x="-80" y="126" fill="#f4f1eb" font-size="12" font-weight="700" text-anchor="middle">O₂</text>
+    
+    <rect x="50" y="100" width="60" height="40" fill="#c41e3a"/>
+    <text x="80" y="126" fill="#f4f1eb" font-size="12" font-weight="700" text-anchor="middle">O₃</text>
+    
+    <rect x="190" y="100" width="60" height="40" fill="#c41e3a"/>
+    <text x="220" y="126" fill="#f4f1eb" font-size="12" font-weight="700" text-anchor="middle">O₄</text>
+    
+    <!-- Arrows -->
+    <g fill="#1a1a1a">
+      <polygon points="-220,160 -230,145 -210,145"/>
+      <polygon points="-80,160 -90,145 -70,145"/>
+      <polygon points="80,160 70,145 90,145"/>
+      <polygon points="220,160 210,145 230,145"/>
+    </g>
+    
+    <text x="0" y="200" fill="#1a1a1a" font-size="20" font-weight="900" text-anchor="middle" letter-spacing="4">OUTCOMES</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="640" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">CHOICES</text>
+  <text x="400" y="720" fill="#2d5a27" font-size="56" font-weight="900" text-anchor="middle" letter-spacing="4">GENERATE</text>
+  <text x="400" y="800" fill="#1a1a1a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">OUTCOMES</text>
+  
+  <!-- Equation -->
+  <g transform="translate(400, 870)">
+    <text x="-120" y="0" fill="#1a1a1a" font-size="28" text-anchor="middle" font-style="italic">C</text>
+    <text x="-60" y="0" fill="#1a1a1a" font-size="28" text-anchor="middle">→</text>
+    <text x="0" y="0" fill="#1a1a1a" font-size="28" text-anchor="middle" font-style="italic">f(C)</text>
+    <text x="60" y="0" fill="#1a1a1a" font-size="28" text-anchor="middle">→</text>
+    <text x="120" y="0" fill="#1a1a1a" font-size="28" text-anchor="middle" font-style="italic">O</text>
+  </g>
+  
+  <text x="400" y="940" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"Every branch point is an opportunity for leverage."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a1a1a"/>
+  <text x="400" y="1040" fill="#f4f1eb" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="6">DETERMINISM IS A CHOICE</text>
+  
+  <!-- Registration marks -->
+  <circle cx="60" cy="970" r="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="52" y1="970" x2="68" y2="970" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="60" y1="962" x2="60" y2="978" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <circle cx="740" cy="970" r="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="732" y1="970" x2="748" y2="970" stroke="#1a1a1a" stroke-width="1"/>
+  <line x1="740" y1="962" x2="740" y2="978" stroke="#1a1a1a" stroke-width="1"/>
+</svg>

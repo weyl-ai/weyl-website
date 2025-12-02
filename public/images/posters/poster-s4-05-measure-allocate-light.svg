@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e8e4d9" opacity="0.3"/>
+  
+  <!-- Subtle aging -->
+  <ellipse cx="600" cy="300" rx="200" ry="150" fill="#d4c9b0" opacity="0.12"/>
+  <ellipse cx="150" cy="800" rx="180" ry="200" fill="#c9b896" opacity="0.1"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner -->
+  <rect x="30" y="30" width="740" height="80" fill="#8b7355"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="26" font-weight="900" letter-spacing="6">WEYL · STANDARDS BUREAU</text>
+  
+  <!-- Measurement illustration -->
+  <g transform="translate(400, 360)">
+    <!-- Drafting table -->
+    <rect x="-250" y="-120" width="500" height="280" fill="#1a1a1a"/>
+    <rect x="-230" y="-100" width="460" height="240" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    
+    <!-- Blueprint/graph paper effect -->
+    <g stroke="#1a5276" stroke-width="0.5" opacity="0.3">
+      <line x1="-230" y1="-60" x2="230" y2="-60"/>
+      <line x1="-230" y1="-20" x2="230" y2="-20"/>
+      <line x1="-230" y1="20" x2="230" y2="20"/>
+      <line x1="-230" y1="60" x2="230" y2="60"/>
+      <line x1="-230" y1="100" x2="230" y2="100"/>
+      <line x1="-170" y1="-100" x2="-170" y2="140"/>
+      <line x1="-110" y1="-100" x2="-110" y2="140"/>
+      <line x1="-50" y1="-100" x2="-50" y2="140"/>
+      <line x1="10" y1="-100" x2="10" y2="140"/>
+      <line x1="70" y1="-100" x2="70" y2="140"/>
+      <line x1="130" y1="-100" x2="130" y2="140"/>
+      <line x1="190" y1="-100" x2="190" y2="140"/>
+    </g>
+    
+    <!-- Ruler -->
+    <rect x="-220" y="-90" width="440" height="25" fill="#d4a017" stroke="#1a1a1a" stroke-width="2"/>
+    <g fill="#1a1a1a" font-size="8">
+      <line x1="-200" y1="-90" x2="-200" y2="-75" stroke="#1a1a1a" stroke-width="1"/>
+      <text x="-200" y="-78" text-anchor="middle">0</text>
+      <line x1="-100" y1="-90" x2="-100" y2="-75" stroke="#1a1a1a" stroke-width="1"/>
+      <text x="-100" y="-78" text-anchor="middle">10</text>
+      <line x1="0" y1="-90" x2="0" y2="-75" stroke="#1a1a1a" stroke-width="1"/>
+      <text x="0" y="-78" text-anchor="middle">20</text>
+      <line x1="100" y1="-90" x2="100" y2="-75" stroke="#1a1a1a" stroke-width="1"/>
+      <text x="100" y="-78" text-anchor="middle">30</text>
+      <line x1="200" y1="-90" x2="200" y2="-75" stroke="#1a1a1a" stroke-width="1"/>
+      <text x="200" y="-78" text-anchor="middle">40</text>
+    </g>
+    
+    <!-- Calipers -->
+    <g transform="translate(-100, 20)">
+      <rect x="-5" y="-50" width="10" height="100" fill="#1a1a1a"/>
+      <rect x="85" y="-50" width="10" height="100" fill="#1a1a1a"/>
+      <rect x="-5" y="-60" width="100" height="15" fill="#1a1a1a"/>
+      <circle cx="45" cy="-52" r="8" fill="#d4a017"/>
+      <text x="45" y="70" fill="#1a1a1a" font-size="12" font-weight="700" text-anchor="middle">MEASURED</text>
+    </g>
+    
+    <!-- Allocated stamp -->
+    <g transform="translate(100, 40)">
+      <rect x="-60" y="-30" width="120" height="60" fill="#2d5a27" stroke="#1a1a1a" stroke-width="2"/>
+      <text x="0" y="-5" fill="#f4f1eb" font-size="14" font-weight="900" text-anchor="middle">ALLOCATED</text>
+      <text x="0" y="15" fill="#f4f1eb" font-size="10" text-anchor="middle">CORRECTLY</text>
+    </g>
+    
+    <!-- Monotile as precision symbol -->
+    <use href="#monotile" x="-200" y="60" width="60" height="41" 
+         style="fill: none; stroke: #1a5276; stroke-width: 2;"/>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="570" fill="#1a1a1a" font-size="48" font-weight="300" text-anchor="middle" letter-spacing="4">MEASURE</text>
+  <text x="400" y="660" fill="#c41e3a" font-size="84" font-weight="900" text-anchor="middle" letter-spacing="2">TWICE</text>
+  <text x="400" y="750" fill="#1a1a1a" font-size="48" font-weight="300" text-anchor="middle" letter-spacing="4">ALLOCATE</text>
+  <text x="400" y="850" fill="#2d5a27" font-size="84" font-weight="900" text-anchor="middle" letter-spacing="2">ONCE</text>
+  
+  <!-- Principles -->
+  <g transform="translate(100, 890)">
+    <rect x="0" y="0" width="600" height="60" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="60" y="38" fill="#1a1a1a" font-size="12" font-weight="700">BUREAU MAXIM:</text>
+    <text x="190" y="38" fill="#1a1a1a" font-size="12" font-style="italic">Waste nothing. Account for everything. Precision serves purpose.</text>
+  </g>
+  
+  <!-- Quote -->
+  <text x="400" y="990" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"The careful allocation of resources is the foundation of prosperity."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="1010" width="740" height="60" fill="#1a1a1a"/>
+  <g transform="translate(55, 1022)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2;"/>
+  </g>
+  <text x="120" y="1048" fill="#f4f1eb" font-size="14" font-weight="600">PRECISION WITHOUT WASTE</text>
+  <text x="400" y="1055" fill="#c9b896" font-size="10" letter-spacing="4">WEYL RESEARCH · METROLOGY</text>
+  <text x="740" y="1055" fill="#f4f1eb" font-size="10" text-anchor="end">MCMLIX</text>
+</svg>

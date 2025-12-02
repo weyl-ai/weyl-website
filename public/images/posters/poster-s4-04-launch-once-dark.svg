@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Berkeley Mono', 'Iosevka', 'SF Mono', monospace;">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#090b0e"/>
+      <stop offset="100%" style="stop-color:#0d1117"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#21262d" stroke-width="0.5"/>
+    </pattern>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="1100" fill="url(#bgGrad)"/>
+  <rect width="800" height="1100" fill="url(#grid)" opacity="0.4"/>
+  
+  <!-- Corner marks -->
+  <path d="M 25 25 L 25 10 L 40 10" stroke="#f0c020" stroke-width="2" fill="none"/>
+  <path d="M 775 25 L 775 10 L 760 10" stroke="#f0c020" stroke-width="2" fill="none"/>
+  <path d="M 25 1075 L 25 1090 L 40 1090" stroke="#f0c020" stroke-width="2" fill="none"/>
+  <path d="M 775 1075 L 775 1090 L 760 1090" stroke="#f0c020" stroke-width="2" fill="none"/>
+  
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(240, 192, 32, 0.1); stroke: #f0c020; stroke-width: 2;" filter="url(#softGlow)"/>
+    <text x="58" y="25" fill="#f0c020" font-size="14" font-weight="600" letter-spacing="4">WEYL</text>
+    <text x="115" y="25" fill="#484f58" font-size="14" font-weight="300" letter-spacing="2">PERSISTENT KERNEL</text>
+  </g>
+  <text x="750" y="53" fill="#30363d" font-size="11" text-anchor="end">004</text>
+  
+  <!-- Main graphic: Rocket/persistent launch -->
+  <g transform="translate(400, 360)">
+    <!-- Launch trajectory -->
+    <path d="M 0,180 C 0,100 0,0 0,-180" fill="none" stroke="#f0c020" stroke-width="4" filter="url(#glow)"/>
+    
+    <!-- Exhaust plume at bottom -->
+    <ellipse cx="0" cy="180" rx="60" ry="30" fill="#ff7b72" opacity="0.3"/>
+    <ellipse cx="0" cy="170" rx="40" ry="20" fill="#ffa657" opacity="0.5"/>
+    <ellipse cx="0" cy="160" rx="20" ry="10" fill="#f0c020" opacity="0.8"/>
+    
+    <!-- Monotile as the "rocket" -->
+    <g transform="translate(0, -100) rotate(-90)">
+      <use href="#monotile" x="-50" y="-34" width="100" height="68.6" 
+           style="fill: rgba(240, 192, 32, 0.3); stroke: #f0c020; stroke-width: 3;" filter="url(#glow)"/>
+    </g>
+    
+    <!-- "Never return" crossed path -->
+    <path d="M -150,180 L -80,80" fill="none" stroke="#ff7b72" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+    <text x="-170" y="190" fill="#ff7b72" font-size="9" opacity="0.7">per-token launch</text>
+    <text x="-60" y="75" fill="#ff7b72" font-size="16">✗</text>
+    
+    <path d="M 150,180 L 80,80" fill="none" stroke="#ff7b72" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+    <text x="100" y="190" fill="#ff7b72" font-size="9" opacity="0.7">CPU ping-pong</text>
+    <text x="70" y="75" fill="#ff7b72" font-size="16">✗</text>
+    
+    <!-- Status indicators along trajectory -->
+    <g fill="#3fb950" font-size="9">
+      <circle cx="30" cy="100" r="4"/>
+      <text x="45" y="104">stable occupancy</text>
+      
+      <circle cx="30" cy="50" r="4"/>
+      <text x="45" y="54">fewer stalls</text>
+      
+      <circle cx="30" cy="0" r="4"/>
+      <text x="45" y="4">tail latency ✓</text>
+      
+      <circle cx="30" cy="-50" r="4"/>
+      <text x="45" y="-46">less watt burn</text>
+    </g>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="600" fill="#6e7681" font-size="28" font-weight="300" text-anchor="middle" letter-spacing="4">WE</text>
+  <text x="400" y="680" fill="#f0c020" font-size="72" font-weight="800" text-anchor="middle" letter-spacing="-2" filter="url(#glow)">LAUNCH ONCE</text>
+  <text x="400" y="760" fill="#6e7681" font-size="28" font-weight="300" text-anchor="middle" letter-spacing="4">AND</text>
+  <text x="400" y="850" fill="#54aeff" font-size="72" font-weight="800" text-anchor="middle" letter-spacing="-2" filter="url(#glow)">NEVER COME</text>
+  <text x="400" y="930" fill="#54aeff" font-size="72" font-weight="800" text-anchor="middle" letter-spacing="-2" filter="url(#glow)">BACK</text>
+  
+  <!-- Code snippet -->
+  <rect x="100" y="960" width="600" height="50" rx="4" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+  <text x="130" y="990" fill="#a371f7" font-size="11">while</text>
+  <text x="175" y="990" fill="#8b949e" font-size="11">(!srv-&gt;shutdown()) { pipeline_token(model, kv, r); }</text>
+  
+  <!-- Footer -->
+  <rect x="50" y="1020" width="700" height="45" rx="4" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+  <g transform="translate(70, 1028)">
+    <use href="#monotile" x="0" y="0" width="36" height="24.7" 
+         style="fill: rgba(240, 192, 32, 0.1); stroke: #f0c020; stroke-width: 1.5;"/>
+  </g>
+  <text x="120" y="1050" fill="#8b949e" font-size="11">The GPU stops idling between 40-microsecond errands. We stop micromanaging from the CPU.</text>
+  
+  <text x="750" y="1080" fill="#21262d" font-size="9" text-anchor="end">2025</text>
+</svg>

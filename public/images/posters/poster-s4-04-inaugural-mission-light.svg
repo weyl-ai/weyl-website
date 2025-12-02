@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#e8e4d9" opacity="0.3"/>
+  
+  <!-- Subtle aging -->
+  <ellipse cx="200" cy="400" rx="200" ry="150" fill="#d4c9b0" opacity="0.1"/>
+  <ellipse cx="600" cy="800" rx="180" ry="200" fill="#c9b896" opacity="0.08"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner -->
+  <rect x="30" y="30" width="740" height="80" fill="#1a1a1a"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(212, 160, 23, 0.2); stroke: #d4a017; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#d4a017" font-size="26" font-weight="900" letter-spacing="6">WEYL · MISSION CONTROL</text>
+  
+  <!-- Rocket illustration (vintage style) -->
+  <g transform="translate(400, 380)">
+    <!-- Launch pad -->
+    <rect x="-150" y="130" width="300" height="30" fill="#8b7355"/>
+    <rect x="-120" y="100" width="240" height="30" fill="#1a1a1a"/>
+    
+    <!-- Support tower -->
+    <rect x="-140" y="-100" width="20" height="200" fill="#1a5276"/>
+    <rect x="120" y="-100" width="20" height="200" fill="#1a5276"/>
+    <rect x="-140" y="-100" width="280" height="10" fill="#1a5276"/>
+    <rect x="-140" y="0" width="280" height="10" fill="#1a5276"/>
+    
+    <!-- Rocket body -->
+    <rect x="-50" y="-120" width="100" height="200" fill="#f4f1eb" stroke="#1a1a1a" stroke-width="3"/>
+    
+    <!-- Nose cone -->
+    <polygon points="0,-200 -50,-120 50,-120" fill="#c41e3a" stroke="#1a1a1a" stroke-width="3"/>
+    
+    <!-- Monotile emblem on rocket -->
+    <use href="#monotile" x="-30" y="-60" width="60" height="41" 
+         style="fill: none; stroke: #1a5276; stroke-width: 2;"/>
+    
+    <!-- Fins -->
+    <polygon points="-50,80 -90,100 -50,40" fill="#1a5276" stroke="#1a1a1a" stroke-width="2"/>
+    <polygon points="50,80 90,100 50,40" fill="#1a5276" stroke="#1a1a1a" stroke-width="2"/>
+    
+    <!-- Exhaust -->
+    <ellipse cx="0" cy="90" rx="30" ry="15" fill="#d4a017"/>
+    <ellipse cx="0" cy="95" rx="20" ry="10" fill="#c41e3a"/>
+    
+    <!-- "ONE MISSION" badge -->
+    <circle cx="0" cy="0" r="25" fill="#d4a017" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="0" y="5" fill="#1a1a1a" font-size="8" font-weight="900" text-anchor="middle">ONE</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="590" fill="#1a1a1a" font-size="48" font-weight="300" text-anchor="middle" letter-spacing="4">THE</text>
+  <text x="400" y="680" fill="#c41e3a" font-size="72" font-weight="900" text-anchor="middle" letter-spacing="2">INAUGURAL</text>
+  <text x="400" y="780" fill="#1a1a1a" font-size="84" font-weight="900" text-anchor="middle" letter-spacing="2">MISSION</text>
+  
+  <!-- Mission statement -->
+  <g transform="translate(100, 830)">
+    <rect x="0" y="0" width="600" height="80" fill="#1a1a1a"/>
+    <text x="300" y="30" fill="#d4a017" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="4">MISSION PARAMETERS</text>
+    <text x="50" y="55" fill="#f4f1eb" font-size="11">LAUNCH: ONCE</text>
+    <text x="200" y="55" fill="#f4f1eb" font-size="11">RETURN: NEVER</text>
+    <text x="350" y="55" fill="#f4f1eb" font-size="11">COMMITMENT: TOTAL</text>
+    <text x="500" y="55" fill="#f4f1eb" font-size="11">OBJECTIVE: ✓</text>
+  </g>
+  
+  <!-- Quote -->
+  <text x="400" y="950" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"We choose to go not because it is easy, but because the return is unacceptable."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a5276"/>
+  <g transform="translate(55, 1010)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2;"/>
+  </g>
+  <text x="120" y="1038" fill="#f4f1eb" font-size="14" font-weight="600">DECISIVE ACTION · SINGULAR PURPOSE</text>
+  <text x="400" y="1055" fill="#b0e1ff" font-size="10" letter-spacing="4">WEYL AEROSPACE DIVISION · LAUNCH AUTHORITY</text>
+  <text x="740" y="1055" fill="#f4f1eb" font-size="10" text-anchor="end">MCMLXIX</text>
+</svg>

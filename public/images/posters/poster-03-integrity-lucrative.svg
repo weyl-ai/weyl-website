@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Helvetica Neue', 'Arial Black', sans-serif;">
+  <defs>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Aged cream background -->
+  <rect width="800" height="1100" fill="#f4f1eb"/>
+  <rect width="800" height="1100" fill="#ebe7db" opacity="0.5"/>
+  
+  <!-- Age spots -->
+  <circle cx="120" cy="300" r="40" fill="#d4c9b0" opacity="0.2"/>
+  <circle cx="700" cy="700" r="55" fill="#c9b896" opacity="0.15"/>
+  
+  <!-- Border -->
+  <rect x="30" y="30" width="740" height="1040" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="40" y="40" width="720" height="1020" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  
+  <!-- Top banner with monotile -->
+  <rect x="30" y="30" width="740" height="80" fill="#1a5276"/>
+  <g transform="translate(55, 42)">
+    <use href="#monotile" x="0" y="0" width="72" height="49.5" 
+         style="fill: rgba(244, 241, 235, 0.15); stroke: #f4f1eb; stroke-width: 2.5;"/>
+  </g>
+  <text x="145" y="82" fill="#f4f1eb" font-size="28" font-weight="900" letter-spacing="8">ECONOMICS DIVISION</text>
+  
+  <!-- Main graphic: Upward graph -->
+  <g transform="translate(400, 380)">
+    <!-- Graph axes -->
+    <line x1="-250" y1="150" x2="-250" y2="-150" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="-250" y1="150" x2="250" y2="150" stroke="#1a1a1a" stroke-width="4"/>
+    
+    <!-- Axis arrows -->
+    <polygon points="-250,-150 -260,-130 -240,-130" fill="#1a1a1a"/>
+    <polygon points="250,150 230,140 230,160" fill="#1a1a1a"/>
+    
+    <!-- Axis labels -->
+    <text x="-280" y="0" fill="#1a1a1a" font-size="14" font-weight="700" text-anchor="middle" transform="rotate(-90, -280, 0)">RETURNS</text>
+    <text x="0" y="190" fill="#1a1a1a" font-size="14" font-weight="700" text-anchor="middle">TIME</text>
+    
+    <!-- Low integrity path (dashed, peaks then crashes) -->
+    <path d="M -230,130 Q -150,100 -80,0 Q -20,-80 40,-60 Q 100,-40 160,120 L 220,140" 
+          fill="none" stroke="#8b8b8b" stroke-width="3" stroke-dasharray="10,5"/>
+    <text x="180" y="100" fill="#8b8b8b" font-size="11" font-style="italic">low integrity</text>
+    
+    <!-- High integrity path (solid, steady upward) -->
+    <path d="M -230,130 Q -100,110 0,50 Q 100,-10 200,-130" 
+          fill="none" stroke="#1a5276" stroke-width="5"/>
+    
+    <!-- Endpoint with monotile -->
+    <use href="#monotile" x="175" y="-165" width="50" height="34" 
+         style="fill: #c41e3a; stroke: #1a1a1a; stroke-width: 2;"/>
+    
+    <text x="200" y="-180" fill="#1a5276" font-size="12" font-weight="700" text-anchor="middle">HIGH INTEGRITY</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="620" fill="#1a1a1a" font-size="42" font-weight="900" text-anchor="middle" letter-spacing="2">HIGH INTEGRITY</text>
+  <text x="400" y="680" fill="#1a1a1a" font-size="42" font-weight="900" text-anchor="middle" letter-spacing="2">BEHAVIOR</text>
+  
+  <text x="400" y="770" fill="#1a5276" font-size="28" font-weight="400" text-anchor="middle" letter-spacing="2">— IS —</text>
+  
+  <text x="400" y="870" fill="#c41e3a" font-size="96" font-weight="900" text-anchor="middle" letter-spacing="-2">LUCRATIVE</text>
+  
+  <!-- Supporting text -->
+  <line x1="150" y1="910" x2="650" y2="910" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="400" y="950" fill="#1a1a1a" font-size="14" text-anchor="middle" font-style="italic">"Reputation compounds. Shortcuts don't."</text>
+  
+  <!-- Bottom banner -->
+  <rect x="30" y="990" width="740" height="80" fill="#1a1a1a"/>
+  <text x="400" y="1040" fill="#f4f1eb" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="6">LONG-TERM THINKING IS ALPHA</text>
+  
+  <!-- Decorative elements -->
+  <rect x="60" y="130" width="80" height="8" fill="#1a5276"/>
+  <rect x="660" y="130" width="80" height="8" fill="#1a5276"/>
+  
+  <!-- Dollar signs as subtle watermark -->
+  <text x="150" y="550" fill="#1a1a1a" font-size="200" font-weight="900" opacity="0.03">$</text>
+  <text x="500" y="450" fill="#1a1a1a" font-size="150" font-weight="900" opacity="0.03">$</text>
+</svg>

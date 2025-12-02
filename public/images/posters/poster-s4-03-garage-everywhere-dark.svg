@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" style="font-family: 'Berkeley Mono', 'Iosevka', 'SF Mono', monospace;">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#090b0e"/>
+      <stop offset="100%" style="stop-color:#0d1117"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#21262d" stroke-width="0.5"/>
+    </pattern>
+    <symbol id="monotile" viewBox="0 0 96.006653 65.823639">
+      <path d="m 18.003326,18.003326 v 20 l -17.3203124,10 10.0000004,17.320312 h 40 l 10,-17.320312 17.320312,10 17.32031,-10 -9.999998,-17.320312 h -20 v -20 L 48.003326,0.6830136 l -10,17.3203124 z"/>
+    </symbol>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="1100" fill="url(#bgGrad)"/>
+  <rect width="800" height="1100" fill="url(#grid)" opacity="0.4"/>
+  
+  <!-- Corner marks -->
+  <path d="M 25 25 L 25 10 L 40 10" stroke="#a371f7" stroke-width="2" fill="none"/>
+  <path d="M 775 25 L 775 10 L 760 10" stroke="#a371f7" stroke-width="2" fill="none"/>
+  <path d="M 25 1075 L 25 1090 L 40 1090" stroke="#a371f7" stroke-width="2" fill="none"/>
+  <path d="M 775 1075 L 775 1090 L 760 1090" stroke="#a371f7" stroke-width="2" fill="none"/>
+  
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <use href="#monotile" x="0" y="0" width="48" height="33" 
+         style="fill: rgba(163, 113, 247, 0.1); stroke: #a371f7; stroke-width: 2;" filter="url(#softGlow)"/>
+    <text x="58" y="25" fill="#a371f7" font-size="14" font-weight="600" letter-spacing="4">WEYL</text>
+    <text x="115" y="25" fill="#484f58" font-size="14" font-weight="300" letter-spacing="2">DEMOCRATIZED COMPUTE</text>
+  </g>
+  <text x="750" y="53" fill="#30363d" font-size="11" text-anchor="end">003</text>
+  
+  <!-- Main graphic: Global network of garages -->
+  <g transform="translate(400, 340)">
+    <!-- Globe outline -->
+    <circle cx="0" cy="0" r="180" fill="none" stroke="#21262d" stroke-width="2"/>
+    <ellipse cx="0" cy="0" rx="180" ry="60" fill="none" stroke="#21262d" stroke-width="1"/>
+    <ellipse cx="0" cy="0" rx="130" ry="180" fill="none" stroke="#21262d" stroke-width="1"/>
+    
+    <!-- Nodes (garages) scattered around -->
+    <g fill="#a371f7" filter="url(#softGlow)">
+      <circle cx="-120" cy="-80" r="8"/>
+      <circle cx="80" cy="-120" r="8"/>
+      <circle cx="150" cy="-30" r="8"/>
+      <circle cx="100" cy="90" r="8"/>
+      <circle cx="-80" cy="110" r="8"/>
+      <circle cx="-150" cy="20" r="8"/>
+      <circle cx="0" cy="-150" r="8"/>
+      <circle cx="-40" cy="60" r="8"/>
+      <circle cx="40" cy="-40" r="8"/>
+    </g>
+    
+    <!-- Connection lines -->
+    <g stroke="#a371f7" stroke-width="1" opacity="0.3">
+      <line x1="-120" y1="-80" x2="80" y2="-120"/>
+      <line x1="80" y1="-120" x2="150" y2="-30"/>
+      <line x1="150" y1="-30" x2="100" y2="90"/>
+      <line x1="100" y1="90" x2="-80" y2="110"/>
+      <line x1="-80" y1="110" x2="-150" y2="20"/>
+      <line x1="-150" y1="20" x2="-120" y2="-80"/>
+      <line x1="0" y1="-150" x2="40" y2="-40"/>
+      <line x1="40" y1="-40" x2="-40" y2="60"/>
+      <line x1="-40" y1="60" x2="-120" y2="-80"/>
+    </g>
+    
+    <!-- Central monotile -->
+    <use href="#monotile" x="-40" y="-28" width="80" height="55" 
+         style="fill: rgba(163, 113, 247, 0.2); stroke: #a371f7; stroke-width: 2;" filter="url(#glow)"/>
+    
+    <!-- Labels -->
+    <text x="-120" y="-95" fill="#484f58" font-size="8" text-anchor="middle">4090</text>
+    <text x="80" y="-135" fill="#484f58" font-size="8" text-anchor="middle">RTX6000</text>
+    <text x="165" y="-30" fill="#484f58" font-size="8" text-anchor="start">3090</text>
+    <text x="100" y="110" fill="#484f58" font-size="8" text-anchor="middle">5090</text>
+    <text x="-80" y="130" fill="#484f58" font-size="8" text-anchor="middle">A6000</text>
+    <text x="-170" y="20" fill="#484f58" font-size="8" text-anchor="end">4080</text>
+  </g>
+  
+  <!-- Main text -->
+  <text x="400" y="580" fill="#6e7681" font-size="36" font-weight="300" text-anchor="middle" letter-spacing="6">THE</text>
+  <text x="400" y="670" fill="#a371f7" font-size="84" font-weight="800" text-anchor="middle" letter-spacing="-2" filter="url(#glow)">GARAGE</text>
+  <text x="400" y="750" fill="#6e7681" font-size="36" font-weight="300" text-anchor="middle" letter-spacing="6">IS EVERYWHERE</text>
+  <text x="400" y="840" fill="#3fb950" font-size="84" font-weight="800" text-anchor="middle" letter-spacing="-2" filter="url(#glow)">NOW</text>
+  
+  <!-- Subtext -->
+  <g transform="translate(400, 900)">
+    <line x1="-300" y1="0" x2="300" y2="0" stroke="#21262d" stroke-width="1"/>
+    <text x="0" y="35" fill="#484f58" font-size="11" text-anchor="middle">While we romanticized "local LLMs," the real revolution happened in ComfyUI workflows:</text>
+    <text x="0" y="55" fill="#484f58" font-size="11" text-anchor="middle">teenagers building credible VFX on gaming cards.</text>
+  </g>
+  
+  <!-- Culture statement -->
+  <rect x="100" y="970" width="600" height="35" rx="4" fill="#161b22" stroke="#a371f7" stroke-width="1"/>
+  <text x="400" y="993" fill="#a371f7" font-size="12" font-weight="600" text-anchor="middle" letter-spacing="2">SHARE WEIGHTS · PIN LAYOUTS · FUSE WHAT YOU CAN · SHIP</text>
+  
+  <!-- Footer -->
+  <rect x="50" y="1020" width="700" height="45" rx="4" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+  <g transform="translate(70, 1028)">
+    <use href="#monotile" x="0" y="0" width="36" height="24.7" 
+         style="fill: rgba(163, 113, 247, 0.1); stroke: #a371f7; stroke-width: 1.5;"/>
+  </g>
+  <text x="120" y="1050" fill="#8b949e" font-size="11">A culture formed. s4 borrows that discipline for text, audio, and video inference.</text>
+  
+  <text x="750" y="1080" fill="#21262d" font-size="9" text-anchor="end">2025</text>
+</svg>
