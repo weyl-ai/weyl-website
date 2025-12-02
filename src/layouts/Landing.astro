@@ -22,12 +22,15 @@ const {
   title = 'Weyl',
   description = 'The render layer for generative media. Inference infrastructure for diffusion models with sub-100ms latency.',
 } = Astro.props;
+
+// Default OG image for landing page
+const ogImage = '/og-default.png';
 ---
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <BaseHead title={title} description={description} />
+    <BaseHead title={title} description={description} image={ogImage} />
     <JsonLd schema={organizationSchema} />
     <JsonLd schema={websiteSchema} />
   </head>

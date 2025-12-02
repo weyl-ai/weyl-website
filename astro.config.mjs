@@ -128,6 +128,7 @@ export default defineConfig({
         Banner: './src/components/overrides/Banner.astro',
         ThemeSelect: './src/components/overrides/ThemeSelect.astro',
         SocialIcons: './src/components/overrides/SocialIcons.astro',
+        Head: './src/components/overrides/Head.astro',
       },
       expressiveCode: {
         themes: ['github-dark', 'github-light'],

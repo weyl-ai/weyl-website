@@ -1,0 +1,14 @@
+---
+// Custom head for Starlight docs pages
+// This adds proper OG images for documentation
+
+// Use docs OG image for all documentation pages
+const ogImage = new URL('/og-docs.png', Astro.site).href;
+---
+
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:image" content={ogImage} />
+<meta name="twitter:card" content="summary_large_image" />
+

@@ -3,7 +3,15 @@ import { ImageResponse } from '@vercel/og';
 import type { APIRoute } from 'astro';
 import type { ReactElement } from 'react';
 
-export const prerender = false;
+export const prerender = true;
+
+export async function getStaticPaths() {
+  return [
+    { params: { slug: 'default' } },
+    { params: { slug: 'blog' } },
+    { params: { slug: 'docs' } },
+  ];
+}
 
 export const GET: APIRoute = async ({ params, request }) => {
   const url = new URL(request.url);

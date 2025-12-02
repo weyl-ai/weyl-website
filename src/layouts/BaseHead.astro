@@ -27,8 +27,8 @@ const siteUrl = 'https://weyl.ai';
 const fullTitle = title === 'Weyl' ? title : `${title} | Weyl`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, siteUrl).href;
 
-// Use dynamic OG image API if no custom image provided
-const defaultOgImage = `/api/og/default?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
+// Use static OG image or dynamic API
+const defaultOgImage = `/og-default.png`;
 const ogImage = new URL(image ?? defaultOgImage, siteUrl).href;
 ---
 
