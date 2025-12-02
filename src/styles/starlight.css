@@ -370,7 +370,7 @@ button[aria-controls="starlight__sidebar"] svg,
 /* Logo styling */
 .site-title img,
 .logo {
-  height: 32px;
+  height: 24px;
   width: auto;
   object-fit: contain;
 }
