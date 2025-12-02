@@ -15,10 +15,10 @@ interface Props {
   title: string;
   description: string;
   pubDate: Date;
-  updatedDate?: Date;
+  updatedDate?: Date | undefined;
   author: string;
   tags?: string[];
-  image?: { src: string; alt: string };
+  image?: { src: string; alt: string } | undefined;
 }
 
 const { 
@@ -208,6 +208,14 @@ const schema = techArticleSchema({
     border: none;
     border-top: 1px solid var(--color-border-default);
     margin: 3rem 0;
+  }
+  
+  .prose img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    margin: 1.5rem 0;
+    border: 1px solid var(--color-border-default);
   }
 </style>
 

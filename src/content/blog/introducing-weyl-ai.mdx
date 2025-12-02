@@ -1,0 +1,98 @@
+---
+title: "Introducing Weyl AI: Making Generative AI Sustainable with NVFP4"
+description: "Leveraging NVIDIA's NVFP4 and Blackwell architecture to deliver 70-80% cost reduction for diffusion inference without sacrificing speed or quality."
+pubDate: 2025-01-15
+author: "Weyl Team"
+tags: ["announcement", "NVFP4", "infrastructure", "AI"]
+---
+
+# Introducing Weyl AI: Making Generative AI Sustainable with NVFP4
+
+Today we're publicly launching Weyl AI.
+
+The goal of Weyl is to leverage NVFP4 and other bleeding edge NVIDIA technologies to make diffusion inference and generative AI highly efficient and sustainable, empowering anyone to build world class generative AI apps and experiences.
+
+We accomplish this by taking a no-compromise approach to diffusion inference leveraging NVIDIA's NVFP4 and Blackwell architecture that delivers **70-80% cost reduction** versus the status quo, without sacrificing speed or quality.
+
+We're not a billion-dollar lab. We don't have thousands of H100s. What we have is a belief that technical choices should matter more than financial resources, and an initial stack that proves it.
+
+## Why the name Weyl?
+
+![Hermann Weyl - mathematician who worked alongside Einstein at Princeton](/blog/hermann-weyl.png)
+
+Hermann Weyl was one of the most influential mathematicians of the 20th century. Working alongside Einstein at Princeton, his contributions to group theory and representation theory quietly underpin much of modern deep learning. Every time a neural network learns that a cat is still a cat whether rotated, scaled, or translated, it's leveraging concepts Weyl formalized nearly a century ago.
+
+Weyl believed mathematics should be beautiful, rigorous, and practical. He wasn't interested in abstractions for their own sake - he wanted frameworks that revealed deeper truths about how things actually work. That's the hypermodern spirit we're channeling. We're not here to add abstraction layers on top of GPUs, we're here to understand and give the hardware what it actually wants.
+
+## The Problem That Led to Our Breakthrough Solution
+
+![FLUX.1 DEV Time to Image - Weyl NVFP4 at 640ms vs fal.ai at 3000ms and Nunchaku SVDQuant at 4700ms](/blog/flux-benchmark.png)
+
+Most AI startups, ourselves included, won't survive because current GPU and inference costs are not sustainable. The big AI labs can subsidize their apps (Grok Imagine, OpenAI Sora, Meta Vibes, etc.), but for the rest of us building apps with their APIs, or using other Gen AI API providers like Fal, it's far too expensive and none of us really stand a chance.
+
+Given the circumstances, a few months ago we decided to do some research and try building a solution to our own problem. What we realized is that in the AI hype cycle of the last few years, it's possible several important technical considerations might have been overlooked and/or deprioritized. So we built a diffusion inference stack from scratch using first principles, and prioritized technical choices over financial resources.
+
+Here's how we did it:
+
+- Bet the farm on NVIDIA NVFP4 & SM120 (exploring SM100 & SM110 too)
+- Master our software builds as an existential priority (NixOS)
+- Build specific for NVIDIA Blackwell (one of first fully leveraging it for diffusion inference)
+- Make quantization a first-order priority in our engineering
+- Use NVIDIA TensorRT & ModelOpt instead of TorchInductor (all-in on NVIDIA software)
+- Prioritize unmanaged languages talking directly to NVIDIA silicon (C++ & CUDA)
+
+The result: diffusion inference that is **70-80% less expensive**, without sacrificing on speed or quality. We're essentially proving that NVIDIA's newest technologies can democratize AI when used correctly.
+
+## Costs That Level The Playing Field
+
+Our approach enables pricing starting at **$0.001 per 480p image** and **$0.005 per second of 480p video**. That isn't VC-subsidized pricing. These are sustainable prices because our actual costs are that low.
+
+
+We achieve these breakthrough costs due to a combination of things, including:
+
+- **Prosumer NVIDIA GPUs** like RTX 6000s & 5090s deliver incredible price to performance and energy efficiency versus datacenter cards (ex. H100s)
+- **Custom NVIDIA inference stack** that keeps cards at 90%+ utilization vs. much lower historical industry standard utilization rates
+- **Leveraging idle GPUs** on platforms like Vast.ai allows zero friction, cost efficient scaling without huge upfront capital requirements, and lets us tap into unused globally distributed GPUs at costs significantly lower than traditional GPU rental or ownership
+
+We're also working on dynamic pricing and routing for the API that automatically selects the optimal GPUs for every scenario - B200s for massive batches, RTX cards for standard workloads, edge devices when latency matters, etc.
+
+## Choices That Dominate Resources
+
+We're taking a hypermodern approach to AI, where technical choices are more important than financial resources. Those choices include using the absolute bleeding edge of what's available, such as NVIDIA's NVFP4, Blackwell's SM120, TensorRT, etc., as well as treating the GPUs how they want to be treated.
+
+We don't force GPUs through abstraction layers. We are writing persistent CUDA kernels that launch once and process continuously (inspiration from the ThunderKittens). We take great care in compiling specifically for each NVIDIA compute capability. Because when you respect the hardware instead of fighting it, everything changes - **90% less compute, 90% less energy, and 90% less cost**, without sacrificing speed or quality.
+
+![NVFP4 performance and energy efficiency in blockscaled GEMM](/blog/nvfp4-performance.png)
+
+Our goal is to help make AI generation actually viable. While the industry burns through trillions subsidizing unsustainable inference costs, we're helping prove there's another way. And we aren't the only ones starting to understand this. NVIDIA definitely knows about this with their recent Deepseek NVFP4 paper, groups like the one behind SageAttention3 get it, Decart is also doing great things in this direction, as well as the Nunchaku team behind SVDQuant. We're just one of the early teams putting all of the pieces of this new NVIDIA computing stack together.
+
+The result? AI generation that's finally sustainable, even if the current AI bubble bursts.
+
+## The Weyl Roadmap
+
+Starting today, you can start using the v0 API, which will include support for both image and video, and support the following models:
+
+- Wan 2.2 and all variants
+- Flux 1 Dev
+- Flux 1 Schnell
+- Qwen Image / Qwen Image Edit
+- SDXL
+
+We plan to add more models in the coming weeks, as well as expand beyond image and video into voice, 3D, and other modalities. What you're seeing is just the beginning - we're at 5% of our technical roadmap.
+
+While our focus for now is open source diffusion models, these same efficiency advantages apply to all transformer models including LLMs.
+
+## The Weyl Mission
+
+We're going to help democratize AI and help builders create dope Gen AI apps and experiences.
+
+The big AI labs have the resources. We have the math that backs our technical decisions.
+
+Let's see which one ends up mattering more.
+
+Back to the garage.
+
+---
+
+*— Weyl Team*
+
