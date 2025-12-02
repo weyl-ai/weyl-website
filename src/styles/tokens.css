@@ -51,8 +51,8 @@
   --color-border-default: #21262d;
   --color-border-hover: #54aeff;
   
-  /* Typography - Optimized fallback stack */
-  --font-mono: 'Iosevka Web', 'Iosevka', ui-monospace, 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  /* Typography - Custom Iosevka Weyl AI with fallback stack */
+  --font-mono: 'Iosevka Weyl AI', 'Iosevka Web', 'Iosevka', ui-monospace, 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
   --font-display: 'Aldrich Web', 'Aldrich', 'Orbitron', ui-sans-serif, system-ui, sans-serif;
   
   /* Scale */

@@ -40,4 +40,7 @@ Thumbs.db
 .temp/
 .tmp/
 
+# Font build directory
+.font-build/
+
 .vercel

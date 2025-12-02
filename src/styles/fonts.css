@@ -1,5 +1,53 @@
-/* Optimized Font Loading with font-display: optional */
-/* This eliminates FOUT/FOIT by rendering immediately with fallback */
+/* // WEYL AI // Custom Font Loading //
+ * 
+ * Primary: Iosevka Weyl AI (custom build)
+ * Fallback: Standard Iosevka Web
+ * 
+ * Uses font-display: optional to eliminate FOUT/FOIT
+ * by rendering immediately with system fallback if font not cached
+ */
+
+/* === IOSEVKA WEYL AI (Custom Build) === */
+/* Build with: bun run build:fonts */
+
+@font-face {
+  font-family: 'Iosevka Weyl AI';
+  src: url('/fonts/iosevkaweylai-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: optional;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+2000-206F;
+}
+
+@font-face {
+  font-family: 'Iosevka Weyl AI';
+  src: url('/fonts/iosevkaweylai-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: optional;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+2000-206F;
+}
+
+@font-face {
+  font-family: 'Iosevka Weyl AI';
+  src: url('/fonts/iosevkaweylai-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: optional;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+2000-206F;
+}
+
+@font-face {
+  font-family: 'Iosevka Weyl AI';
+  src: url('/fonts/iosevkaweylai-bolditalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: optional;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+2000-206F;
+}
+
+/* === IOSEVKA WEB (Fallback) === */
+/* Standard Iosevka for fallback */
 
 @font-face {
   font-family: 'Iosevka Web';
@@ -28,7 +76,8 @@
   unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F;
 }
 
-/* Aldrich display font with optional */
+/* === ALDRICH (Display Font) === */
+
 @font-face {
   font-family: 'Aldrich Web';
   src: url('https://fonts.gstatic.com/s/aldrich/v21/MCoTzAn-1s3IGyJMZaAS3pP5H_E.woff2') format('woff2');
@@ -37,4 +86,3 @@
   font-display: optional;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
