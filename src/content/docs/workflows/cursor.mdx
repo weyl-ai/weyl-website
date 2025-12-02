@@ -1,0 +1,437 @@
+---
+title: Cursor AI Image & Video Generation
+description: Generate images and video directly in Cursor IDE with Weyl's API - perfect for vibe coding workflows
+category: workflows
+image: /og-workflows-cursor.png
+---
+
+Generate images and video directly in Cursor IDE using Weyl's API. Perfect for building visual apps, prototyping UIs, and adding media generation to your projects.
+
+## Quick Setup
+
+### Prerequisites
+
+1. Get your Weyl API key from [weyl.ai/signup](https://weyl.ai/signup) (free tier: 1,000 requests/month)
+2. Have Cursor IDE installed
+
+### Environment Setup
+
+Add your API key to your project's `.env` file:
+
+```bash
+# .env
+WEYL_API_KEY=your_api_key_here
+```
+
+## Method 1: Direct API Calls (Fastest)
+
+### Node.js / TypeScript
+
+Perfect for backend routes, server actions, or build-time generation.
+
+```typescript
+// generate-image.ts
+async function generateImage(prompt: string): Promise<Buffer> {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Generation failed: ${response.status}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// Usage
+const imageData = await generateImage("cyberpunk city at night, neon lights");
+// Save or send the image
+await fs.writeFile("output.webp", imageData);
+```
+
+### Python
+
+Great for scripts, FastAPI backends, or data processing pipelines.
+
+```python
+# generate_image.py
+import os
+import requests
+
+def generate_image(prompt: str) -> bytes:
+    """Generate an image using Weyl API"""
+    response = requests.post(
+        "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+        headers={
+            "Authorization": f"Bearer {os.getenv('WEYL_API_KEY')}",
+            "Content-Type": "application/json",
+        },
+        json={"prompt": prompt},
+    )
+    
+    response.raise_for_status()
+    return response.content
+
+# Usage
+image_data = generate_image("portrait, natural lighting, professional")
+with open("output.webp", "wb") as f:
+    f.write(image_data)
+```
+
+## Method 2: With Cursor Composer
+
+Use Cursor's Composer to generate code that includes Weyl API calls.
+
+### Example Prompt for Cursor
+
+```
+Create a Next.js API route that generates hero images using Weyl API.
+Use the FLUX schnell model for speed.
+Environment variable: WEYL_API_KEY
+Endpoint: POST /api/generate-hero
+Accept: { prompt: string }
+Return: The generated image as a blob
+```
+
+Cursor will generate something like:
+
+```typescript
+// app/api/generate-hero/route.ts
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const { prompt } = await request.json();
+
+  if (!prompt) {
+    return NextResponse.json(
+      { error: "Prompt is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const response = await fetch(
+      "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    
+    return new NextResponse(imageBuffer, {
+      headers: {
+        "Content-Type": "image/webp",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  } catch (error) {
+    console.error("Generation error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate image" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Video Generation
+
+Generate video from images for dynamic content.
+
+```typescript
+async function generateVideo(
+  prompt: string,
+  imageUrl: string
+): Promise<Buffer> {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt,
+        image: imageUrl,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Generation failed: ${response.status}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// Usage
+const video = await generateVideo(
+  "camera pans across the landscape",
+  "https://cdn.render.weyl.ai/your-image.webp"
+);
+```
+
+## Common Use Cases
+
+### 1. Hero Image Generator
+
+```typescript
+// lib/hero-generator.ts
+export async function generateHeroImage(
+  theme: "tech" | "nature" | "abstract"
+): Promise<string> {
+  const prompts = {
+    tech: "futuristic tech office, glass windows, blue hour lighting",
+    nature: "serene mountain landscape, golden hour, misty valleys",
+    abstract: "geometric abstract art, vibrant gradients, modern",
+  };
+
+  const imageBuffer = await generateImage(prompts[theme]);
+  
+  // Save to public directory or upload to CDN
+  const filename = `hero-${theme}-${Date.now()}.webp`;
+  await fs.writeFile(`public/images/${filename}`, imageBuffer);
+  
+  return `/images/${filename}`;
+}
+```
+
+### 2. Product Mockup Generator
+
+```typescript
+export async function generateProductMockup(
+  productType: string,
+  style: string
+): Promise<Buffer> {
+  const prompt = `${productType} product shot, ${style} style, studio lighting, white background, professional photography`;
+  
+  return generateImage(prompt);
+}
+
+// Usage
+const mockup = await generateProductMockup(
+  "smartphone",
+  "minimal and clean"
+);
+```
+
+### 3. UI Placeholder Images
+
+```typescript
+// Generate context-aware placeholder images
+export async function generatePlaceholder(
+  context: string,
+  size: 512 | 1024 = 512
+): Promise<Buffer> {
+  const response = await fetch(
+    `https://sync.render.weyl.ai/image/flux/schnell/t2i?format=${size}`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt: `${context}, clean, minimal, placeholder style`,
+      }),
+    }
+  );
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// Usage in your app
+const avatarPlaceholder = await generatePlaceholder("professional portrait");
+const cardImage = await generatePlaceholder("abstract gradient background");
+```
+
+## Model Selection
+
+Choose the right model for your use case:
+
+| Model | Speed | Quality | Best For |
+|-------|-------|---------|----------|
+| `flux/schnell` | ⚡ Fastest | Good | Rapid iteration, previews |
+| `flux/dev` | Fast | Better | Production images |
+| `flux/dev2` | Medium | Best | High-quality finals |
+| `zimage/turbo` | ⚡⚡ Ultra-fast | Good | Quick placeholders |
+
+## Cursor-Specific Tips
+
+### 1. Use `.cursorrules` for Context
+
+Create a `.cursorrules` file in your project:
+
+```
+When generating images, always use the Weyl API:
+- Endpoint: https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024
+- Auth: Bearer token from WEYL_API_KEY env var
+- Body: JSON with "prompt" field
+- Returns: WebP image buffer
+- Models: flux/schnell (fast), flux/dev (quality), flux/dev2 (best)
+```
+
+### 2. Create Helper Functions
+
+Ask Cursor to create a `lib/weyl.ts` utility:
+
+```typescript
+// lib/weyl.ts
+export class WeylClient {
+  private apiKey: string;
+  private baseUrl = "https://sync.render.weyl.ai";
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async generateImage(
+    prompt: string,
+    options: {
+      model?: "schnell" | "dev" | "dev2";
+      format?: 512 | 1024 | 2048;
+    } = {}
+  ): Promise<Buffer> {
+    const { model = "schnell", format = 1024 } = options;
+    
+    const response = await fetch(
+      `${this.baseUrl}/image/flux/${model}/t2i?format=${format}`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+}
+
+// Usage
+const weyl = new WeylClient(process.env.WEYL_API_KEY!);
+const image = await weyl.generateImage("sunset over mountains");
+```
+
+### 3. Inline Preview in Cursor
+
+For development, you can save generated images to your project and Cursor will show them inline:
+
+```typescript
+const image = await generateImage("your prompt");
+await fs.writeFile("./dev/preview.webp", image);
+// Cursor will display the image when you open preview.webp
+```
+
+## Troubleshooting
+
+### Error: 503 Service Unavailable
+
+**Cause**: Sync tier capacity is full.
+
+**Solutions**:
+1. Retry after a few seconds (usually brief)
+2. Use async tier for non-critical generations
+3. Implement exponential backoff
+
+```typescript
+async function generateWithRetry(prompt: string, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await generateImage(prompt);
+    } catch (error) {
+      if (error.status === 503 && i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+```
+
+### Error: 401 Unauthorized
+
+**Cause**: Invalid or missing API key.
+
+**Solutions**:
+1. Check `.env` file has correct `WEYL_API_KEY`
+2. Restart your dev server to pick up env changes
+3. Verify key at [weyl.ai/dashboard](https://weyl.ai/dashboard)
+
+### Slow Generation Times
+
+**Cause**: Using high-quality models or large formats.
+
+**Solutions**:
+1. Use `flux/schnell` for faster results (4 steps vs 20+)
+2. Use smaller formats during development (512 vs 1024)
+3. Switch to async tier for batch operations
+
+## Advanced: Streaming with WebSockets
+
+For real-time progress updates in your UI:
+
+```typescript
+const ws = new WebSocket(
+  `wss://sync.render.weyl.ai/ws?token=${process.env.WEYL_API_KEY}`
+);
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({
+    type: "generate",
+    model: "flux/schnell",
+    prompt: "your prompt here",
+  }));
+});
+
+ws.on("message", (data) => {
+  const message = JSON.parse(data);
+  
+  if (message.type === "progress") {
+    console.log(`Progress: ${message.percent}%`);
+  }
+  
+  if (message.type === "complete") {
+    console.log(`Image URL: ${message.url}`);
+    ws.close();
+  }
+});
+```
+
+## Next Steps
+
+- [API Reference](/api/) - Complete API documentation
+- [Model Guide](/api/models/) - Detailed model comparison
+- [WebSocket Protocol](/api/websocket/) - Real-time streaming
+- [Other AI Tools](/workflows/) - Claude, v0, Lovable, Bolt guides
+

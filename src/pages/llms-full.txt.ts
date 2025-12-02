@@ -10,6 +10,14 @@ export const GET: APIRoute = async () => {
       { slug: 'getting-started/quick-start', title: 'Quick Start', desc: 'Get up and running in 5 minutes' },
       { slug: 'getting-started/auth', title: 'Authentication', desc: 'Set up your API keys' },
     ],
+    'AI Workflows': [
+      { slug: 'workflows', title: 'AI Workflows Overview', desc: 'Generate images in Cursor, Claude, v0, Lovable, and Bolt' },
+      { slug: 'workflows/cursor', title: 'Cursor IDE', desc: 'AI image generation in Cursor IDE for vibe coding' },
+      { slug: 'workflows/claude', title: 'Claude Projects', desc: 'Claude Projects and MCP integration for image generation' },
+      { slug: 'workflows/v0', title: 'v0.dev', desc: 'Add AI image generation to v0.dev components' },
+      { slug: 'workflows/lovable', title: 'Lovable', desc: 'Full-stack apps with AI image generation on Lovable.dev' },
+      { slug: 'workflows/bolt', title: 'Bolt.new', desc: 'Rapid prototyping with AI images in Bolt.new' },
+    ],
     'API Overview': [
       { slug: 'api', title: 'API Overview', desc: 'Generative media at the speed of thought' },
       { slug: 'api/concepts', title: 'Core Concepts', desc: 'Understanding model families, backends, and formats' },

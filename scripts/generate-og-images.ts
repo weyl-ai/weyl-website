@@ -26,6 +26,36 @@ const images: OGImageConfig[] = [
     description: 'Updates, insights, and announcements from the Weyl team',
     filename: 'og-blog.png',
   },
+  {
+    title: 'AI Workflows',
+    description: 'Generate images and video in Cursor, Claude, v0, Lovable, and Bolt - vibe coding with AI',
+    filename: 'og-workflows.png',
+  },
+  {
+    title: 'Cursor AI Images',
+    description: 'Generate images directly in Cursor IDE with Weyl API - perfect for vibe coding workflows',
+    filename: 'og-workflows-cursor.png',
+  },
+  {
+    title: 'Claude AI Images',
+    description: 'Claude Projects and MCP integration for AI image generation - seamless workflow integration',
+    filename: 'og-workflows-claude.png',
+  },
+  {
+    title: 'v0 AI Images',
+    description: 'Add dynamic AI image generation to v0.dev components - build visual UIs with AI',
+    filename: 'og-workflows-v0.png',
+  },
+  {
+    title: 'Lovable AI Images',
+    description: 'Full-stack apps with AI image generation on Lovable.dev - rapid prototyping with visuals',
+    filename: 'og-workflows-lovable.png',
+  },
+  {
+    title: 'Bolt AI Images',
+    description: 'Rapid prototyping with AI images in Bolt.new - instant demos with generated content',
+    filename: 'og-workflows-bolt.png',
+  },
 ];
 
 async function generateOGImage(config: OGImageConfig) {

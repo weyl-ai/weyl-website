@@ -26,7 +26,7 @@ const docs = defineCollection({
     extend: z.object({
       apiVersion: z.string().optional(),
       deprecated: z.boolean().default(false),
-      category: z.enum(['core', 'api', 'guide', 'reference']).optional(),
+      category: z.enum(['core', 'api', 'guide', 'reference', 'workflows']).optional(),
     }),
   }),
 });

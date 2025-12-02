@@ -1,0 +1,701 @@
+---
+title: Lovable AI Image & Video Generation
+description: Integrate Weyl image and video generation into Lovable.dev full-stack apps - build visual apps with AI
+category: workflows
+image: /og-workflows-lovable.png
+---
+
+Build full-stack apps with AI-generated images and video using Lovable.dev and Weyl. Perfect for rapid prototyping with visual content.
+
+## Quick Setup
+
+### Prerequisites
+
+1. Get your Weyl API key from [weyl.ai/signup](https://weyl.ai/signup) (free tier: 1,000 requests/month)
+2. Access to Lovable.dev
+
+## Method 1: Direct Integration Prompt
+
+Tell Lovable to integrate Weyl from the start.
+
+### Example Lovable Prompt
+
+```
+Create a landing page with dynamic hero image generation using Weyl API.
+
+Requirements:
+- Hero section with image generation
+- API integration for https://sync.render.weyl.ai
+- Use WEYL_API_KEY from environment
+- FLUX schnell model for speed
+- Button to regenerate hero
+- Loading states and error handling
+- Store API key securely
+```
+
+### What Lovable Will Generate
+
+Lovable creates a full-stack app with:
+- Frontend component with image display
+- Backend API route for Weyl integration
+- Environment variable configuration
+- Database schema (if needed for caching)
+- Authentication (if required)
+
+## Method 2: Add to Existing Lovable App
+
+If you already have a Lovable app, add image generation:
+
+### Prompt
+
+```
+Add image generation feature to my app using Weyl API.
+
+Features needed:
+- New page at /generate
+- Text input for prompts
+- Generate button
+- Display generated images in gallery
+- Save images to database
+- API route for Weyl at /api/generate-image
+- Use WEYL_API_KEY from environment variables
+```
+
+### Generated Code
+
+Lovable will create:
+
+```typescript
+// Backend API route
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
+serve(async (req) => {
+  if (req.method === "POST" && new URL(req.url).pathname === "/api/generate-image") {
+    try {
+      const { prompt } = await req.json()
+      
+      const response = await fetch(
+        "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${Deno.env.get("WEYL_API_KEY")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      )
+
+      if (!response.ok) {
+        return new Response(
+          JSON.stringify({ error: "Generation failed" }),
+          { status: response.status }
+        )
+      }
+
+      const imageBuffer = await response.arrayBuffer()
+      const cdnUrl = response.headers.get("Content-Location")
+
+      return new Response(
+        JSON.stringify({ url: cdnUrl, success: true }),
+        { headers: { "Content-Type": "application/json" } }
+      )
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500 }
+      )
+    }
+  }
+
+  return new Response("Not Found", { status: 404 })
+})
+```
+
+```tsx
+// Frontend component
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+
+export default function ImageGenerator() {
+  const [prompt, setPrompt] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
+
+  async function handleGenerate() {
+    if (!prompt.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a prompt",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+
+      if (!response.ok) throw new Error("Generation failed")
+
+      const data = await response.json()
+      setImageUrl(data.url)
+      
+      toast({
+        title: "Success",
+        description: "Image generated successfully!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate image",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="container mx-auto max-w-2xl p-8">
+      <h1 className="mb-8 text-4xl font-bold">AI Image Generator</h1>
+      
+      <div className="space-y-4">
+        <Input
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe your image..."
+          className="text-lg"
+          onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+        />
+        
+        <Button 
+          onClick={handleGenerate} 
+          disabled={loading}
+          className="w-full"
+          size="lg"
+        >
+          {loading ? "Generating..." : "Generate Image"}
+        </Button>
+
+        {imageUrl && (
+          <div className="mt-8 overflow-hidden rounded-lg">
+            <img
+              src={imageUrl}
+              alt="Generated"
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+```
+
+## Method 3: Full App with Database
+
+For apps that save generated images:
+
+### Lovable Prompt
+
+```
+Create a full-stack image generation app with Weyl API.
+
+Features:
+- User authentication with Supabase
+- Image generation with Weyl (FLUX models)
+- Save generated images to database
+- Gallery page showing all user images
+- Download functionality
+- Share generated images
+- Admin panel to view all generations
+
+Tech stack:
+- React frontend
+- Supabase backend
+- Weyl API for image generation
+- Tailwind CSS styling
+```
+
+### Database Schema
+
+Lovable will create:
+
+```sql
+-- Supabase schema
+create table public.generated_images (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  prompt text not null,
+  image_url text not null,
+  model text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS
+alter table public.generated_images enable row level security;
+
+-- Policies
+create policy "Users can view own images"
+  on public.generated_images for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own images"
+  on public.generated_images for insert
+  with check (auth.uid() = user_id);
+```
+
+## Common Use Cases
+
+### 1. Content Creation Platform
+
+```
+Build a content creation platform where:
+- Users create projects
+- Each project can generate images
+- Images saved to project gallery
+- Export projects with images
+- Uses Weyl for generation
+- Supabase for data storage
+```
+
+### 2. Social Media Mockup Generator
+
+```
+Create a social media mockup generator:
+- Generate images for posts
+- Add text overlays
+- Multiple format options (square, portrait, landscape)
+- Download in different sizes
+- Share generated mockups
+- Use Weyl FLUX for generation
+```
+
+### 3. E-commerce Product Generator
+
+```
+Build a product image generator for e-commerce:
+- Product description input
+- Style selection (minimal, luxury, lifestyle)
+- Background options
+- Multiple angle generation
+- Batch generate variations
+- Save to product catalog
+- Weyl API integration
+```
+
+### 4. Avatar Creation App
+
+```
+Create an avatar generator app:
+- Style picker (realistic, artistic, cartoon)
+- Customization options
+- Generate with Weyl FLUX
+- Save favorite avatars
+- Download or use as profile pic
+- User accounts with Supabase
+```
+
+## Lovable-Specific Patterns
+
+### Pattern 1: Environment Variables
+
+Lovable uses Deno. Set env vars in project settings:
+
+```typescript
+// Access in backend
+const apiKey = Deno.env.get("WEYL_API_KEY")
+
+// Or use .env file
+import { load } from "https://deno.land/std@0.208.0/dotenv/mod.ts"
+const env = await load()
+const apiKey = env.WEYL_API_KEY
+```
+
+### Pattern 2: File Upload for Video
+
+When generating video from images:
+
+```typescript
+// Backend route for video generation
+async function generateVideo(imageUrl: string, prompt: string) {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${Deno.env.get("WEYL_API_KEY")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt,
+        image: imageUrl 
+      }),
+    }
+  )
+
+  const videoBuffer = await response.arrayBuffer()
+  const cdnUrl = response.headers.get("Content-Location")
+  
+  return { url: cdnUrl }
+}
+```
+
+### Pattern 3: Caching Generated Images
+
+```typescript
+// Cache images in Supabase storage
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_KEY")!
+)
+
+async function cacheImage(imageBuffer: ArrayBuffer, filename: string) {
+  const { data, error } = await supabase.storage
+    .from("generated-images")
+    .upload(filename, imageBuffer, {
+      contentType: "image/webp",
+      cacheControl: "31536000",
+    })
+
+  if (error) throw error
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("generated-images")
+    .getPublicUrl(filename)
+
+  return publicUrl
+}
+```
+
+## Advanced Integration
+
+### Real-Time Generation Updates
+
+Use Supabase Realtime for live updates:
+
+```typescript
+// Backend: Save generation status
+await supabase
+  .from("generations")
+  .insert({
+    id: generationId,
+    user_id: userId,
+    status: "generating",
+    prompt: prompt,
+  })
+
+// Generate image
+const imageUrl = await generateWithWeyl(prompt)
+
+// Update status
+await supabase
+  .from("generations")
+  .update({ status: "complete", image_url: imageUrl })
+  .eq("id", generationId)
+```
+
+```tsx
+// Frontend: Subscribe to updates
+useEffect(() => {
+  const channel = supabase
+    .channel("generations")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "generations",
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        if (payload.new.status === "complete") {
+          setImageUrl(payload.new.image_url)
+          setLoading(false)
+        }
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [userId])
+```
+
+### Batch Generation Queue
+
+```typescript
+// Queue multiple generations
+async function queueBatchGeneration(prompts: string[], userId: string) {
+  // Insert all jobs
+  const jobs = prompts.map((prompt) => ({
+    user_id: userId,
+    prompt,
+    status: "queued",
+  }))
+
+  await supabase.from("generation_queue").insert(jobs)
+
+  // Process queue (in background worker)
+  for (const job of jobs) {
+    const imageUrl = await generateWithWeyl(job.prompt)
+    
+    await supabase
+      .from("generation_queue")
+      .update({ status: "complete", image_url: imageUrl })
+      .eq("id", job.id)
+  }
+}
+```
+
+## Example Lovable Prompts
+
+### For SaaS App
+
+```
+Create a SaaS app for AI image generation with:
+- Landing page with demo
+- User authentication
+- Credit system (100 credits free)
+- Image generation interface
+- Gallery of generated images
+- Pricing page
+- Admin dashboard
+- Uses Weyl API for generation
+- Supabase for backend
+- Stripe for payments
+```
+
+### For Portfolio Site
+
+```
+Build a portfolio site that:
+- Showcases AI-generated artwork
+- Each piece generated via Weyl
+- Click to view generation prompt
+- Regenerate variations
+- Download options
+- Share on social media
+- Contact form
+```
+
+### For Marketing Tool
+
+```
+Create a marketing image generator:
+- Campaign name input
+- Generate hero images
+- Generate social media variants
+- A/B test different versions
+- Analytics on performance
+- Export all assets
+- Team collaboration
+- Weyl API integration
+```
+
+## Troubleshooting
+
+### Issue: Environment variables not loading
+
+**Solution**: Set in Lovable project settings:
+1. Go to Project Settings
+2. Add `WEYL_API_KEY` under Environment Variables
+3. Redeploy the app
+
+### Issue: CORS errors
+
+**Solution**: Use backend API routes, not direct browser calls:
+
+```typescript
+// Bad: Direct from frontend
+const response = await fetch("https://sync.render.weyl.ai/...", {...})
+
+// Good: Through your API route
+const response = await fetch("/api/generate-image", {...})
+```
+
+### Issue: Large image files
+
+**Solution**: Use Supabase Storage:
+
+```typescript
+// Store in Supabase instead of inline
+const { data } = await supabase.storage
+  .from("images")
+  .upload(`${userId}/${Date.now()}.webp`, imageBuffer)
+```
+
+### Issue: Slow generation blocking UI
+
+**Solution**: Use async processing:
+
+```typescript
+// Return immediately
+const jobId = crypto.randomUUID()
+
+// Process in background
+processGeneration(jobId, prompt)
+
+return Response.json({ jobId, status: "processing" })
+
+// Frontend polls for status
+async function pollStatus(jobId: string) {
+  const { data } = await supabase
+    .from("generations")
+    .select("status, image_url")
+    .eq("id", jobId)
+    .single()
+
+  return data
+}
+```
+
+## Best Practices
+
+### 1. Rate Limiting
+
+```typescript
+// Add rate limiting per user
+async function checkRateLimit(userId: string) {
+  const { count } = await supabase
+    .from("generated_images")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", new Date(Date.now() - 3600000).toISOString())
+
+  if (count >= 10) {
+    throw new Error("Rate limit exceeded")
+  }
+}
+```
+
+### 2. Cost Tracking
+
+```typescript
+// Track generation costs
+await supabase.from("usage_tracking").insert({
+  user_id: userId,
+  action: "image_generation",
+  model: "flux/schnell",
+  cost_credits: 1,
+  timestamp: new Date().toISOString(),
+})
+```
+
+### 3. Error Recovery
+
+```typescript
+async function generateWithRetry(prompt: string, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await generateImage(prompt)
+    } catch (error) {
+      if (i === maxRetries - 1) throw error
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+```
+
+## Model Selection
+
+Tell Lovable which model to use:
+
+```
+Use FLUX schnell for quick previews
+Use FLUX dev for production images
+Use FLUX dev2 for hero images and marketing
+Use Z-Image turbo for ultra-fast placeholders
+```
+
+## Deployment
+
+Lovable handles deployment automatically. Just ensure:
+
+1. Environment variables are set in project settings
+2. Supabase database is configured
+3. Storage bucket has proper permissions
+4. RLS policies are enabled
+
+## Next Steps
+
+- [API Reference](/api/) - Complete Weyl API docs
+- [Model Guide](/api/models/) - Choose the right model
+- [Authentication](/getting-started/auth/) - API key setup
+- [Other Tools](/workflows/) - Cursor, Claude, v0, Bolt guides
+
+## Example: Complete Image Gen App
+
+Here's a full prompt for Lovable to create a complete app:
+
+```
+Create a complete AI image generation SaaS called "ImageForge".
+
+Features:
+1. Landing Page
+   - Hero with demo generation
+   - Feature showcase
+   - Pricing tiers
+
+2. Authentication
+   - Supabase Auth
+   - Email/password and OAuth
+
+3. Dashboard
+   - Recent generations
+   - Usage statistics
+   - Credit balance
+
+4. Generator Page
+   - Prompt input with suggestions
+   - Model selector (FLUX schnell/dev/dev2)
+   - Size selector (512/1024/2048)
+   - Generate button with loading state
+   - Result display with download
+   - Save to gallery option
+
+5. Gallery Page
+   - Grid of all user images
+   - Filter by model, date
+   - Search prompts
+   - Bulk download
+   - Delete images
+
+6. Settings
+   - API key management
+   - Billing info
+   - Usage limits
+
+7. Backend
+   - Weyl API integration
+   - Credit system
+   - Rate limiting
+   - Usage tracking
+   - Admin endpoints
+
+Tech Stack:
+- React + TypeScript
+- Tailwind CSS
+- Supabase (auth, database, storage)
+- Weyl API for generation
+- Lucide icons
+
+Environment variables needed:
+- WEYL_API_KEY
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+```
+
+Lovable will generate a complete, production-ready app!
+

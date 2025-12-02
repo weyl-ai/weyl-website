@@ -1,0 +1,778 @@
+---
+title: Bolt.new AI Image & Video Generation
+description: Generate images and video in Bolt.new projects - rapid prototyping with AI-powered visuals
+category: workflows
+image: /og-workflows-bolt.png
+---
+
+Build rapid prototypes with AI-generated images and video using Bolt.new and Weyl. Perfect for quick demos, MVPs, and proof-of-concepts.
+
+## Quick Setup
+
+### Prerequisites
+
+1. Get your Weyl API key from [weyl.ai/signup](https://weyl.ai/signup) (free tier: 1,000 requests/month)
+2. Access to Bolt.new
+
+## Method 1: Include in Initial Prompt
+
+Start your Bolt project with Weyl integration from the beginning.
+
+### Example Bolt Prompt
+
+```
+Create a landing page with dynamic image generation using Weyl API.
+
+Requirements:
+- Hero section with AI-generated background
+- "Generate New" button to refresh image
+- Use Weyl API: https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024
+- Store API key in environment variable WEYL_API_KEY
+- Show loading state during generation
+- Display error messages if generation fails
+- Modern, responsive design
+
+Tech: React, Vite, Tailwind CSS
+```
+
+### What Bolt Will Generate
+
+Bolt creates:
+- Complete React app with Vite setup
+- API integration for Weyl
+- Environment variable configuration
+- UI with loading and error states
+- Full styling with Tailwind
+
+## Method 2: Add to Existing Bolt Project
+
+Add image generation to a project you've already started:
+
+### Follow-Up Prompt
+
+```
+Add image generation feature using Weyl API.
+
+Add to my app:
+- New "/generate" route with image generator
+- Input field for prompts
+- Generate button
+- Display generated images in a grid
+- Download button for each image
+- API endpoint: POST https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024
+- Use WEYL_API_KEY from .env
+```
+
+### Generated Code
+
+```tsx
+// src/pages/Generate.tsx
+import { useState } from 'react'
+import { Download, Sparkles, Loader2 } from 'lucide-react'
+
+export default function Generate() {
+  const [prompt, setPrompt] = useState('')
+  const [images, setImages] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleGenerate() {
+    if (!prompt.trim()) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch(
+        'https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_WEYL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      // Get image as blob
+      const blob = await response.blob()
+      const imageUrl = URL.createObjectURL(blob)
+      
+      // Also get CDN URL from header
+      const cdnUrl = response.headers.get('Content-Location')
+      
+      setImages([cdnUrl || imageUrl, ...images])
+      setPrompt('')
+    } catch (err) {
+      setError('Failed to generate image. Please try again.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+      <div className="mx-auto max-w-6xl">
+        <h1 className="mb-8 text-4xl font-bold text-gray-900">
+          AI Image Generator
+        </h1>
+
+        <div className="mb-8 flex gap-4">
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+            placeholder="Describe your image..."
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <button
+            onClick={handleGenerate}
+            disabled={loading || !prompt.trim()}
+            className="flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5" />
+                Generate
+              </>
+            )}
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-8 rounded-lg bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {images.map((url, index) => (
+            <div
+              key={index}
+              className="group relative overflow-hidden rounded-lg bg-white shadow-lg"
+            >
+              <img
+                src={url}
+                alt={`Generated ${index}`}
+                className="h-64 w-full object-cover"
+              />
+              <button
+                onClick={() => window.open(url, '_blank')}
+                className="absolute right-2 top-2 rounded-full bg-white p-2 opacity-0 shadow-lg transition-opacity hover:bg-gray-100 group-hover:opacity-100"
+              >
+                <Download className="h-5 w-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {images.length === 0 && !loading && (
+          <div className="text-center text-gray-500">
+            <Sparkles className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+            <p className="text-lg">Generate your first image to get started</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+```
+
+```env
+# .env
+VITE_WEYL_API_KEY=your_api_key_here
+```
+
+## Method 3: Full-Stack with Backend
+
+For production-ready apps with a backend:
+
+### Bolt Prompt
+
+```
+Create a full-stack app with image generation.
+
+Frontend:
+- React with Vite
+- Tailwind CSS
+- Image generation interface
+- Gallery view
+
+Backend:
+- Express server
+- API route for Weyl integration
+- Store WEYL_API_KEY server-side (not exposed to client)
+- Rate limiting
+- Error handling
+
+Features:
+- Generate images with prompts
+- Save generated images
+- View history
+- Download images
+- Copy CDN URLs
+```
+
+### Generated Backend
+
+```typescript
+// server/index.ts
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const app = express()
+app.use(cors())
+app.use(express.json())
+
+app.post('/api/generate-image', async (req, res) => {
+  const { prompt } = req.body
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required' })
+  }
+
+  try {
+    const response = await fetch(
+      'https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.WEYL_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`)
+    }
+
+    const imageBuffer = await response.arrayBuffer()
+    const cdnUrl = response.headers.get('Content-Location')
+
+    res.json({
+      success: true,
+      url: cdnUrl,
+      prompt,
+    })
+  } catch (error) {
+    console.error('Generation error:', error)
+    res.status(500).json({ error: 'Failed to generate image' })
+  }
+})
+
+const PORT = process.env.PORT || 3001
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+```
+
+## Common Use Cases
+
+### 1. Portfolio Generator
+
+```
+Create a portfolio website that generates custom artwork.
+
+Features:
+- Homepage with featured generated art
+- "Generate Art" page with style controls
+- Gallery of all generated pieces
+- Click to view full size
+- Download originals
+- Share on social media
+- Uses Weyl FLUX dev for quality
+```
+
+### 2. Product Mockup Tool
+
+```
+Build a product mockup generator.
+
+Features:
+- Product type selector (phone, laptop, bottle, etc.)
+- Background style options
+- Generate button
+- Instant preview
+- Download in multiple formats
+- Batch generate variations
+- Weyl API integration
+```
+
+### 3. Blog Header Generator
+
+```
+Create a tool that generates blog post headers.
+
+Features:
+- Blog title input
+- Category/mood selector
+- Generate matching header image
+- Preview in blog layout
+- Regenerate if not satisfied
+- Export with correct dimensions
+- Uses FLUX schnell for speed
+```
+
+### 4. Avatar Creator
+
+```
+Build an avatar generation tool.
+
+Features:
+- Style picker (realistic, cartoon, pixel art)
+- Gender/age options
+- Accessories customization
+- Generate avatar
+- Crop to circle
+- Download or copy URL
+- Weyl FLUX models
+```
+
+## Bolt-Specific Tips
+
+### 1. Use Vite Environment Variables
+
+Bolt uses Vite, so prefix with `VITE_`:
+
+```typescript
+// Access in frontend
+const apiKey = import.meta.env.VITE_WEYL_API_KEY
+
+// .env file
+VITE_WEYL_API_KEY=your_key_here
+```
+
+**Note**: Never expose API keys in frontend code for production! Use a backend proxy.
+
+### 2. Iterative Prompts
+
+Bolt excels at iterative development. Start simple:
+
+```
+Add image generation button to homepage
+```
+
+Then refine:
+
+```
+Make the button more prominent and add a preview modal
+```
+
+Then enhance:
+
+```
+Add multiple image format options and model selection
+```
+
+### 3. Request Specific Libraries
+
+```
+Use lucide-react for icons
+Use clsx for conditional classnames
+Use react-hot-toast for notifications
+```
+
+Bolt will integrate them seamlessly.
+
+### 4. Mobile-First Design
+
+Always mention:
+
+```
+Make it fully responsive and mobile-friendly
+```
+
+Bolt will generate proper Tailwind responsive classes.
+
+## Advanced Patterns
+
+### Pattern 1: Image Variations
+
+```typescript
+async function generateVariations(basePrompt: string, count = 4) {
+  const variations = [
+    `${basePrompt}, style A`,
+    `${basePrompt}, style B`,
+    `${basePrompt}, style C`,
+    `${basePrompt}, style D`,
+  ]
+
+  const results = await Promise.all(
+    variations.map((prompt) =>
+      fetch('https://sync.render.weyl.ai/image/flux/schnell/t2i?format=512', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_WEYL_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      }).then((r) => r.blob())
+    )
+  )
+
+  return results.map((blob) => URL.createObjectURL(blob))
+}
+```
+
+### Pattern 2: Progressive Enhancement
+
+```typescript
+// Start with low-res preview
+const previewUrl = await generateImage(prompt, { format: 512, model: 'schnell' })
+setPreview(previewUrl)
+
+// Then generate high-res in background
+const fullResUrl = await generateImage(prompt, { format: 2048, model: 'dev2' })
+setFullRes(fullResUrl)
+```
+
+### Pattern 3: Prompt Templates
+
+```typescript
+const TEMPLATES = {
+  hero: 'cinematic landscape, professional photography, high quality',
+  product: 'product shot, studio lighting, white background, commercial',
+  avatar: 'portrait, professional headshot, neutral background, detailed',
+  abstract: 'abstract art, modern design, vibrant colors, geometric',
+}
+
+function generateFromTemplate(template: keyof typeof TEMPLATES, subject: string) {
+  const prompt = `${subject}, ${TEMPLATES[template]}`
+  return generateImage(prompt)
+}
+```
+
+## Example Bolt Prompts
+
+### For Landing Pages
+
+```
+Create a SaaS landing page with AI image generation demo.
+
+Hero section:
+- Generated background image
+- "Regenerate" button
+- Headline and CTA
+
+Features section:
+- 3 feature cards with icons
+- Each feature shows example generated image
+
+Demo section:
+- Live generation interface
+- Try it yourself
+
+Footer:
+- Links and social
+
+Use Weyl API for all image generation
+Tailwind CSS for styling
+Responsive design
+```
+
+### For Apps
+
+```
+Build a complete image generation app.
+
+Pages:
+- Home: Featured generations
+- Generate: Creation interface
+- Gallery: All images in grid
+- About: How it works
+
+Features:
+- Model selector (FLUX schnell/dev/dev2)
+- Size options (512/1024/2048)
+- Prompt suggestions
+- Download images
+- Share links
+
+Tech:
+- React + Vite + Tailwind
+- Weyl API integration
+- Local storage for history
+- Responsive design
+```
+
+### For Tools
+
+```
+Create a professional tool for generating marketing images.
+
+Features:
+- Template categories (Social, Email, Ads)
+- Size presets by platform
+- Batch generation
+- Text overlay editor
+- Export in multiple formats
+- Brand color suggestions
+
+Integration:
+- Weyl FLUX dev for quality
+- Canvas API for overlays
+- FileSaver.js for downloads
+```
+
+## Troubleshooting
+
+### Issue: CORS errors
+
+**Solution 1**: Use a backend proxy (recommended for production)
+
+```typescript
+// Frontend calls your backend
+fetch('/api/generate', { ... })
+
+// Backend calls Weyl
+fetch('https://sync.render.weyl.ai/...', { ... })
+```
+
+**Solution 2**: For prototypes, Weyl's sync endpoint supports CORS from localhost
+
+### Issue: API key exposed in frontend
+
+**Solution**: Tell Bolt to create a backend:
+
+```
+Create an Express server that proxies Weyl API calls.
+Move WEYL_API_KEY to backend only.
+Frontend calls /api/generate instead.
+```
+
+### Issue: Images not displaying
+
+**Solution**: Check the response format:
+
+```typescript
+// For blob URLs
+const blob = await response.blob()
+const url = URL.createObjectURL(blob)
+
+// For CDN URLs
+const url = response.headers.get('Content-Location')
+
+// Use whichever works for your use case
+```
+
+### Issue: Slow generation blocking UI
+
+**Solution**: Add loading states and optimistic UI:
+
+```typescript
+// Show placeholder immediately
+setImages([{ id: Date.now(), loading: true }, ...images])
+
+// Generate in background
+const url = await generateImage(prompt)
+
+// Replace placeholder
+setImages(images.map(img => 
+  img.loading ? { id: img.id, url } : img
+))
+```
+
+## Model Selection
+
+Tell Bolt which model based on your needs:
+
+```
+Use FLUX schnell for instant previews
+Use FLUX dev for final quality images
+Use FLUX dev2 for marketing hero images
+Use Z-Image turbo for ultra-fast placeholders
+```
+
+## Video Generation
+
+For video, use similar pattern:
+
+```
+Add video generation feature using Weyl.
+
+Features:
+- Upload image or provide URL
+- Motion prompt input
+- Generate video button
+- Video player for result
+- Download video
+
+API:
+- POST https://sync.render.weyl.ai/video/wan/default/i2v?format=720p
+- Body: { prompt: "motion description", image: "url" }
+```
+
+Bolt will create:
+
+```typescript
+async function generateVideo(imageUrl: string, motionPrompt: string) {
+  const response = await fetch(
+    'https://sync.render.weyl.ai/video/wan/default/i2v?format=720p',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_WEYL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: motionPrompt,
+        image: imageUrl,
+      }),
+    }
+  )
+
+  const videoBlob = await response.blob()
+  return URL.createObjectURL(videoBlob)
+}
+```
+
+## Best Practices
+
+### 1. Error Boundaries
+
+```
+Add error handling for:
+- Network failures
+- API errors
+- Invalid prompts
+Show user-friendly error messages
+```
+
+### 2. Loading States
+
+```
+Add loading indicators:
+- Skeleton loaders
+- Progress text
+- Animated spinners
+Disable buttons during generation
+```
+
+### 3. Responsive Design
+
+```
+Make fully responsive:
+- Mobile: single column
+- Tablet: 2 columns
+- Desktop: 3-4 columns
+Touch-friendly buttons
+```
+
+### 4. Performance
+
+```
+Optimize performance:
+- Lazy load images
+- Use WebP format
+- Implement virtual scrolling for large galleries
+- Cache generated images
+```
+
+## Deployment
+
+Bolt apps can be deployed to:
+- Vercel (recommended)
+- Netlify
+- Railway
+- Render
+
+Ensure environment variables are set in deployment platform.
+
+## Complete Example App
+
+Here's a full Bolt prompt for a production-ready app:
+
+```
+Create "QuickGen" - a modern AI image generation tool.
+
+Pages:
+1. Home
+   - Hero with live generation demo
+   - Features showcase
+   - Call to action
+
+2. Studio
+   - Main generation interface
+   - Prompt input with autocomplete
+   - Model selector (FLUX schnell/dev/dev2)
+   - Size selector (512/1024/2048)
+   - Advanced options (guidance, steps)
+   - Generation history sidebar
+   - Preview area with zoom
+   - Download and share buttons
+
+3. Gallery
+   - Masonry grid of generations
+   - Filter by model
+   - Search prompts
+   - Sort by date
+   - Infinite scroll
+
+4. Settings
+   - API key input
+   - Default preferences
+   - Usage statistics
+
+Tech Stack:
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS + shadcn/ui components
+- React Router for navigation
+- Zustand for state management
+- React Query for API calls
+- Lucide icons
+
+Backend:
+- Express server
+- CORS configured
+- Rate limiting
+- Error handling
+- Weyl API integration
+
+Features:
+- Prompt suggestions
+- Keyboard shortcuts
+- Dark mode
+- Mobile responsive
+- PWA capabilities
+- Local storage for history
+- Copy CDN URLs
+- Batch downloads
+
+Environment:
+- WEYL_API_KEY (backend)
+- VITE_API_URL (frontend)
+
+Make it production-ready with proper error handling, loading states, and beautiful UI.
+```
+
+Bolt will generate a complete, deployable application!
+
+## Next Steps
+
+- [API Reference](/api/) - Complete Weyl API documentation
+- [Model Guide](/api/models/) - Model comparison and selection
+- [Cursor Guide](/workflows/cursor/) - Cursor IDE integration
+- [Claude Guide](/workflows/claude/) - Claude Projects workflows
+- [v0 Guide](/workflows/v0/) - v0.dev integration
+- [Lovable Guide](/workflows/lovable/) - Lovable.dev workflows
+
+Build fast, ship faster with Bolt and Weyl! 🚀
+

@@ -1,0 +1,95 @@
+---
+title: AI Workflows
+description: Generate images and video in your favorite AI coding tools - Cursor, Claude, v0, Lovable, and Bolt
+category: workflows
+image: /og-workflows.png
+---
+
+Generate stunning images and video directly in your AI coding environment. Weyl provides sub-100ms latency for real-time generation workflows.
+
+## Why Weyl for AI Coding?
+
+- **Fast**: Sub-100ms p99 latency - perfect for interactive workflows
+- **Simple**: Copy-paste ready code snippets
+- **Powerful**: FLUX, SDXL, and video generation at your fingertips
+- **Reliable**: 99.99% uptime with multi-region redundancy
+
+## Choose Your Tool
+
+| Tool | Best For | Integration Method |
+|------|----------|-------------------|
+| [Cursor](/workflows/cursor/) | IDE integration, live previews | API calls in code |
+| [Claude](/workflows/claude/) | Projects, MCP server | Context files, tools |
+| [v0](/workflows/v0/) | UI component generation | API in generated code |
+| [Lovable](/workflows/lovable/) | Full-stack apps | Backend API integration |
+| [Bolt](/workflows/bolt/) | Rapid prototyping | Direct API calls |
+
+## Common Use Cases
+
+### Hero Images
+Generate custom hero images for landing pages without leaving your IDE.
+
+```bash
+# Quick example - works anywhere
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"modern tech startup office, bright natural lighting"}' \
+  -o hero.webp
+```
+
+### UI Mockups
+Create placeholder images that match your design vision.
+
+```bash
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=512" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"product shot, minimal background, studio lighting"}' \
+  -o product.webp
+```
+
+### Video Content
+Generate short video clips for prototypes and demos.
+
+```bash
+curl -X POST "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"camera slowly zooms in","image":"https://your-image.jpg"}' \
+  -o demo.mp4
+```
+
+## Quick Start
+
+1. **Get Your API Key** - Sign up at [weyl.ai](https://weyl.ai/signup) for free (1,000 requests/month)
+2. **Pick Your Tool** - Choose from Cursor, Claude, v0, Lovable, or Bolt above
+3. **Copy & Paste** - Each guide has ready-to-use code snippets
+4. **Generate** - Start creating images and video in seconds
+
+## Sync vs Async
+
+### Sync Tier (Real-Time)
+Use `sync.render.weyl.ai` for interactive workflows:
+- Instant results
+- Perfect for live previews
+- Returns 503 if capacity full
+
+### Async Tier (Batch)
+Use `async.render.weyl.ai` for cost optimization:
+- Queue-based
+- Lower pricing
+- Poll for results
+
+Most vibe coding workflows use the sync tier for immediate feedback.
+
+## Need Help?
+
+- [API Overview](/api/) - Complete API reference
+- [Model Guide](/api/models/) - Available models and formats
+- [Authentication](/getting-started/auth/) - Set up your API keys
+
+## Next Steps
+
+Choose your tool from the table above to get started with tool-specific guides and examples.
+

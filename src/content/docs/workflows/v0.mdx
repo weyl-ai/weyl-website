@@ -1,0 +1,616 @@
+---
+title: v0 AI Image & Video Generation
+description: Generate images and video in v0.dev components - add dynamic visuals to your AI-generated UIs
+category: workflows
+image: /og-workflows-v0.png
+---
+
+Integrate Weyl image and video generation directly into your v0.dev components. Generate dynamic hero images, product shots, and visual content right in your UI components.
+
+## Quick Setup
+
+### Prerequisites
+
+1. Get your Weyl API key from [weyl.ai/signup](https://weyl.ai/signup) (free tier: 1,000 requests/month)
+2. Access to v0.dev
+
+## Method 1: Client-Side Generation (Instant Preview)
+
+Tell v0 to create a component that generates images on the fly.
+
+### Example v0 Prompt
+
+```
+Create a hero section component with dynamic image generation using the Weyl API.
+
+Requirements:
+- Image generates on button click
+- Shows loading state
+- Uses FLUX schnell model for speed
+- API endpoint: https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024
+- Auth via WEYL_API_KEY environment variable
+- Display generated image with smooth fade-in
+```
+
+### Generated Component Example
+
+v0 will create something like:
+
+```tsx
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
+
+export default function DynamicHero() {
+  const [imageUrl, setImageUrl] = useState<string>("")
+  const [loading, setLoading] = useState(false)
+
+  async function generateHero() {
+    setLoading(true)
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: "modern tech startup office, bright and professional",
+        }),
+      })
+
+      const data = await response.json()
+      setImageUrl(data.url)
+    } catch (error) {
+      console.error("Failed to generate image:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="relative h-[600px] w-full overflow-hidden rounded-lg">
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt="Generated hero"
+          className="h-full w-full object-cover transition-opacity duration-500"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500">
+          <Button onClick={generateHero} disabled={loading} size="lg">
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate Hero Image"
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+## Method 2: API Route Pattern
+
+Tell v0 to create the API route alongside the component.
+
+### v0 Prompt for API Route
+
+```
+Create a Next.js API route at /api/generate-image that:
+- Accepts POST with { prompt: string }
+- Calls Weyl API at sync.render.weyl.ai
+- Uses WEYL_API_KEY from env
+- Returns { url: string } with CDN URL
+- Includes error handling
+```
+
+### Generated API Route
+
+```typescript
+// app/api/generate-image/route.ts
+import { NextResponse } from "next/server"
+
+export async function POST(request: Request) {
+  try {
+    const { prompt } = await request.json()
+
+    if (!prompt) {
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      )
+    }
+
+    const response = await fetch(
+      "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`)
+    }
+
+    // Get CDN URL from header
+    const cdnUrl = response.headers.get("Content-Location")
+
+    return NextResponse.json({ 
+      url: cdnUrl,
+      success: true 
+    })
+  } catch (error) {
+    console.error("Image generation failed:", error)
+    return NextResponse.json(
+      { error: "Failed to generate image" },
+      { status: 500 }
+    )
+  }
+}
+```
+
+## Method 3: Server Component with Static Generation
+
+Generate images at build time for better performance.
+
+### v0 Prompt
+
+```
+Create a product showcase component that generates product images at build time.
+- Server component
+- Generate 3 product variations
+- Cache images in public folder
+- Display in responsive grid
+```
+
+### Generated Component
+
+```tsx
+// app/products/page.tsx
+import { generateProductImage } from "@/lib/weyl"
+import { ProductCard } from "@/components/product-card"
+
+const products = [
+  { name: "Laptop", style: "minimal tech, white background" },
+  { name: "Headphones", style: "product shot, studio lighting" },
+  { name: "Smartphone", style: "sleek design, professional" },
+]
+
+export default async function ProductsPage() {
+  // Generate images at build time
+  const productImages = await Promise.all(
+    products.map(async (product) => {
+      const imageUrl = await generateProductImage(
+        `${product.name}, ${product.style}`
+      )
+      return { ...product, imageUrl }
+    })
+  )
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="mb-8 text-4xl font-bold">Our Products</h1>
+      <div className="grid gap-6 md:grid-cols-3">
+        {productImages.map((product) => (
+          <ProductCard
+            key={product.name}
+            name={product.name}
+            imageUrl={product.imageUrl}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+## Common v0 Use Cases
+
+### 1. Dynamic Image Gallery
+
+```
+Create an image gallery component where users can generate custom images.
+
+Features:
+- Text input for prompts
+- Generate button
+- Grid display of generated images
+- Download button for each image
+- Uses Weyl FLUX schnell for speed
+```
+
+v0 output:
+
+```tsx
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Download, Sparkles } from "lucide-react"
+
+export default function ImageGallery() {
+  const [prompt, setPrompt] = useState("")
+  const [images, setImages] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+
+  async function generateImage() {
+    if (!prompt.trim()) return
+
+    setLoading(true)
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+
+      const data = await response.json()
+      setImages([data.url, ...images])
+      setPrompt("")
+    } catch (error) {
+      console.error("Generation failed:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex gap-2">
+        <Input
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe your image..."
+          className="flex-1"
+          onKeyDown={(e) => e.key === "Enter" && generateImage()}
+        />
+        <Button onClick={generateImage} disabled={loading}>
+          <Sparkles className="mr-2 h-4 w-4" />
+          Generate
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {images.map((url, i) => (
+          <div key={i} className="group relative overflow-hidden rounded-lg">
+            <img
+              src={url}
+              alt={`Generated ${i}`}
+              className="h-64 w-full object-cover"
+            />
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={() => window.open(url, "_blank")}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+### 2. AI Avatar Generator
+
+```
+Create a profile avatar generator component.
+
+Features:
+- Style selection (realistic, cartoon, artistic)
+- Generate button
+- Display in circle crop
+- Save to profile functionality
+- Uses FLUX dev for quality
+```
+
+### 3. Landing Page with Dynamic Hero
+
+```
+Create a landing page with hero section that:
+- Generates contextual background image on load
+- Shows loading skeleton
+- Includes CTA buttons overlay
+- Responsive design
+- Uses Weyl for image generation
+```
+
+### 4. Product Mockup Generator
+
+```
+Create a product mockup generator where users can:
+- Enter product name
+- Select style (minimal, luxury, tech)
+- Generate mockup
+- Display in card with download option
+```
+
+## v0-Specific Best Practices
+
+### 1. Always Include Loading States
+
+v0 loves clean loading states. Include them in your prompt:
+
+```
+Add a skeleton loader while image generates
+Show shimmer effect during loading
+Display progress text "Generating your image..."
+```
+
+### 2. Use Environment Variables
+
+Tell v0 to use env vars properly:
+
+```
+Use WEYL_API_KEY from environment variables
+Add .env.example with WEYL_API_KEY placeholder
+Include setup instructions in README
+```
+
+### 3. Responsive Design by Default
+
+v0 generates responsive code. Leverage it:
+
+```
+Make image generation responsive
+Mobile: single column, smaller images
+Desktop: grid layout, larger images
+```
+
+### 4. Integrate with shadcn/ui
+
+v0 uses shadcn/ui. Reference it:
+
+```
+Use Button component from shadcn
+Add Card wrapper for generated images
+Include Dialog for full-size preview
+Use Toast for error notifications
+```
+
+## Advanced Patterns
+
+### Pattern 1: Prompt Templates
+
+```tsx
+const PROMPT_TEMPLATES = {
+  hero: (theme: string) =>
+    `${theme} hero background, cinematic, professional`,
+  avatar: (style: string) =>
+    `portrait, ${style} style, professional headshot`,
+  product: (item: string) =>
+    `${item} product shot, white background, studio lighting`,
+  abstract: (mood: string) =>
+    `abstract ${mood} background, modern, gradient`,
+}
+
+// Usage in component
+async function generateWithTemplate(
+  type: keyof typeof PROMPT_TEMPLATES,
+  param: string
+) {
+  const prompt = PROMPT_TEMPLATES[type](param)
+  // ... generate image
+}
+```
+
+### Pattern 2: Batch Generation
+
+```tsx
+async function generateBatch(prompts: string[]) {
+  const results = await Promise.all(
+    prompts.map((prompt) =>
+      fetch("/api/generate-image", {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+      }).then((r) => r.json())
+    )
+  )
+  return results.map((r) => r.url)
+}
+```
+
+### Pattern 3: Image Carousel with Generation
+
+Tell v0:
+
+```
+Create a carousel that:
+- Shows 5 generated images
+- Auto-advances every 5 seconds
+- Allows manual navigation
+- Generates new images in background
+- Uses Weyl FLUX schnell
+```
+
+## Example v0 Prompts
+
+### For Hero Sections
+
+```
+Create a hero section with:
+- Dynamic background image generation
+- Prompt: "futuristic tech landscape"
+- Generated via Weyl API on component mount
+- Gradient overlay for text readability
+- CTA buttons
+- Responsive layout
+```
+
+### For Galleries
+
+```
+Build an image gallery where:
+- User enters prompts in modal
+- Generates 4 variations using Weyl
+- Displays in masonry grid
+- Click to view full size
+- Download buttons
+```
+
+### For Forms
+
+```
+Create a form that generates images:
+- Style selector (artistic, photographic, minimal)
+- Subject input field
+- Quality toggle (fast/quality)
+- Calls Weyl API with selected options
+- Shows result in preview area
+```
+
+## Integration Tips
+
+### Tip 1: Mention Weyl in Initial Prompt
+
+Start your v0 prompt with:
+
+```
+Using the Weyl API (sync.render.weyl.ai) for image generation...
+```
+
+This sets context for the entire component.
+
+### Tip 2: Request API Route Creation
+
+Always ask for the API route:
+
+```
+Also create the API route at /api/generate-image that calls Weyl
+```
+
+v0 will generate both component and route.
+
+### Tip 3: Specify Error Handling
+
+```
+Include error handling for:
+- Network failures
+- API errors (503, 401)
+- Invalid prompts
+Display errors in toast notifications
+```
+
+### Tip 4: Ask for TypeScript
+
+```
+Use TypeScript with proper types
+Interface for API responses
+Type-safe props
+```
+
+## Troubleshooting
+
+### Issue: v0 doesn't know Weyl API format
+
+**Solution**: Be specific in your prompt:
+
+```
+API endpoint: POST https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024
+Headers: Authorization: Bearer {WEYL_API_KEY}, Content-Type: application/json
+Body: { "prompt": "your prompt" }
+Response: Binary image data, CDN URL in Content-Location header
+```
+
+### Issue: CORS errors in browser
+
+**Solution**: Always use API routes, not direct browser calls:
+
+```
+// Bad: Direct from browser
+fetch("https://sync.render.weyl.ai/...", { ... })
+
+// Good: Through your API route
+fetch("/api/generate-image", { ... })
+```
+
+### Issue: Images not caching
+
+**Solution**: Tell v0 to add caching:
+
+```
+Cache generated images in /public/generated
+Add cache-control headers
+Reuse images for same prompts
+```
+
+## Model Selection for v0
+
+Choose based on use case:
+
+| Use Case | Model | Reason |
+|----------|-------|--------|
+| Quick previews | `flux/schnell` | Sub-second generation |
+| UI components | `flux/dev` | Good quality/speed balance |
+| Hero images | `flux/dev2` | Best quality |
+| Avatars | `flux/dev` | Good for portraits |
+| Backgrounds | `flux/schnell` | Speed matters more |
+
+Specify in your v0 prompt:
+
+```
+Use FLUX schnell for fast iteration
+```
+
+or
+
+```
+Use FLUX dev2 for high-quality final images
+```
+
+## Example Project Structure
+
+After v0 generates your components:
+
+```
+my-v0-app/
+├── .env.local                    # WEYL_API_KEY here
+├── app/
+│   ├── api/
+│   │   └── generate-image/
+│   │       └── route.ts          # Generated by v0
+│   └── page.tsx                  # Main component with image gen
+├── components/
+│   ├── ui/                       # shadcn components
+│   └── image-generator.tsx       # Custom generated component
+└── lib/
+    └── weyl.ts                   # Optional helper functions
+```
+
+## Next Steps
+
+- [API Reference](/api/) - Complete Weyl API documentation
+- [Model Guide](/api/models/) - Choose the right model
+- [Cursor Guide](/workflows/cursor/) - Cursor-specific workflows
+- [Claude Guide](/workflows/claude/) - Claude Projects integration
+- [Other Tools](/workflows/) - Lovable, Bolt guides
+
+## Video Generation in v0
+
+For video, use the same pattern:
+
+```
+Create a video generator component using Weyl:
+- Upload image or use URL
+- Motion prompt input
+- Generate video via Weyl WAN model
+- Endpoint: POST sync.render.weyl.ai/video/wan/default/i2v?format=720p
+- Display video player when complete
+```
+
+v0 will create a similar component adapted for video workflows!
+

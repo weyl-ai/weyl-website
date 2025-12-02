@@ -123,6 +123,17 @@ export default defineConfig({
             { label: 'Model Aliases', link: '/api/infrastructure/aliases/' },
           ],
         },
+        {
+          label: 'AI Workflows',
+          items: [
+            { label: 'Overview', link: '/workflows/' },
+            { label: 'Cursor IDE', link: '/workflows/cursor/' },
+            { label: 'Claude Projects', link: '/workflows/claude/' },
+            { label: 'v0.dev', link: '/workflows/v0/' },
+            { label: 'Lovable', link: '/workflows/lovable/' },
+            { label: 'Bolt.new', link: '/workflows/bolt/' },
+          ],
+        },
       ],
       components: {
         // Custom Banner component to show llms.txt links at the top of doc pages

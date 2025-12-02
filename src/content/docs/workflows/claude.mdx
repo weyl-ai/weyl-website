@@ -1,0 +1,601 @@
+---
+title: Claude AI Image & Video Generation
+description: Generate images and video in Claude Projects and via MCP - seamless integration with your AI workflows
+category: workflows
+image: /og-workflows-claude.png
+---
+
+Integrate Weyl's image and video generation directly into your Claude Projects workflows. Perfect for AI-assisted development with visual content generation.
+
+## Quick Setup
+
+### Prerequisites
+
+1. Get your Weyl API key from [weyl.ai/signup](https://weyl.ai/signup) (free tier: 1,000 requests/month)
+2. Have Claude Pro or Claude.ai access
+
+## Method 1: Claude Projects with Context Files
+
+The simplest way - add Weyl integration instructions to your project.
+
+### Step 1: Create Project Instructions
+
+In your Claude Project, add this to your custom instructions:
+
+```
+I have access to the Weyl API for generating images and video.
+
+API Details:
+- Base URL: https://sync.render.weyl.ai
+- Auth: Bearer token (in WEYL_API_KEY)
+- Image endpoint: POST /image/flux/schnell/t2i?format=1024
+- Video endpoint: POST /video/wan/default/i2v?format=720p
+
+When I need images, generate code that calls the Weyl API with appropriate prompts.
+Use FLUX schnell for speed, dev for quality.
+Return WebP images (sync) or job IDs (async).
+
+Example curl:
+curl -X POST "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024" \
+  -H "Authorization: Bearer $WEYL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"your prompt here"}'
+```
+
+### Step 2: Add API Key Context
+
+Create a `.env.example` file in your project:
+
+```bash
+# .env.example
+WEYL_API_KEY=your_api_key_here
+```
+
+Add this to project knowledge, then tell Claude:
+"I have WEYL_API_KEY set in my environment."
+
+### Step 3: Ask Claude to Generate Images
+
+Now you can simply say:
+
+> "Generate a hero image for a tech startup landing page"
+
+Claude will respond with code like:
+
+```typescript
+async function generateHeroImage() {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt: "modern tech startup office, bright natural lighting, professional"
+      }),
+    }
+  );
+
+  const imageBuffer = await response.arrayBuffer();
+  return Buffer.from(imageBuffer);
+}
+```
+
+## Method 2: MCP Server (Model Context Protocol)
+
+For advanced users - create a Weyl MCP server for native Claude integration.
+
+### Create Weyl MCP Server
+
+```typescript
+// weyl-mcp-server.ts
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+
+const WEYL_API_KEY = process.env.WEYL_API_KEY;
+
+const server = new Server(
+  {
+    name: "weyl-image-generator",
+    version: "1.0.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// Register tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: "generate_image",
+        description: "Generate an image using Weyl's FLUX models",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description: "Text description of the image to generate",
+            },
+            model: {
+              type: "string",
+              enum: ["schnell", "dev", "dev2"],
+              description: "Model to use (schnell=fast, dev=balanced, dev2=best quality)",
+              default: "schnell",
+            },
+            format: {
+              type: "number",
+              enum: [512, 1024, 2048],
+              description: "Output image size",
+              default: 1024,
+            },
+          },
+          required: ["prompt"],
+        },
+      },
+      {
+        name: "generate_video",
+        description: "Generate a video from an image using Weyl's WAN model",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description: "Text description of the motion/animation",
+            },
+            image_url: {
+              type: "string",
+              description: "URL of the starting image",
+            },
+          },
+          required: ["prompt", "image_url"],
+        },
+      },
+    ],
+  };
+});
+
+// Handle tool execution
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  if (name === "generate_image") {
+    const { prompt, model = "schnell", format = 1024 } = args;
+
+    const response = await fetch(
+      `https://sync.render.weyl.ai/image/flux/${model}/t2i?format=${format}`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${WEYL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`);
+    }
+
+    // Get CDN URL from response headers
+    const cdnUrl = response.headers.get("Content-Location");
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Image generated successfully!\nCDN URL: ${cdnUrl}\nPrompt: ${prompt}`,
+        },
+        {
+          type: "image",
+          data: await response.arrayBuffer(),
+          mimeType: "image/webp",
+        },
+      ],
+    };
+  }
+
+  if (name === "generate_video") {
+    const { prompt, image_url } = args;
+
+    const response = await fetch(
+      "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${WEYL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt, image: image_url }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`);
+    }
+
+    const cdnUrl = response.headers.get("Content-Location");
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Video generated successfully!\nCDN URL: ${cdnUrl}\nPrompt: ${prompt}`,
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Unknown tool: ${name}`);
+});
+
+// Start server
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+### Install MCP Server
+
+```bash
+npm install @modelcontextprotocol/sdk
+```
+
+### Configure Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "weyl": {
+      "command": "node",
+      "args": ["/path/to/your/weyl-mcp-server.js"],
+      "env": {
+        "WEYL_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Using MCP Tools in Claude
+
+After setup, you can simply ask:
+
+> "Generate an image of a cyberpunk street scene"
+
+Claude will use the `generate_image` tool automatically and show you the result!
+
+## Method 3: Direct API Integration in Code
+
+When Claude is helping you build an app, guide it to use Weyl:
+
+### Example Conversation
+
+**You**: "Create an API route that generates product images using Weyl"
+
+**Claude**: Here's a Next.js API route:
+
+```typescript
+// app/api/generate-product/route.ts
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const { productName, style } = await request.json();
+
+  const prompt = `${productName}, ${style} style, product photography, studio lighting, white background`;
+
+  try {
+    const response = await fetch(
+      "https://sync.render.weyl.ai/image/flux/dev/t2i?format=1024",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Weyl API error: ${response.status}`);
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    const cdnUrl = response.headers.get("Content-Location");
+
+    return NextResponse.json({
+      success: true,
+      cdnUrl,
+      localUrl: `/api/images/${productName}.webp`,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Generation failed" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Common Use Cases
+
+### 1. Content Generation Assistant
+
+Create a Claude Project that generates blog post images:
+
+**Project Instructions**:
+```
+When the user asks for blog post images:
+1. Analyze the blog post title/content
+2. Generate 3 different image concepts
+3. Use Weyl API to create images
+4. Return CDN URLs for each
+
+Use flux/dev for quality.
+Style: clean, professional, blog-appropriate
+```
+
+**Usage**:
+> "Create header images for my post about AI productivity"
+
+### 2. UI Mockup Generator
+
+**You**: "Generate placeholder images for this component"
+
+**Claude** (with context):
+```typescript
+async function generatePlaceholders() {
+  const images = await Promise.all([
+    fetch("https://sync.render.weyl.ai/image/flux/schnell/t2i?format=512", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt: "user avatar, professional portrait, neutral background"
+      }),
+    }),
+    fetch("https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        prompt: "abstract gradient background, modern UI design"
+      }),
+    }),
+  ]);
+
+  return images;
+}
+```
+
+### 3. Video Thumbnail Generator
+
+Generate video thumbnails from existing images:
+
+```typescript
+async function generateVideoThumbnail(imageUrl: string) {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/video/wan/default/i2v?format=720p",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: "subtle zoom in, cinematic feel",
+        image: imageUrl,
+      }),
+    }
+  );
+
+  return response;
+}
+```
+
+## Claude Projects Best Practices
+
+### 1. Add Weyl Helper to Project Knowledge
+
+Create `lib/weyl-helper.md`:
+
+```markdown
+# Weyl Image Generation Helper
+
+Always use this pattern when generating images:
+
+\`\`\`typescript
+async function generateImage(prompt: string): Promise<Buffer> {
+  const response = await fetch(
+    "https://sync.render.weyl.ai/image/flux/schnell/t2i?format=1024",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WEYL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    }
+  );
+
+  if (!response.ok) throw new Error(`Error: ${response.status}`);
+  
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+\`\`\`
+
+Models:
+- schnell: Fast (4 steps)
+- dev: Balanced
+- dev2: Best quality
+```
+
+### 2. Create Reusable Prompts
+
+Add common prompt templates to project:
+
+```typescript
+const PROMPT_TEMPLATES = {
+  hero: (theme: string) => 
+    `${theme} themed hero image, professional, high quality, modern design`,
+  product: (item: string) => 
+    `${item} product shot, studio lighting, white background, professional`,
+  abstract: (mood: string) => 
+    `abstract ${mood} background, gradients, modern, UI-friendly`,
+  portrait: (description: string) => 
+    `professional portrait, ${description}, natural lighting, neutral background`,
+};
+```
+
+### 3. Error Handling Template
+
+```typescript
+async function safeGenerate(prompt: string): Promise<Buffer | null> {
+  try {
+    return await generateImage(prompt);
+  } catch (error) {
+    if (error.status === 503) {
+      console.log("Capacity full, retrying...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return safeGenerate(prompt); // Retry once
+    }
+    console.error("Generation failed:", error);
+    return null;
+  }
+}
+```
+
+## Troubleshooting
+
+### Issue: Claude doesn't know about Weyl
+
+**Solution**: Add Weyl documentation to project knowledge. Include this guide or create a condensed version.
+
+### Issue: API key not working
+
+**Solution**: 
+1. Verify key in `.env` file
+2. Ensure Claude knows to use `process.env.WEYL_API_KEY`
+3. Restart your development server
+
+### Issue: MCP server not connecting
+
+**Solution**:
+1. Check `claude_desktop_config.json` path is correct
+2. Verify Node.js path: `which node`
+3. Check server logs in Claude Desktop → Settings → Developer
+4. Ensure WEYL_API_KEY is in env config
+
+### Issue: Generation timing out
+
+**Solution**: Use async tier for longer generations:
+
+```typescript
+// Switch to async endpoint
+const response = await fetch(
+  "https://async.render.weyl.ai/image/flux/dev2/t2i?format=2048",
+  // ... same auth and body
+);
+
+const { job_id } = await response.json();
+
+// Poll for result
+const result = await fetch(
+  `https://async.render.weyl.ai/jobs/${job_id}`,
+  {
+    headers: { "Authorization": `Bearer ${process.env.WEYL_API_KEY}` }
+  }
+);
+```
+
+## Advanced: Artifact Generation
+
+When Claude generates artifacts (React components, HTML), include image generation:
+
+**Example Prompt**:
+> "Create a landing page component that generates custom hero images on mount using Weyl"
+
+**Claude's Response**:
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+export default function DynamicHero() {
+  const [heroUrl, setHeroUrl] = useState<string>("");
+
+  useEffect(() => {
+    async function generateHero() {
+      const res = await fetch("/api/generate-hero", {
+        method: "POST",
+        body: JSON.stringify({ 
+          prompt: "futuristic tech landscape, cinematic" 
+        }),
+      });
+      
+      const { cdnUrl } = await res.json();
+      setHeroUrl(cdnUrl);
+    }
+
+    generateHero();
+  }, []);
+
+  return (
+    <div className="relative h-screen">
+      {heroUrl && (
+        <img
+          src={heroUrl}
+          alt="Dynamic hero"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      <div className="relative z-10">
+        <h1>Welcome</h1>
+      </div>
+    </div>
+  );
+}
+```
+
+## Next Steps
+
+- [API Reference](/api/) - Complete Weyl API docs
+- [Model Guide](/api/models/) - Choose the right model
+- [Cursor Guide](/workflows/cursor/) - Cursor-specific workflows
+- [Other Tools](/workflows/) - v0, Lovable, Bolt guides
+
+## Example Project Structure
+
+```
+my-project/
+├── .env                          # WEYL_API_KEY here
+├── lib/
+│   ├── weyl.ts                   # Weyl client helper
+│   └── prompts.ts                # Prompt templates
+├── app/
+│   └── api/
+│       └── generate/
+│           └── route.ts          # Image generation endpoint
+└── docs/
+    └── weyl-integration.md       # Add to Claude Project knowledge
+```
+
+Now Claude can help you build apps with AI-generated images seamlessly!
+
