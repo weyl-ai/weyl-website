@@ -38,7 +38,7 @@ export default defineConfig({
       ],
       social: {
         github: 'https://github.com/weyl-ai',
-        twitter: 'https://twitter.com/weyl_ai',
+        'x.com': 'https://twitter.com/weyl_ai',
       },
       sidebar: [
         {
