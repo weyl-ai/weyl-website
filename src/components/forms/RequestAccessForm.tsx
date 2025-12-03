@@ -76,7 +76,7 @@ export default function RequestAccessForm() {
       if (response.ok) {
         setSubmitStatus({
           type: 'success',
-          message: 'Thank you! Your request has been submitted. We\'ll be in touch soon.',
+          message: 'Success! Check your email for a Slack invitation to connect with our team.',
         });
         setFormData({ email: '', company: '', description: '' });
         setErrors({});
@@ -238,12 +238,12 @@ export default function RequestAccessForm() {
             Submitting...
           </span>
         ) : (
-          'Submit Request'
+          'Request Access'
         )}
       </button>
 
       <p className="text-center font-mono text-caption text-text-muted">
-        All fields are required. We typically respond within 24 hours.
+        We'll send you a Slack invitation to connect with our team.
       </p>
     </form>
   );

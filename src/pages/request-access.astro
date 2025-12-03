@@ -7,6 +7,7 @@ import RequestAccessForm from '@components/forms/RequestAccessForm';
 <Landing
   title="Request API Access - Weyl"
   description="Request access to the Weyl API for your generative media project. Get started with sub-100ms latency inference infrastructure."
+  hideCalendly={true}
 >
   <main class="min-h-screen bg-bg-primary">
     {/* Hero Section */}
@@ -16,13 +17,8 @@ import RequestAccessForm from '@components/forms/RequestAccessForm';
           REQUEST API ACCESS
         </h1>
         
-        <p class="font-mono text-subhead text-text-secondary mb-4">
-          Get access to the fastest generative media API
-        </p>
-        
-        <p class="font-mono text-body text-text-muted max-w-2xl mx-auto leading-relaxed">
-          Fill out the form below to request access to the Weyl API. We'll review your 
-          application and get back to you within 24 hours.
+        <p class="font-mono text-body text-text-muted max-w-2xl mx-auto leading-relaxed mb-4">
+          Request access below. We'll send you a <strong class="text-text-secondary">Slack Connect invitation</strong> to the email you provide to chat with our team and get your API key.
         </p>
       </div>
     </section>
@@ -33,5 +29,6 @@ import RequestAccessForm from '@components/forms/RequestAccessForm';
         <RequestAccessForm client:only="react" />
       </div>
     </section>
+
   </main>
 </Landing>
