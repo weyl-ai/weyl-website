@@ -17,16 +17,15 @@ interface Props {
   title?: string;
   description?: string;
   hideCalendly?: boolean;
+  ogImage?: string;
 }
 
 const {
   title = 'Weyl',
   description = 'The render layer for generative media. Inference infrastructure for diffusion models with sub-100ms latency.',
   hideCalendly = false,
+  ogImage = '/og-default.png',
 } = Astro.props;
-
-// Default OG image for landing page
-const ogImage = '/og-default.png';
 ---
 
 <!DOCTYPE html>

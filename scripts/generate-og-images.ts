@@ -56,6 +56,26 @@ const images: OGImageConfig[] = [
     description: 'Rapid prototyping with AI images in Bolt.new - instant demos with generated content',
     filename: 'og-workflows-bolt.png',
   },
+  {
+    title: 'Request API Access',
+    description: 'Get access to sub-100ms generative media inference. Join our Slack to connect with the team.',
+    filename: 'og-request-access.png',
+  },
+  {
+    title: 'Posters',
+    description: 'Hypermodern generative AI art. Downloadable posters for your space.',
+    filename: 'og-posters.png',
+  },
+  {
+    title: 'Getting Started',
+    description: 'Quick start guide for the Weyl API. From zero to generating images in minutes.',
+    filename: 'og-getting-started.png',
+  },
+  {
+    title: 'API Reference',
+    description: 'Complete API documentation. Sync, async, WebSocket, models, and more.',
+    filename: 'og-api.png',
+  },
 ];
 
 async function generateOGImage(config: OGImageConfig) {
