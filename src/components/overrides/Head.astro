@@ -4,8 +4,8 @@
 import type { Props } from '@astrojs/starlight/props';
 
 const { entry } = Astro.props;
-const pageTitle = entry.data.title || 'Documentation';
-const pageDescription = entry.data.description || 'API documentation and guides for building with Weyl';
+const pageTitle = entry['data']['title'] || 'Documentation';
+const pageDescription = entry['data']['description'] || 'API documentation and guides for building with Weyl';
 const path = Astro.url.pathname;
 
 // Map paths to specific OG images
