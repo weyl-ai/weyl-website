@@ -4,7 +4,6 @@
 
 Your site is now configured for Vercel deployment with:
 - **Vercel adapter** installed and configured
-- **Keystatic CMS** enabled and ready
 - **Server-side rendering** enabled
 - **Web Analytics** enabled
 - **Security headers** configured
@@ -32,7 +31,7 @@ vercel --prod
 1. **Push to GitHub:**
    ```bash
    git add .
-   git commit -m "Configure Vercel deployment with Keystatic"
+   git commit -m "Configure Vercel deployment"
    git push origin main
    ```
 
@@ -72,26 +71,6 @@ The build is configured in `vercel.json`:
 - Framework: Astro
 - Node version: 22 (Vercel will use this even though you have v23 locally)
 
-## 📝 Keystatic CMS Access
-
-Once deployed, you can access Keystatic at:
-```
-https://your-domain.vercel.app/keystatic
-```
-
-### Keystatic Authentication
-
-Keystatic is configured for **local mode** by default (see `keystatic.config.ts`). For production:
-
-1. **GitHub Mode** (Recommended for production):
-   - Create a GitHub OAuth App
-   - Update `keystatic.config.ts` storage mode to 'github'
-   - Add environment variables in Vercel
-
-2. **Cloud Mode** (Paid):
-   - Sign up for Keystatic Cloud
-   - Update config to use cloud mode
-
 ## 🔒 Security Headers
 
 Security headers are configured in `vercel.json`:
@@ -125,8 +104,7 @@ The custom Web Vitals tracking is still in place and will work alongside Vercel 
 With `output: 'server'` mode:
 
 **Server-Rendered (SSR):**
-- `/keystatic/*` - CMS interface
-- Dynamic API routes (if any)
+- Dynamic API routes (e.g., `/api/request-access`)
 - Pages that need real-time data
 
 **Static (Prerendered):**
@@ -147,11 +125,6 @@ export const prerender = true;
 - Ensure all dependencies are in `package.json`
 - Verify environment variables are set
 
-### Keystatic Not Working
-- Check that you're accessing `/keystatic` route
-- Verify storage mode in `keystatic.config.ts`
-- Check browser console for errors
-
 ### Node Version Warning
 The warning about Node 23 vs 22 is expected and harmless. Vercel uses Node 22 for serverless functions regardless of your local version.
 
@@ -166,15 +139,11 @@ After successful deployment:
    - https://your-domain/ai-sitemap.xml
    - https://your-domain/.well-known/ai-plugin.json
 
-2. **Test Keystatic:**
-   - Go to https://your-domain/keystatic
-   - Try editing content
-
-3. **Check Analytics:**
+2. **Check Analytics:**
    - Vercel Dashboard → Analytics tab
    - Should see Web Vitals data within 24 hours
 
-4. **Submit to Search Engines:**
+3. **Submit to Search Engines:**
    - Google Search Console
    - Bing Webmaster Tools
    - Submit sitemap
@@ -183,7 +152,6 @@ After successful deployment:
 
 Your site is configured for:
 - ✅ Vercel deployment
-- ✅ Keystatic CMS
 - ✅ Enterprise SEO
 - ✅ Security headers
 - ✅ Web Analytics

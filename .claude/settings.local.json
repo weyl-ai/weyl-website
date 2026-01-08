@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git count-objects:*)",
+      "Bash(git lfs ls-files:*)",
+      "Bash(du:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git gc:*)",
+      "Bash(git lfs pull:*)",
+      "Bash(bun run build:*)",
+      "Bash([ -d node_modules ])",
+      "Bash(bun install:*)",
+      "Bash(bun run dev)"
+    ]
+  }
+}

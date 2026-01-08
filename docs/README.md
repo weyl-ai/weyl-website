@@ -1,42 +1,43 @@
-# Weyl Documentation
+# Weyl AI Website Documentation
 
-Internal documentation for development and deployment.
+Comprehensive documentation for developers, maintainers, and contributors.
 
-## Contents
+## Core Documentation
 
-- **[PRODUCTION-READY.md](./PRODUCTION-READY.md)** - Production deployment checklist and completion summary
-- **[ASSETS.md](./ASSETS.md)** - Instructions for generating image assets (favicons, OG images)
+### Getting Started
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete system architecture, directory structure, and tech stack
+- **[ASSETS.md](./ASSETS.md)** - Asset generation guide (favicons, OG images)
+
+### Features & Components
+- **[PAGES.md](./PAGES.md)** - All routes and pages documentation
+- **[API-ROUTES.md](./API-ROUTES.md)** - API endpoints and special routes
+- **[COMPONENTS.md](./COMPONENTS.md)** - Component library and interfaces (coming soon)
+- **[SEO.md](./SEO.md)** - SEO implementation and configuration
+
+### Deployment & Integration
+- **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** - Vercel deployment guide
+- **[API_REQUEST_ACCESS_SETUP.md](./API_REQUEST_ACCESS_SETUP.md)** - Klaviyo integration setup
+- **[SLACK_CONNECT_SETUP.md](./SLACK_CONNECT_SETUP.md)** - Slack Connect integration setup
+
+### Reference
+- **[openapi.yaml](./openapi.yaml)** - API specification in OpenAPI 3.0 format
+
+### Archive
+- **[archive/](./archive/)** - Historical documentation and original specifications
 
 ## Project Documentation
 
+### Quick Links
+
+- **Architecture Overview**: [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **All Pages**: [PAGES.md](./PAGES.md)
+- **API Documentation**: [API-ROUTES.md](./API-ROUTES.md)
+- **Deploy to Vercel**: [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
+- **SEO Guide**: [SEO.md](./SEO.md)
+
 ### Repository Structure
-```
-weyl-website/
-├── .cursor/              # Cursor IDE context files (brand tokens, architecture, specs)
-├── .cursorrules          # Development rules and conventions
-├── docs/                 # Project documentation (this folder)
-├── public/               # Static assets (logos, robots.txt)
-│   └── og/              # Open Graph images
-├── scripts/              # Build and utility scripts
-├── src/
-│   ├── assets/          # Processed assets (Astro optimized)
-│   ├── components/      # UI components (brand, landing, ui, seo)
-│   ├── content/         # Content collections (blog, docs)
-│   ├── layouts/         # Page layouts
-│   ├── lib/             # Utilities and helpers
-│   ├── pages/           # Routes and API endpoints
-│   └── styles/          # Global CSS (tokens, typography, starlight)
-├── astro.config.mjs     # Astro configuration
-├── tailwind.config.mjs  # Tailwind configuration
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Dependencies
-```
 
-### Key Files
-
-- **`.cursorrules`** - Development standards and conventions
-- **`.env.example`** - Environment variable template
-- **`openapi.yaml`** - API specification reference
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the complete directory structure and file organization.
 
 ### Development
 
@@ -56,12 +57,43 @@ bun run check       # TypeScript + Astro checks
 - **Runtime**: Bun
 - **Content**: MDX with Zod validation
 
-### SEO & Meta
+### Key Features
 
-- JSON-LD structured data on all pages
-- Dynamic OG image generation (`/api/og/[slug]`)
-- Sitemap auto-generated
-- Search powered by Pagefind
+- **SEO**: JSON-LD structured data, dynamic OG images, XML sitemaps
+- **Documentation**: Astro Starlight with search (Pagefind)
+- **Analytics**: Vercel Analytics and Speed Insights
+- **git-lfs**: Large file storage for fonts and images
+- **TypeScript**: Strict mode, branded types, result types
 
-See [.cursor/architecture.md](../.cursor/architecture.md) for detailed system design.
+## Contributing
+
+When adding new features or making changes:
+
+1. Update relevant documentation in `/docs`
+2. Follow TypeScript strict mode (no `any`, no `@ts-ignore`)
+3. Add Zod schemas for new content types
+4. Include SEO metadata for new pages
+5. Test locally with `bun dev` before deploying
+
+## Documentation Organization
+
+### Developer Docs (`/docs`)
+Technical documentation for developers:
+- Architecture and system design
+- API references and specifications
+- Deployment guides
+- Integration setup
+
+### AI Context (`/.cursor`)
+Design specifications and context for AI tools:
+- Design system principles
+- Theme specifications (Hypermodern, High Modernism)
+- Typography guidelines
+
+## Support & Resources
+
+- **Issues**: GitHub Issues
+- **Discussions**: GitHub Discussions
+- **Website**: https://weyl.ai
+- **API Docs**: https://weyl.ai/api
 
