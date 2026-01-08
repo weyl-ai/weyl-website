@@ -1,0 +1,95 @@
+---
+title: Naming Conventions
+description: Standard nixpkgs idioms are fine, everything else gets spelled out. Optimize for grep and maintainability.
+category: guides
+order: 5
+---
+
+# Naming Conventions
+
+## The Three-Character Rule
+
+Standard nixpkgs idioms are fine—every nixer knows them. Everything else gets spelled out.
+
+```nix
+# Universal idioms—keep these
+{ pkgs, lib, config, ... }
+final: prev:
+inherit (lib) mkOption types mkIf mkMerge;
+
+# Not okay—requires mental translation
+{ p, l, c, ... }
+f: p:
+inherit (lib) mk o t;
+```
+
+When the idiom doesn't apply, be explicit:
+
+```nix
+let
+  databaseConfiguration = config.weyl.services.database;
+  enabledServices = builtins.filter (svc: svc.enable) allServices;
+  backupRetentionDays = 30;
+in
+```
+
+## Attribute Naming
+
+Follow nixpkgs exactly:
+
+- **Packages:** hyphenated lowercase (`weyl-api-server`, `cuda-ml-toolkit`)
+- **Module options:** nested structure, camelCase leaves
+- **Flake outputs:** follow the schema (`packages`, `checks`, `overlays`)
+
+See [lisp-case](../../philosophy/lisp-case/) for the full rationale.
+
+## Optimize for grep
+
+When something breaks at 3am, you need to find the code fast.
+
+```bash
+# Useless
+grep -r "cfg" .           # 500 matches
+grep -r "enable" .        # 2000 matches
+
+# Useful
+grep -r "databaseConfiguration" .     # 5 matches
+grep -r "weyl.services.api" .         # 12 matches
+```
+
+Every identifier should be globally unique within its semantic domain.
+
+## Flake Input Naming Conventions
+
+Use hyphenated names consistently:
+
+```nix
+inputs = {
+  # GOOD: Hyphenated, descriptive
+  nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  nixpkgs-stable-24-11.url = "github:NixOS/nixpkgs/nixos-24.11";
+  home-manager.url = "github:nix-community/home-manager";
+  flake-parts.url = "github:hercules-ci/flake-parts";
+  treefmt-nix.url = "github:numtide/treefmt-nix";
+
+  # BAD: Inconsistent casing or underscores
+  nixpkgsUnstable.url = "...";
+  nixpkgs_stable.url = "...";
+};
+```
+
+## The Economics of Nix Code
+
+Code is written once. Code is read hundreds of times. Code is debugged at 3am by someone who didn't write it and doesn't have context. Every abbreviation, every implicit assumption, every clever trick becomes a tax paid by everyone who touches it later.
+
+```nix
+# This is not clever. This is a liability.
+{ p, c, ... }: { services.x.enable = c.e; }
+
+# This is maintainable.
+{ pkgs, config, ... }: {
+  services.postgresql.enable = config.weyl.database.enable;
+}
+```
+
+The Nix community optimized for terseness when memory was expensive and screens were small. We optimize for disambiguation when human attention is the scarce resource.

@@ -1,0 +1,1302 @@
+---
+title: "Weyl Standard C++"
+description: "C++ guidelines for extreme performance requirements, using modern C++23 features with emphasis on clarity and disambiguation in agent-heavy development."
+category: "languages"
+order: 3
+---
+
+# `// s4 // cpp // guidelines`
+
+## Strategy and Motivation
+
+We use C++ in situations where we need to do something extreme along one or more dimensions: we are
+in a regime where no compromise is possible. Typically we do this by having low-friction access to
+efficient, ergonomic implementations of best-in-class algorithms. Sometimes, we have the opportunity
+to do something best-in-class ourselves; we consider such proposals with open minds and healthy
+skepticism. Our C++ codebase and the investment represented by maintaining it is the optionality
+premium on these degrees of freedom.
+
+Much if not most excellent modern C++ code is proprietary because worthwhile C++ code is expensive
+and most contemporary projects don't need it. This leads to a situation where it is difficult to
+learn well outside of an elite technology or finance company. For non-commercial examples of extreme
+requirements, consider people working at the frontiers of human knowledge: CERN has excellent code
+because they operate in regimes that would be daunting for any company.
+
+This document is aimed at three audiences:
+
+- Experienced C++ programmers who have missed recent developments
+- Programmers new to serious C++ who want to skip learning curve friction
+- Agents with extensive informational resources who need clear guidelines
+
+## The Economics of Code in Agent-Heavy Development
+
+**In a codebase with heavy agent contribution, traditional economics invert:**
+
+- Code is written once by agents in seconds
+- Code is read hundreds of times by humans and agents
+- Code is debugged when you're under pressure by tired humans
+- Code is modified by agents who lack the original context
+
+**Every ambiguity compounds exponentially.**
+
+### The Fundamental Principle
+
+```cpp
+
+// this costs an agent 0.1 seconds to write, a human 10 seconds to debug:
+auto e = edge{};
+if (e.p > 0) process(e);
+
+// this costs an agent 0.2 seconds to write, saves hours of cumulative confusion:
+auto inference_configuration = s4::inference::config::engine{};
+if (inference_configuration.batch_size > 0) {
+  initialize_inference_engine(inference_configuration);
+}
+```
+
+**Optimize for disambiguation, not brevity.**
+
+### Why Config Parsing Is Sacred
+
+Configuration parsing is the most critical code in any system because:
+
+1. **Multiplication Effect**: One config bug affects every component
+2. **Trust Boundary**: External input that everything else trusts implicitly
+3. **Silent Corruption**: Config errors manifest as business logic failures
+4. **Audit Trail**: In regulated environments, you must prove correct configuration
+
+Config parsing should be **human-written**, **brutally simple**, and **fail-fast**.
+
+## High Level Choices
+
+1. **Explicit Types over `AAA`** (for agents) - Disambiguation beats brevity
+2. **Fully qualified names** - No `using namespace`, absolute clarity
+3. **C++23 features** - Use modern constructs maximally
+4. **Measure, don't guess** - Data-driven optimization
+5. **Name for `grep`** - Every identifier must be globally searchable
+
+## Naming Conventions
+
+### The Disambiguation Imperative
+
+In an agent-heavy codebase, names must be:
+
+- **Globally unique** within their semantic domain
+- **Self-documenting** without context
+- **Searchable** with basic tools
+
+```cpp
+// BAD: Will create confusion at scale
+class parser;
+auto config = load();
+int process(data& d);
+
+// GOOD: Unambiguous even with 100 agents contributing
+class tokenizer_engine;
+auto inference_configuration = load_inference_configuration();
+int process_tensor_batch(tensor_batch_data& batch);
+```
+
+### Core Naming Rules
+
+- **snake_case** for everything: `tensor_batch`, `model_weights`, `execute_inference()`
+- **Full words** over abbreviations: `configuration` not `config`, `connection` not `conn`
+- **Domain prefixes** for common concepts: `cuda_stream`, `device_memory`, `host_memory`
+- **member_suffix_** for members: `tensor_shape_`, `latency_us_`, `device_id_`
+- **Preserve acronyms**: `NVFP4_quantizer` not `Nvfp4Quantizer`
+
+### The Three-Letter Rule
+
+If an abbreviation is less than 4 characters, it's too short:
+
+```cpp
+// BAD
+auto cfg = load_cfg();
+auto conn = db.get_conn();
+auto res = process(req);
+
+// GOOD
+auto configuration = load_configuration();
+auto connection = database.get_connection();
+auto result = process_request(request);
+```
+
+### Standard Abbreviations (Use Sparingly)
+
+Only when the full name would be absurd:
+
+- `idx/jdx` - index (prefer descriptive names like `row_index`)
+- `rxbuf/txbuf` - receive/transmit buffer (domain-specific)
+- `ctx` - context (only when type makes it unambiguous)
+
+## Code Organization
+
+### Directory Structure Guidelines
+
+```
+s4/
+├── core/           # Foundation utilities (exceptions, hash, workspace, nvtx)
+│   ├── exceptions.h
+│   ├── exceptions.cpp
+│   ├── generator.h
+│   └── workspace.h
+├── cuda/           # CUDA primitives and utilities
+│   ├── nvfp4/
+│   │   ├── nvfp4.h
+│   │   ├── nvfp4.cuh
+│   │   └── nvfp4.cu
+│   └── cccl_standard.h
+├── attention/      # Attention mechanisms and kernels
+│   ├── sage_attention_plugin.h
+│   ├── sage_attention_plugin.cu
+│   └── score_correction.h
+├── tensor/         # Tensor abstractions
+│   ├── device_tensor.h
+│   └── view.h
+├── dtypes/         # Data type system
+│   ├── dtype.h
+│   ├── cuda_types.h
+│   └── dispatch.h
+└── trt/            # TensorRT integration
+  ├── affine_unary_plugin.h
+  └── affine_unary_plugin.cu
+```
+
+- **Headers and implementations are adjacent** - `foo.h` and `foo.cpp` live together
+- Test files live in separate `tests/` directory: `tests/unit/test_*.cpp`
+- Property tests: `tests/property/test_*_properties.cpp`
+- Python hypothesis tests: `tests/python/test_*_hypothesis.py`
+- CUDA device code uses `.cu` extension, device-only headers use `.cuh`
+
+### Headers
+
+```cpp
+#pragma once
+
+#include <chrono>
+#include <memory>
+#include <span>
+
+#include "s4/core/exceptions.h"
+#include "s4/dtypes/dtype.h"
+#include "s4/tensor/device_tensor.h"
+
+namespace s4::inference {
+
+class engine {  // Full descriptive names
+public:
+  engine();
+
+  // full words in function names
+  auto initialize_from_configuration(std::string configuration_path) noexcept
+    -> s4::core::status;
+
+  auto run_inference(std::span<const float> input_tensor) noexcept
+    -> s4::core::result<tensor_batch>;
+
+private:
+  // clear member names with units where applicable
+  std::unique_ptr<model_executor> executor_;
+  std::chrono::microseconds inference_timeout_us_;
+  int device_id_;
+};
+
+}  // namespace s4::inference
+```
+
+### Implementation
+
+```cpp
+#include "s4/inference/engine.h"
+
+#include <format>
+
+#include "s4/core/logging.h"
+#include "s4/cuda/device.h"
+
+namespace s4::inference {
+
+auto engine::initialize_from_configuration(
+  std::string configuration_path) noexcept -> s4::core::status {
+
+  // Descriptive variable names throughout
+  auto configuration_result = s4::core::fs::read_file_to_string(configuration_path);
+
+  if (!configuration_result) {
+    return s4::core::fail(
+      std::format("[s4] [inference] [engine] failed to read configuration: {}",
+                  configuration_result.error().what()));
+  }
+
+  auto parsed_configuration = parse_inference_configuration(configuration_result.value());
+  // ...
+
+  return s4::core::ok();
+}
+
+}  // namespace s4::inference
+```
+
+## Modern C++23 Patterns
+
+### Core Hardware Realities
+
+Modern GPUs and CPUs are not the abstraction models from your CS courses,  they're not even the ones you worked with a few years ago:
+
+- **Cache lines are 64 bytes** - This is the unit of memory transfer. Period.
+- **Branches are heinously expensive** - A mispredicted branch costs 15-20 cycles on modern CPUs
+- **The prefetcher is your friend** - Linear access patterns let it work magic
+- **The compiler is your best optimizer** - With `-O3 -march=native`, it knows tricks you don't
+- **This is even more true of Myelin** - When attempting to go fast on a GPU, you will almost never outsmart Myelin except when it has a pathological failure.
+
+### Performance Anti-Patterns and Reality Checks
+
+**Write simple, clear loops. The compiler will optimize them:**
+
+```cpp
+// BAD: Hand-rolled "optimization" that confuses compiler and humans
+for (; data_index + 8 <= data_length; data_index += 8) {
+  auto chunk = *reinterpret_cast<const uint64_t*>(data + data_index);
+  // Complex bit manipulation
+}
+
+// GOOD: Clear intent, compiler optimizes perfectly
+for (auto data_index = 0; data_index < data_length; ++data_index) {
+  if (data[data_index] == target_value) {
+    match_count++;
+  }
+}
+```
+
+### Error Handling Philosophy
+
+We don't throw exceptions. We use `s4::core::result<T>` and when something is truly unrecoverable:
+
+```cpp
+// When failure is recoverable - return result
+auto parse_configuration(std::string_view configuration_json) noexcept
+  -> s4::core::result<server_configuration> {
+
+  if (configuration_json.empty()) {
+    return s4::core::fail<server_configuration>("empty configuration string");
+  }
+
+  // parse...
+  return s4::core::ok(server_configuration{...});
+}
+
+// when failure is unrecoverable - fatal and we do the postmortem...
+if (!critical_resource_handle) {
+  s4::fatal("critical resource unavailable: {}", resource_name);
+}
+```
+
+### Error Handling Patterns
+
+```cpp
+// DO: Use specific fail overloads
+if (size > max_size) {
+  return s4::fail<buffer>("buffer size {} exceeds maximum {}", size, max_size);
+}
+
+if (::listen(socket_fd, backlog) < 0) {
+  return s4::fail_errno<socket>("failed to listen on socket");
+}
+
+// DON'T: Build error messages manually
+if (size > max_size) {
+  return s4::fail<buffer>(std::format("buffer size {} exceeds maximum {}", size, max_size));
+}
+```
+
+### Result Type Usage
+
+```cpp
+// prefer explicit type parameters for fail() - aids readability...
+auto parse_config(std::string_view json) -> s4::core::result<configuration> {
+  if (json.empty()) {
+    return s4::fail<configuration>("empty configuration string");
+  }
+  // ...
+}
+
+// for functions returning status, the type parameter can be omitted
+auto validate_connection() -> s4::core::status {
+
+  if (!is_connected()) {
+    return s4::fail("not connected");  // T defaults to monostate
+  }
+
+  return s4::ok();
+}
+```
+
+### Const-Correctness
+
+```cpp
+// DO: mark everything const that can be...
+auto process_batch(const tensor_batch& batch_data) const noexcept -> s4::core::status;
+
+// DO: use const for local variables that don't change...
+const auto configuration = load_configuration();
+const auto batch_count = batches.size();
+
+// DON'T: forget const on method that doesn't modify state...
+auto get_status() -> status_code;  // n.b. should be const, often [[nodiscard]]...
+```
+
+### Span Usage
+
+```cpp
+// DO: use `span` or `mdspan` for non-owning array views...
+auto process_batch(std::span<const inference_request> requests) -> s4::core::status;
+
+// DON'T: use raw pointer + size
+auto process_batch(const inference_request* requests, size_t count) -> s4::core::status;
+
+// DO: use span for fixed-size buffers...
+auto read_into(std::span<std::byte> buffer) -> s4::core::result<size_t>;
+```
+
+## CUDA and GPU Computing Patterns
+
+### CCCL-Forward Modern CUDA
+
+We use [CUDA C++ Core Libraries (CCCL)](https://nvidia.github.io/cccl/) for modern, standards-compliant CUDA code. As of March 2024, CCCL unifies Thrust, CUB, and libcudacxx.
+
+**Key principle**: Always prefer `cuda::std::` over `std::` - it works in both host and device code, works with NVRTC, and is tested for CUDA.
+
+```cpp
+#include <cuda/std/span>
+#include <cuda/std/array>
+#include <cuda/stream_ref>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+
+// DO: Use cuda::std:: entities (not std::) for device compatibility
+__global__ void process_kernel(cuda::std::span<float> input_data,
+                         cuda::std::span<float> output_data) {
+  int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+  if (thread_id < input_data.size()) {
+    output_data[thread_id] = input_data[thread_id] * 2.0f;
+  }
+}
+
+// DO: Use cuda::stream_ref for stream management
+auto launch_inference_kernel(cuda::stream_ref stream,
+                        std::span<const float> device_input) -> s4::core::status {
+  constexpr auto threads_per_block = 256;
+  auto block_count = (device_input.size() + threads_per_block - 1) / threads_per_block;
+
+  process_kernel<<<block_count, threads_per_block, 0, stream>>>(
+  cuda::std::span{device_input.data(), device_input.size()},
+  // ...
+  );
+
+  return s4::cuda::check_last_error();
+}
+```
+
+### Thrust Vectors for Memory Management
+
+[Thrust](https://nvidia.github.io/cccl/thrust/) provides STL-like containers for host and device memory:
+
+```cpp
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/universal_vector.h>
+#include <thrust/async/copy.h>
+
+// DO: Use thrust::device_vector for device-side data
+auto prepare_inference_batch(std::span<const float> host_data)
+  -> s4::core::result<thrust::device_vector<float>> {
+
+  // Host vector with STL-like interface
+  auto host_batch = thrust::host_vector<float>(host_data.begin(), host_data.end());
+
+  // Transfer to device (synchronous) - type deduced
+  auto device_batch = host_batch;
+
+  return s4::ok(std::move(device_batch));
+}
+
+// DO: Use thrust::async for non-blocking operations
+auto prepare_batch_async(std::span<const float> host_data,
+                   cudaStream_t stream)
+  -> thrust::device_future<thrust::device_vector<float>> {
+
+  auto host_batch = thrust::host_vector<float>(host_data.begin(), host_data.end());
+  auto device_batch = thrust::device_vector<float>(host_batch.size());
+
+  // Asynchronous copy
+  return thrust::async::copy(thrust::device.on(stream),
+                       host_batch.begin(), host_batch.end(),
+                       device_batch.begin());
+}
+
+// DO: Use thrust::universal_vector for unified memory scenarios
+auto shared_buffer = thrust::universal_vector<float>(batch_size);
+// Accessible by both host and device without explicit transfers
+
+// DON'T: Access individual device_vector elements in loops
+// Each access requires cudaMemcpy!
+for (auto idx = 0; idx < device_vec.size(); ++idx) {
+  auto value = device_vec[idx];  // BAD: N cudaMemcpy calls
+}
+
+// DO: Transfer once, process in bulk
+auto host_copy = device_vec;  // One transfer, type deduced
+for (auto idx = 0; idx < host_copy.size(); ++idx) {
+  auto value = host_copy[idx];  // GOOD: Local memory access
+}
+```
+
+### mdspan for Multidimensional Data (C++23)
+
+[mdspan](https://github.com/kokkos/mdspan) provides non-owning views of multidimensional arrays. CUDA support is available via [Kokkos implementation](https://github.com/kokkos/mdspan):
+
+```cpp
+#include <mdspan>
+// Future: #include <cuda/std/mdspan> when available in libcudacxx
+
+// DO: Use mdspan for type-safe multidimensional indexing
+template<typename T>
+using matrix_view = std::mdspan<T, std::dextents<size_t, 2>>;
+
+template<typename T>
+using tensor3d_view = std::mdspan<T, std::dextents<size_t, 3>>;
+
+// DO: Express tensor operations with clear dimensionality
+auto quantize_weight_matrix(matrix_view<const float> weights_fp32,
+                      matrix_view<uint8_t> weights_nvfp4,
+                      float scale_factor) -> s4::core::status {
+
+  if (weights_fp32.extent(0) != weights_nvfp4.extent(0) ||
+      weights_fp32.extent(1) != weights_nvfp4.extent(1)) {
+    return s4::fail("dimension mismatch: fp32[{},{}] vs nvfp4[{},{}]",
+                    weights_fp32.extent(0), weights_fp32.extent(1),
+                    weights_nvfp4.extent(0), weights_nvfp4.extent(1));
+  }
+
+  // C++23 bracket operator for multidimensional access
+  for (auto idx = 0; idx < weights_fp32.extent(0); ++idx) {
+    for (auto jdx = 0; jdx < weights_fp32.extent(1); ++jdx) {
+      weights_nvfp4[idx, jdx] = quantize_value(weights_fp32[idx, jdx], scale_factor);
+    }
+  }
+
+  return s4::ok();
+}
+
+// DO: Use mdspan for batch tensor layouts (N, C, H, W)
+auto process_image_batch(tensor3d_view<const float> batch,  // [batch, height, width]
+                   size_t channels) -> s4::core::status {
+
+  auto batch_size = batch.extent(0);
+  auto height = batch.extent(1);
+  auto width = batch.extent(2);
+
+  s4::info("[s4] [tensor] processing batch shape=[{},{},{}] channels={}",
+     batch_size, height, width, channels);
+
+  // Clear dimensional semantics
+  return s4::ok();
+}
+```
+
+### CUTLASS cute::Tensor
+
+[CUTLASS cute::Tensor](https://docs.nvidia.com/cutlass/media/docs/cpp/cute/03_tensor.html) provides layout-aware tensor abstractions for high-performance kernels:
+
+```cpp
+#include <cute/tensor.hpp>
+
+using namespace cute;
+
+// DO: Use cute::Tensor for layout-aware kernel code
+template<class T, class Layout>
+__global__ void gemm_kernel(Tensor<T, Layout> const& A,
+                     Tensor<T, Layout> const& B,
+                     Tensor<T, Layout>& C) {
+
+  // cute::Tensor provides hierarchical operations
+  auto tile_shape = make_shape(Int<16>{}, Int<16>{});
+
+  // Access with logical coordinates
+  for (auto idx = 0; idx < size<0>(A); ++idx) {
+    for (auto jdx = 0; jdx < size<1>(B); ++jdx) {
+      C(idx, jdx) = A(idx, 0) * B(0, jdx);  // Simplified GEMM
+    }
+  }
+}
+
+// DO: Create tensors with explicit layout control
+auto create_row_major_tensor(float* device_ptr, size_t rows, size_t cols) {
+  auto shape = make_shape(rows, cols);
+  auto stride = make_stride(cols, Int<1>{});  // Row-major: stride by cols
+  auto layout = make_layout(shape, stride);
+
+  return make_tensor(device_ptr, layout);
+}
+
+// DO: Use cute for copy algorithms with optimal layouts
+template<class TA, class ALayout, class TB, class BLayout>
+__global__ void copy_kernel(Tensor<TA, ALayout> const& src,
+                     Tensor<TB, BLayout>& dst) {
+
+  // Generic copy that respects layout
+  for (auto idx = 0; idx < size(src); ++idx) {
+    dst(idx) = src(idx);
+  }
+}
+
+// DO: Integrate with PyTorch via dlpack (Python API, 2025)
+// Python: cute_tensor = cute.from_dlpack(torch_tensor)
+// Access shape, stride, memspace, element_type attributes
+```
+
+### NVFP4 Quantization Patterns
+
+NVFP4 (4-bit floating point) requires careful handling for optimal inference performance:
+
+```cpp
+namespace s4::quantization {
+
+// Explicit quantization configuration
+struct nvfp4_config {
+  float scale_factor;
+  float zero_point;
+  bool use_symmetric_quantization;
+  size_t block_size;  // Quantization block size in elements
+};
+
+// DO: Make quantization operations explicit and verifiable
+auto quantize_tensor_to_nvfp4(cuda::std::span<const float> input_fp32,
+                        cuda::std::span<uint8_t> output_nvfp4,
+                        const nvfp4_config& config,
+                        cuda::stream_ref stream)
+  -> s4::core::result<quantization_metadata> {
+
+  if (input_fp32.size() * 4 / 8 != output_nvfp4.size()) {
+    return s4::fail<quantization_metadata>(
+      "output buffer size mismatch: expected {} bytes, got {}",
+      input_fp32.size() / 2, output_nvfp4.size());
+  }
+
+  // Launch quantization kernel with explicit block size
+  constexpr auto threads_per_block = 256;
+  auto block_count = (input_fp32.size() + config.block_size - 1) / config.block_size;
+
+  nvfp4_quantize_kernel<<<block_count, threads_per_block, 0, stream>>>(
+    input_fp32, output_nvfp4, config);
+
+  if (auto error = s4::cuda::check_last_error(); !error) {
+    return s4::fail<quantization_metadata>("quantization kernel failed: {}",
+                                           error.error().what());
+  }
+
+  return s4::ok(quantization_metadata{config.scale_factor, config.zero_point});
+}
+
+}  // namespace s4::quantization
+```
+
+### Myelin Tactics Integration
+
+[TensorRT Myelin](https://docs.nvidia.com/deeplearning/tensorrt/) tactics for fused kernel generation:
+
+```cpp
+namespace s4::tensorrt {
+
+// DO: Wrap Myelin tactics in type-safe interfaces
+struct myelin_tactic_config {
+  std::string tactic_name;
+  std::vector<size_t> input_shapes;
+  data_type precision;  // FP32, FP16, INT8, NVFP4
+  size_t workspace_size_bytes;
+};
+
+// DO: Make tactic selection explicit and logged
+auto select_myelin_tactic(const model_layer& layer,
+                   const execution_context& context)
+  -> s4::core::result<myelin_tactic_config> {
+
+  auto available_tactics = query_available_tactics(layer, context);
+
+  if (available_tactics.empty()) {
+    return s4::fail<myelin_tactic_config>(
+      "no myelin tactics available for layer: {}", layer.name);
+  }
+
+  // Select based on measured performance
+  auto selected_tactic = profile_and_select_best(available_tactics, context);
+
+  s4::info("[s4] [tensorrt] [myelin] selected tactic '{}' for layer '{}' "
+      "(workspace: {} MB, precision: {})",
+      selected_tactic.tactic_name, layer.name,
+      selected_tactic.workspace_size_bytes / (1024 * 1024),
+      to_string(selected_tactic.precision));
+
+  return s4::ok(selected_tactic);
+}
+
+}  // namespace s4::tensorrt
+```
+
+### Stream Management Patterns
+
+```cpp
+namespace s4::cuda {
+
+// DO: Use RAII for stream management
+class scoped_stream {
+public:
+  scoped_stream() {
+    if (auto result = create_stream(); !result) {
+      s4::fatal("failed to create CUDA stream: {}", result.error().what());
+    }
+  }
+
+  ~scoped_stream() noexcept {
+    if (stream_handle_) {
+      cudaStreamDestroy(stream_handle_);
+    }
+  }
+
+  // Non-copyable, movable
+  scoped_stream(const scoped_stream&) = delete;
+  scoped_stream(scoped_stream&& other) noexcept
+  : stream_handle_(std::exchange(other.stream_handle_, nullptr)) {}
+
+  auto get() const noexcept -> cudaStream_t { return stream_handle_; }
+  auto ref() const noexcept -> cuda::stream_ref { return cuda::stream_ref{stream_handle_}; }
+
+private:
+  cudaStream_t stream_handle_ = nullptr;
+};
+
+// DO: Use stream ordering for complex pipelines
+auto execute_inference_pipeline(const model& model_instance,
+                         std::span<const float> input_data)
+  -> s4::core::result<tensor_batch> {
+
+  scoped_stream preprocessing_stream;
+  scoped_stream inference_stream;
+  scoped_stream postprocessing_stream;
+
+  // Launch preprocessing (independent)
+  preprocess_input_async(input_data, preprocessing_stream.ref());
+
+  // Synchronize and launch inference
+  cudaStreamWaitEvent(inference_stream.get(), preprocessing_done_event);
+  run_inference_async(model_instance, inference_stream.ref());
+
+  // Synchronize and launch postprocessing
+  cudaStreamWaitEvent(postprocessing_stream.get(), inference_done_event);
+  postprocess_output_async(postprocessing_stream.ref());
+
+  return s4::ok(/* result */);
+}
+
+}  // namespace s4::cuda
+```
+
+### Device Memory Management
+
+```cpp
+namespace s4::cuda {
+
+// DO: Use typed wrappers for device memory
+template<typename T>
+class device_buffer {
+public:
+  explicit device_buffer(size_t element_count) : count_(element_count) {
+    auto alloc_result = allocate_device_memory(element_count * sizeof(T));
+    if (!alloc_result) {
+      s4::fatal("failed to allocate device memory: {}", alloc_result.error().what());
+    }
+    data_ = static_cast<T*>(alloc_result.value());
+  }
+
+  ~device_buffer() noexcept {
+    if (data_) {
+      cudaFree(data_);
+    }
+  }
+
+  // Non-copyable, movable
+  device_buffer(const device_buffer&) = delete;
+  device_buffer(device_buffer&& other) noexcept
+  : data_(std::exchange(other.data_, nullptr))
+  , count_(std::exchange(other.count_, 0)) {}
+
+  auto data() noexcept -> T* { return data_; }
+  auto data() const noexcept -> const T* { return data_; }
+  auto size() const noexcept { return count_; }
+  auto size_bytes() const noexcept { return count_ * sizeof(T); }
+
+  auto span() noexcept -> cuda::std::span<T> { return {data_, count_}; }
+  auto span() const noexcept -> cuda::std::span<const T> { return {data_, count_}; }
+
+private:
+  T* data_ = nullptr;
+  size_t count_ = 0;
+};
+
+// DO: Make host-device transfers explicit
+auto copy_to_device_async(std::span<const float> host_data,
+                   device_buffer<float>& device_buffer,
+                   cuda::stream_ref stream) -> s4::core::status {
+
+  if (host_data.size() != device_buffer.size()) {
+    return s4::fail("size mismatch: host {} elements, device {} elements",
+                    host_data.size(), device_buffer.size());
+  }
+
+  auto result = cudaMemcpyAsync(device_buffer.data(),
+                                host_data.data(),
+                                device_buffer.size_bytes(),
+                                cudaMemcpyHostToDevice,
+                                stream);
+
+  if (result != cudaSuccess) {
+    return s4::fail_errno<void>("cudaMemcpyAsync failed");
+  }
+
+  return s4::ok();
+}
+
+}  // namespace s4::cuda
+```
+
+### Error Handling for CUDA Operations
+
+```cpp
+namespace s4::cuda {
+
+// DO: Check every CUDA call
+auto check_cuda_error(cudaError_t error, std::string_view operation) -> s4::core::status {
+  if (error != cudaSuccess) {
+    return s4::fail("CUDA operation '{}' failed: {} (code: {})",
+                    operation, cudaGetErrorString(error), static_cast<int>(error));
+  }
+  return s4::ok();
+}
+
+// DO: Macro for inline error checking (use sparingly)
+#define S4_CUDA_CHECK(call) \
+  do { \
+    if (auto _error = (call); _error != cudaSuccess) { \
+      return s4::fail("CUDA call '" #call "' failed: {} at {}:{}", \
+                      cudaGetErrorString(_error), __FILE__, __LINE__); \
+    } \
+  } while (0)
+
+// DO: Check for asynchronous errors after kernel launches
+auto check_last_error() -> s4::core::status {
+  if (auto error = cudaGetLastError(); error != cudaSuccess) {
+    return s4::fail("CUDA kernel launch failed: {}", cudaGetErrorString(error));
+  }
+  return s4::ok();
+}
+
+}  // namespace s4::cuda
+```
+
+### Kernel Launch Guidelines
+
+```cpp
+// DO: Document kernel launch parameters
+namespace s4::kernels {
+
+struct launch_config {
+  dim3 grid_dimensions;       // Number of blocks
+  dim3 block_dimensions;      // Threads per block
+  size_t shared_memory_bytes; // Dynamic shared memory
+  cudaStream_t stream;
+};
+
+// DO: Provide clear launch configuration calculators
+auto calculate_1d_launch_config(size_t total_elements,
+                          size_t threads_per_block = 256)
+  -> launch_config {
+
+  auto block_count = (total_elements + threads_per_block - 1) / threads_per_block;
+
+  return launch_config{
+    .grid_dimensions = dim3(block_count),
+    .block_dimensions = dim3(threads_per_block),
+    .shared_memory_bytes = 0,
+    .stream = nullptr
+  };
+}
+
+// DO: Log kernel launches in debug builds
+template<typename KernelFunc, typename... Args>
+auto launch_kernel(const char* kernel_name,
+            const launch_config& config,
+            KernelFunc kernel,
+            Args&&... args) -> s4::core::status {
+
+#ifndef NDEBUG
+  s4::debug("[s4] [cuda] [kernel] launching '{}' with grid({},{},{}) block({},{},{})",
+       kernel_name,
+       config.grid_dimensions.x, config.grid_dimensions.y, config.grid_dimensions.z,
+       config.block_dimensions.x, config.block_dimensions.y, config.block_dimensions.z);
+#endif
+
+  kernel<<<config.grid_dimensions, config.block_dimensions,
+           config.shared_memory_bytes, config.stream>>>(
+    std::forward<Args>(args)...);
+
+  return check_last_error();
+}
+
+}  // namespace s4::kernels
+```
+
+## Agent-Human Collaboration Patterns
+
+### The Comment Convention
+
+**This convention helps identify code provenance at a glance:**
+
+- Agents: Properly capitalized comments
+- Humans: lowercase comments (straylight tradition)
+
+```cpp
+// This is agent-generated code with standard patterns
+auto tokenizer = create_tokenizer(configuration);
+
+// human intuition: special handling needed for rope positional encoding
+if (model_type == "llama") {
+  apply_rope_encoding(tokenizer);
+}
+```
+
+### Agent-Specific Guidelines
+
+Agents should:
+
+1. **Use explicit types** instead of `auto` except where awkward
+2. **Fully qualify all names** even when seemingly redundant
+3. **Generate descriptive names** that tell the complete story
+4. **Add domain prefixes** to prevent namespace collisions
+
+```cpp
+// Agent style - explicit and unambiguous
+std::vector<s4::inference::request> pending_requests = load_pending_requests();
+s4::core::result<s4::inference::batch_result> inference_result =
+  execute_inference(pending_requests.front());
+
+// Human style - can use auto where type is obvious
+auto pending_requests = load_pending_requests();
+auto inference_result = execute_inference(pending_requests.front());
+```
+
+### Critical Path Marking
+
+Identify code requiring human review:
+
+```cpp
+// CRITICAL PATH: Model quantization - human review required
+namespace s4::quantization {
+  // Config parsing errors here corrupt inference results
+  auto parse_quantization_config(std::string_view config_json)
+  -> s4::core::result<quantization_config> {
+  // Human-written parser with aggressive validation
+  }
+}
+
+// AUXILIARY: Metrics collection - agent generation acceptable
+namespace s4::metrics {
+  // Agent can generate this boilerplate
+}
+```
+
+### Working with Legacy APIs
+
+When core APIs can't be changed without breaking everything:
+
+1. **Add better-named aliases** alongside existing functions
+2. **Use the new names in new code** to model good patterns
+3. **Document the preferred style** in comments
+4. **Gradually migrate** during other refactoring
+
+```cpp
+// Example: result.h evolution
+// Old API (keep for compatibility):
+auto ok(T value) -> result<T>;
+auto fail(string msg) -> result<T>;
+
+// New aliases (use in new code):
+auto make_success(T value) -> result<T>;
+auto make_error(string message) -> result<T>;
+```
+
+## Testing Philosophy
+
+### The Five-Minute Rule
+
+If you can't understand what agent-generated code does in 5 minutes, regenerate it with better
+structure.
+
+### Property-Based Testing for Invariants
+
+Agents generate thorough unit tests but miss semantic invariants:
+
+```cpp
+// Agent-generated test - thorough but mechanical
+TEST_CASE("tokenizer handles empty input") {
+  auto tokenize_result = tokenize_input("");
+  REQUIRE(!tokenize_result.has_value());
+}
+
+// Human-written property test - catches semantic violations
+TEST_CASE("quantizer preserves tensor shape") {
+  check_property([](const tensor_fp32& input_tensor) {
+    auto quantized_tensor = quantize_to_nvfp4(input_tensor);
+    if (!quantized_tensor) return true;
+
+    return quantized_tensor->shape == input_tensor.shape &&
+           quantized_tensor->rank == input_tensor.rank;
+  });
+}
+```
+
+### Testing Error Handling
+
+```cpp
+// Check error content
+REQUIRE(!result.has_value());
+CHECK(!result.error().what().empty());
+CHECK_THAT(result.error().what(), ContainsSubstring("expected text"));
+
+// Check error codes
+if (auto code = result.error().code()) {
+  CHECK(code->value() == ENOENT);
+}
+
+// Check formatted errors work
+auto error = s4::fail<int>("failed at position {}", 42);
+CHECK_THAT(error.error().what(), ContainsSubstring("failed at position 42"));
+```
+
+### Fuzz Testing for Parsers
+
+```cpp
+// Add fuzz tests for any parser handling external input
+FUZZ_TEST(configuration_parser, random_input) {
+  auto result = parse_configuration(fuzz_input);
+  // Should never crash, only return error
+  if (result) {
+    validate_configuration_invariants(*result);
+  }
+}
+```
+
+## Debugging Patterns
+
+### The Grep Test
+
+Every function should be globally unique and searchable:
+
+```bash
+# BAD: Too many results
+grep -r "process(" .          # 500 matches
+grep -r "handler::" .         # 200 matches
+
+# GOOD: Finds exactly what you need
+grep -r "process_tensor_batch(" .     # 3 relevant matches
+grep -r "quantization_handler::" .    # 10 specific matches
+```
+
+### State Machine Clarity
+
+Make states explicit for debugging:
+
+```cpp
+// BAD: Implicit state machines become agent debugging nightmares
+if (flags & 0x04 && !error_flag && counter > threshold) {
+  // What state is this?
+}
+
+// GOOD: Self-documenting states
+enum class connection_state {
+  disconnected,
+  connecting,
+  authenticated,
+  active,
+  draining
+};
+
+if (current_state == connection_state::authenticated &&
+  error_count == 0 &&
+  retry_counter > max_retries) {
+  transition_to_state(connection_state::draining);
+}
+```
+
+## Performance Guidelines
+
+1. **Start with clear, simple code** - The compiler optimizes clarity
+2. **Measure with production flags**: `-O3 -march=native`
+3. **Small types belong in registers** - pass by value
+4. **Profile before optimizing** - Data always surprises
+
+```cpp
+// Let the compiler work
+for (const auto& request : pending_requests) {
+  process_inference_request(request);
+}
+
+// Not this cleverness
+for (auto idx = 0; idx < pending_requests.size(); idx += 4) {
+  // Unrolled loop that's probably slower
+}
+```
+
+### Constexpr Usage
+
+```cpp
+// DO: Use constexpr for compile-time constants
+constexpr size_t max_batch_size = 1024;
+constexpr std::string_view model_architecture = "transformer";
+
+// DO: Mark functions constexpr when possible
+constexpr auto calculate_tensor_size(uint64_t batch, uint64_t seq_len, uint64_t hidden_dim) -> uint64_t {
+  return batch * seq_len * hidden_dim;
+}
+
+// DON'T: Force constexpr when it complicates implementation
+constexpr auto complex_quantization() {  // Requires contortions
+  // ...
+}
+```
+
+## Logging
+
+Hierarchical tagging for structured logs:
+
+```cpp
+s4::info("[s4] [inference] [engine] [batch] executing batch id={} device={}",
+   batch_id, device_id);
+s4::error("[s4] [inference] [engine] [error] inference failed: {}",
+    error_description);
+```
+
+Format: `[project] [system] [component] [detail] message`
+
+## Configuration Philosophy
+
+### Parse Everything Up Front
+
+```cpp
+// Parse and validate entire config at startup
+auto load_system_configuration(std::string_view config_path)
+  -> s4::core::result<system_configuration> {
+
+  auto file_content = s4::core::fs::read_file_to_string(config_path);
+  if (!file_content) {
+    s4::fatal("Cannot read configuration file: {}", config_path);
+  }
+
+  auto parsed_config = parse_toml_configuration(file_content.value());
+  if (!parsed_config) {
+    s4::fatal("Invalid configuration: {}", parsed_config.error().what());
+  }
+
+  auto validation_result = validate_configuration(parsed_config.value());
+  if (!validation_result) {
+    s4::fatal("Configuration validation failed: {}",
+              validation_result.error().what());
+  }
+
+  return s4::core::ok(parsed_config.value());
+}
+```
+
+### Configuration Errors Are Fatal
+
+If configuration is wrong, nothing else can be trusted:
+
+```cpp
+if (!model_config.has_valid_weights_path()) {
+  s4::fatal("Model configuration missing weights path");
+}
+
+if (inference_config.max_batch_size <= 0) {
+  s4::fatal("Invalid max_batch_size: {}", inference_config.max_batch_size);
+}
+```
+
+## API Evolution Guidelines
+
+When core APIs need updates:
+
+1. **Start with backwards compatibility** - Keep old functions working
+2. **Fix fundamental issues** - Like string lifetime problems
+3. **Add better alternatives** - New overloads following style guide
+4. **Constexpr where reasonable** - Don't force it if it complicates
+5. **Document breaking changes** - Even minor ones like `error_code()` → `code()`
+
+### Incremental Improvement Strategy
+
+For widely-used modules like `s4::core::result`:
+
+1. **Never break existing code** - Aliases are cheap
+2. **Model better patterns** in new functions
+3. **Update documentation** to prefer new patterns
+4. **Consider `[[deprecated]]`** only after wide adoption
+
+## Anti-Patterns to Avoid
+
+### The Abbreviation Cascade
+
+```cpp
+// Starts innocent...
+auto cfg = load_config();
+
+// Spreads like a virus...
+auto conn = create_conn(cfg);
+auto mgr = conn_mgr(conn);
+auto proc = mgr.get_proc();
+
+// Ends in debugging hell
+if (!proc.is_valid()) {  // What is proc again?
+  // ...
+}
+```
+
+### Context-Dependent Names
+
+```cpp
+// BAD: "decoder" means different things in different places
+namespace tokenizer {
+  class decoder;  // Decodes tokens
+}
+namespace model {
+  class decoder;  // Transformer decoder layer
+}
+
+// GOOD: Names carry their domain
+namespace tokenizer {
+  class token_decoder;
+}
+namespace model {
+  class transformer_decoder_layer;
+}
+```
+
+### Implicit State Machines
+
+```cpp
+// BAD: State spread across booleans
+bool is_connected;
+bool is_authenticated;
+bool is_active;
+bool has_error;
+
+// GOOD: Explicit state
+enum class session_state {
+  disconnected,
+  connected_unauthenticated,
+  authenticated_inactive,
+  active,
+  error_recovery
+};
+```
+
+## Summary
+
+In an agent-heavy codebase:
+
+1. **Every name must be globally unambiguous**
+2. **Every abbreviation creates exponential confusion**
+3. **Every implicit assumption becomes a debugging nightmare**
+4. **Every configuration error multiplies across the system**
+
+Write code as if 100 agents will be pattern-matching against it tomorrow, and a tired human will be
+debugging it at 3am next month. Because both will happen.
+
+The Unix authors optimized for scarce memory. We optimize for scarce human comprehension. In 1970,
+every character cost bytes. In 2025, every ambiguity costs hours.
+
+## Required Reading/Watching
+
+### Performance
+
+- [CppCon 2017: Carl Cook "When a Microsecond Is an Eternity"](https://www.youtube.com/watch?v=NH1Tta7purM)
+- [Cliff Click: "A Lock-Free Hash Table"](https://www.youtube.com/watch?v=HJ-719EGIts)
+- [Andrei Alexandrescu: "Optimization Tips"](https://www.youtube.com/watch?v=Qq_WaiwzOtI)
+
+### Modern C++
+
+- [GotW #94: "AAA Style (Almost Always Auto)"](https://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/)
+- [Abseil: "The Danger of Atomic Operations"](https://abseil.io/docs/cpp/atomic_danger)
+
+## Living List of Great Code
+
+**Tier 1** (Perfection - Study every line)
+
+- [simdjson](https://github.com/simdjson/simdjson) - SIMD JSON parsing, exemplary modern C++
+- [Abseil](https://github.com/abseil/abseil-cpp) - Google's foundation library, production-hardened
+- [fmt](https://github.com/fmtlib/fmt) - The formatting library that became std::format
+
+**Tier 2** (Domain Excellence - Best-in-class for their problem space)
+
+- [DuckDB](https://github.com/duckdb/duckdb) - Analytical database, zero dependencies, clean
+  architecture
+- [RocksDB](https://github.com/facebook/rocksdb) - LSM storage engine, battle-tested at scale
+- [DPDK](https://github.com/DPDK/dpdk) - Kernel bypass networking, when microseconds matter
+- [ClickHouse](https://github.com/ClickHouse/ClickHouse) - Columnar database, SIMD everywhere
+
+**Tier 3** (Specific Excellence - Outstanding implementations of focused problems)
+
+- [parallel-hashmap](https://github.com/greg7mdp/parallel-hashmap) - Swiss tables with parallel
+  access
+- [concurrentqueue](https://github.com/cameron314/concurrentqueue) - Lock-free queue that actually
+  works
+- [mimalloc](https://github.com/microsoft/mimalloc) - Microsoft's superb allocator
+- [liburing](https://github.com/axboe/liburing) - io_uring done right (see kernel code too)
+
+**Study Specific Files/Techniques**
+
+- Facebook's [F14](https://github.com/facebook/folly/blob/main/folly/container/F14.md) - Vector
+  instructions in hash tables
+- Google's [SwissTable](https://abseil.io/about/design/swisstables) - The hash table design that
+  conquered all
+- Lemire's [streamvbyte](https://github.com/lemire/streamvbyte) - SIMD integer compression
+- [Aeron](https://github.com/real-logic/aeron) - Reliable UDP messaging, mechanical sympathy
+  exemplar
+
+**Controversial but Instructive**
+
+- [Seastar](https://github.com/scylladb/seastar) - Futures done differently, polarizing but
+  educational
+- [EASTL](https://github.com/electronicarts/EASTL) - EA's STL replacement, different tradeoffs
+- [Boost.Asio](https://github.com/boostorg/asio) - The async model that influenced networking TS
+
+**Required Reading (Papers/Docs)**
+
+- [What Every Programmer Should Know About Memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)
+  - Drepper's classic
+- [Can Seqlocks Get Along With Programming Language Memory Models?](https://www.hpl.hp.com/techreports/2012/HPL-2012-68.pdf)
+  - Hans Boehm on the hard stuff
+- [There is No Fork](https://www.microsoft.com/en-us/research/uploads/prod/2019/04/fork-hotos19.pdf)
+  - Microsoft Research on process creation
+
+**What Makes Code "Great" for This List**
+
+1. **Clarity despite complexity** - Solving hard problems with readable code
+2. **Performance without compromise** - Fast but not at the expense of correctness
+3. **Teaching value** - You become a better programmer by reading it
+4. **Battle-tested** - Used in production at serious scale
+5. **Influential** - Changed how we think about the problem
+
+**What Doesn't Belong**
+
+- Clever for cleverness' sake
+- Template metaprogramming gymnastics without purpose
+- "Look how few lines!" code golf
+- Abandoned experiments (unless historically important)

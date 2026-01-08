@@ -1,0 +1,110 @@
+---
+title: Testing
+description: Every flake output must be built or checked by nix flake check. Untested code is broken code.
+category: guides
+order: 6
+---
+
+# Testing
+
+## Everything Under `nix flake check`
+
+Every flake output must be built or checked by `nix flake check`. This is the author's responsibility. Untested code is broken code—you just don't know it yet.
+
+```nix
+{ self, ... }: {
+  perSystem = { pkgs, system, ... }: {
+    checks = {
+      # Packages are checks too
+      inherit (self.packages.${system}) weyl-cli weyl-api-server;
+
+      # Integration test
+      api-server-startup = pkgs.testers.runNixOSTest {
+        name = "api-server-startup";
+        nodes.server = { ... }: {
+          imports = [ self.nixosModules.api-server ];
+          weyl.services.apiServer.enable = true;
+        };
+        testScript = ''
+          server.wait_for_unit("weyl-api-server.service")
+          server.wait_for_open_port(8080)
+          server.succeed("curl -f http://localhost:8080/health")
+        '';
+      };
+    };
+  };
+}
+```
+
+## Test Naming
+
+Names should indicate what's being tested:
+
+```nix
+checks = {
+  # Good: Descriptive
+  api-server-startup-test = ...;
+  database-backup-integration = ...;
+
+  # Bad: Vague
+  test1 = ...;
+  integration = ...;
+};
+```
+
+## Test Types
+
+### Unit Tests
+
+For pure Nix functions, use assertions:
+
+```nix
+checks = {
+  lib-tests = pkgs.runCommand "lib-tests" {} ''
+    ${lib.assertMsg (myLib.add 2 3 == 5) "add function failed"}
+    ${lib.assertMsg (myLib.multiply 4 5 == 20) "multiply function failed"}
+    touch $out
+  '';
+};
+```
+
+### Integration Tests
+
+Use NixOS tests for system-level integration:
+
+```nix
+checks.database-integration = pkgs.testers.runNixOSTest {
+  name = "database-integration";
+  nodes = {
+    database = { ... }: {
+      services.postgresql.enable = true;
+    };
+    api = { ... }: {
+      imports = [ self.nixosModules.api-server ];
+      weyl.services.apiServer = {
+        enable = true;
+        databaseHost = "database";
+      };
+    };
+  };
+  testScript = ''
+    database.wait_for_unit("postgresql.service")
+    api.wait_for_unit("weyl-api-server.service")
+    api.succeed("curl -f http://localhost:8080/health")
+  '';
+};
+```
+
+### Build Tests
+
+Ensure packages build correctly across platforms:
+
+```nix
+checks = {
+  # Build on all supported systems
+  inherit (self.packages.${system})
+    weyl-cli
+    weyl-api-server
+    cuda-toolkit;
+};
+```

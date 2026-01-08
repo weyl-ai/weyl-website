@@ -1,0 +1,188 @@
+---
+title: File Placement
+description: Nix is infrastructure, not the main attraction. All Nix code lives under nix/ with clear organization for modules, packages, overlays, and configurations.
+category: guides
+order: 2
+---
+
+# File Placement
+
+## The Principle
+
+Nix is infrastructure, not the main attraction. All Nix code lives under `nix/`.
+
+## The Structure
+
+```
+project/
+├── flake.nix                    # Inputs and import-tree only
+├── flake.lock
+├── src/                         # Your actual code
+├── pyproject.toml               # Or Cargo.toml, package.json, etc.
+├── nix/
+│   ├── modules/
+│   │   ├── flake/               # flake-parts modules
+│   │   ├── nixos/               # NixOS modules
+│   │   ├── darwin/              # nix-darwin modules
+│   │   └── home/                # home-manager modules
+│   ├── packages/                # callPackage-ables (.nix files)
+│   ├── overlays/                # Overlay compositions
+│   └── configurations/
+│       ├── nixos/               # Machine configs
+│       └── home/                # User configs
+└── docs/
+```
+
+## Decision Tree
+
+### I need to add a package
+
+→ `nix/packages/<n>.nix`
+
+The file is a function that `callPackage` can invoke:
+
+```nix
+{ lib, stdenv, fetchFromGitHub }:
+stdenv.mkDerivation (finalAttrs: {
+  pname = "my-tool";
+  version = "1.0.0";
+  # ...
+})
+```
+
+### I need a shell script
+
+→ `nix/packages/<n>.nix`
+
+Use `writeShellApplication` or `resholve`:
+
+```nix
+{ writeShellApplication, coreutils, jq }:
+writeShellApplication {
+  name = "my-script";
+  runtimeInputs = [ coreutils jq ];
+  text = ''
+    # ...
+  '';
+}
+```
+
+### I need to configure a NixOS service
+
+→ `nix/modules/nixos/<n>.nix`
+
+```nix
+{ config, lib, pkgs, ... }:
+{
+  _class = "nixos";
+  options.weyl.services.<n> = { ... };
+  config = lib.mkIf cfg.enable { ... };
+}
+```
+
+### I need to define a complete machine
+
+→ `nix/configurations/nixos/<hostname>.nix`
+
+This file imports modules and sets concrete values:
+
+```nix
+{ self, pkgs, ... }:
+{
+  imports = [ self.nixosModules.my-service ];
+  weyl.services.my-service.enable = true;
+  networking.hostName = "my-host";
+}
+```
+
+### I need to configure home-manager
+
+→ `nix/modules/home/<n>.nix`
+
+```nix
+{ config, lib, pkgs, ... }:
+{
+  _class = "home-manager";
+  options.weyl.programs.<n> = { ... };
+  config = lib.mkIf cfg.enable { ... };
+}
+```
+
+### I need perSystem outputs (devShells, checks)
+
+→ `nix/modules/flake/<n>.nix`
+
+```nix
+{ inputs, ... }:
+{
+  perSystem = { pkgs, ... }: {
+    devShells.default = pkgs.mkShell { ... };
+    checks.integration = pkgs.testers.runNixOSTest { ... };
+  };
+}
+```
+
+### I need to modify upstream packages
+
+For project-local modifications:
+
+→ `nix/overlays/<n>.nix`
+
+For org-wide modifications:
+
+→ Submit a PR to `weyl-std`
+
+### I need a flake check
+
+→ `nix/modules/flake/<n>.nix` setting `perSystem.checks.<n>`
+
+## File Naming
+
+The filename becomes the attribute name via import-tree:
+
+| File | Output |
+|------|--------|
+| `nix/packages/my-tool.nix` | `packages.${system}.my-tool` |
+| `nix/modules/nixos/api-server.nix` | `nixosModules.api-server` |
+| `nix/configurations/nixos/gpu-worker.nix` | `nixosConfigurations.gpu-worker` |
+
+You SHALL NOT use `default.nix` except in `nix/overlays/`. The filename carries information;
+`default.nix` discards it.
+
+## Avoiding default.nix
+
+```
+# WRONG
+nix/packages/
+├── my-tool/
+│   └── default.nix    # What is this package called?
+
+# CORRECT
+nix/packages/
+├── my-tool.nix        # Obviously my-tool
+```
+
+If a package needs supporting files:
+
+```
+nix/packages/
+├── my-tool.nix
+└── my-tool/
+    ├── patches/
+    │   └── fix-bug.patch
+    └── scripts/
+        └── helper.sh
+```
+
+The main file imports from its directory: `./my-tool/patches/fix-bug.patch`.
+
+## The flake.nix Exception
+
+`flake.nix` lives at the repository root. It contains ONLY:
+
+1. The `description`
+2. The `inputs`
+3. The `outputs` calling `flake-parts.lib.mkFlake` with `import-tree [ ./nix ]`
+4. The `nixConfig` for Cachix
+
+All other Nix code lives under `nix/`.

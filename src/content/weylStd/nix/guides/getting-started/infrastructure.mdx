@@ -1,0 +1,77 @@
+---
+title: "Infrastructure"
+description: "Configure your environment to use shared infrastructure for faster builds."
+category: "guides"
+order: 4
+---
+
+# Infrastructure
+
+Before writing any Nix, configure your environment to use our shared infrastructure. This isn't bureaucracy—it's the difference between builds taking minutes versus hours.
+
+## Binary Cache (Cachix)
+
+Without a cache, every developer rebuilds every package from source. With our Cachix cache, you download pre-built binaries in seconds.
+
+Every flake gets this configuration:
+
+```nix
+{
+  nixConfig = {
+    extra-experimental-features = [
+      "nix-command"
+      "flakes"
+      "pipe-operators"  # Internal code only—never in open source
+    ];
+    extra-substituters = [
+      "https://weyl-ai.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "weyl-ai.cachix.org-1:cR0SpSAPw7wejZ21ep4SLojE77gp5F2os260eEWqTTw="
+    ];
+  };
+}
+```
+
+Put it in `nixConfig` so anyone who clones your repo gets the cache automatically. No manual setup, no onboarding friction, no "why is CI so slow" questions.
+
+## Hercules CI
+
+[Hercules CI](https://docs.hercules-ci.com/) builds every flake output on push and uploads successes to Cachix. Failed builds block merging. The virtuous cycle: the more we build, the more gets cached, the faster everyone gets.
+
+## Omnix
+
+[Omnix](https://github.com/juspay/omnix) wraps common Nix operations with better ergonomics:
+
+```bash
+om health    # Catch configuration issues before CI does
+om show      # Readable tree of flake outputs
+om init      # Initialize from templates
+om ci        # Run CI checks locally
+```
+
+Use `om health` regularly. It catches the mistakes that would otherwise only surface in CI.
+
+## Secrets
+
+We use [agenix](https://github.com/ryantm/agenix) via our wrapper at [weyl-ai/secrets](https://github.com/weyl-ai/secrets). Secrets are encrypted at rest, decrypted only at activation time on the target system.
+
+```nix
+{ config, ... }: {
+  age.secrets.database-password = {
+    file = ../secrets/database-password.age;
+    owner = "postgres";
+  };
+
+  # Reference the path, never the content
+  systemd.services.myapp.environment = {
+    DATABASE_PASSWORD_FILE = config.age.secrets.database-password.path;
+  };
+}
+```
+
+Never commit plaintext secrets. Never inline them in Nix expressions.
+
+## Formatting
+
+[treefmt-nix](https://github.com/numtide/treefmt-nix) with nixfmt, statix, and deadnix. Run `nix fmt` before every commit. CI rejects unformatted code. This is not a suggestion.

@@ -1,0 +1,191 @@
+---
+title: "lisp-case as God Intended"
+description: "Naming conventions and the shibboleth"
+category: "philosophy"
+order: 3
+---
+
+## The Rule
+
+Weyl Standard Nix uses `lisp-case` (also known as `kebab-case`) for all identifiers:
+packages, modules, options, files, directories.
+
+```nix
+# CONFORMANT
+weyl-api-server
+cuda-ml-toolkit
+nix/modules/nixos/gpu-worker-common.nix
+config.weyl.services.inference-server.model-path
+
+# NON-CONFORMANT
+weylApiServer
+cuda_ml_toolkit
+gpuWorkerCommon.nix
+config.weyl.services.inferenceServer.modelPath
+```
+
+This is a deliberate divergence from nixpkgs conventions.
+
+## The Rationale
+
+### Readability is Not Subjective
+
+Compound identifiers exist to communicate meaning.
+
+- `model-checkpoint-path` has clear word boundaries
+- `modelCheckpointPath` requires your visual cortex to detect case transitions
+- `model_checkpoint_path` works but underscores are harder to type and visually heavier
+
+The hyphen is the most natural word separator in English text. We don't write `NewYorkCity`
+or `New_York_City` in prose. We write `New York City`. In identifiers where spaces are
+forbidden, the hyphen is the closest approximation.
+
+### nixpkgs is Not a Style Guide
+
+Look at the actual nixpkgs codebase:
+
+- Package names: `lisp-case` (`cuda-toolkit`, `python3-packages`)
+- Module options: `camelCase` (`services.nginx.virtualHosts`)
+- Internal variables: chaos (`enableParallelBuilding`, `allow_unfree`, `CUDA_PATH`)
+- Attribute sets: whatever the original author felt like that day
+
+This isn't a coherent system. It's thirty years of accretion by thousands of contributors
+with no central authority on style.
+
+We don't cargo cult it.
+
+### Nix Supports This Natively
+
+Attribute names can be any string:
+
+```nix
+{
+  weyl-api-server = { };           # Direct, no quotes needed
+  "weyl-api-server" = { };         # Also valid
+  services.weyl-inference = { };   # Nested, still clean
+}
+```
+
+The parser handles it. The tooling handles it. The only reason nixpkgs uses camelCase in
+options is social convention, not technical necessity.
+
+### We Are Not nixpkgs
+
+We're building a vertically integrated stack for GPU inference. Our code doesn't need to
+merge upstream. Our conventions don't need to match theirs. We have the luxury of internal
+consistency that a community project cannot enforce.
+
+### The Shibboleth
+
+When you see `lisp-case` everywhere, you know you're in weyl-ai code.
+
+It signals that the author thought about conventions rather than copying them, that
+consistency was chosen over compatibility, that we're optimizing for our own velocity
+rather than fitting into someone else's ecosystem.
+
+This is hypermodern Nix.
+
+## The Specification
+
+### Files and Directories
+
+```
+nix/
+├── modules/
+│   └── nixos/
+│       └── inference-server.nix
+├── packages/
+│   └── cuda-kernels.nix
+└── overlays/
+    └── ml-stack.nix
+```
+
+### Packages
+
+```nix
+# packages/weyl-inference-runtime.nix
+{ lib, stdenv, cuda-kernels, model-loader }:
+stdenv.mkDerivation {
+  pname = "weyl-inference-runtime";
+  # ...
+}
+```
+
+### Module Options
+
+```nix
+options.weyl.services.inference-server = {
+  enable = mkEnableOption "the inference server";
+
+  model-path = mkOption {
+    type = types.path;
+    description = "Path to the model weights.";
+  };
+
+  cuda-device = mkOption {
+    type = types.int;
+    default = 0;
+    description = "CUDA device index.";
+  };
+};
+```
+
+### Flake Outputs
+
+```nix
+{
+  packages.x86_64-linux = {
+    weyl-cli = ...;
+    cuda-benchmark = ...;
+  };
+
+  nixosModules = {
+    inference-server = ...;
+    gpu-common = ...;
+  };
+}
+```
+
+## Exceptions
+
+Standard nixpkgs idioms that every Nix user knows are retained:
+
+```nix
+{ pkgs, lib, config, ... }
+final: prev:
+inherit (lib) mkOption mkIf mkMerge;
+```
+
+These are universal. Renaming them would confuse everyone, including us.
+
+Additionally, attributes that interface with external APIs (nixpkgs builder arguments,
+systemd options, etc.) retain their upstream names:
+
+```nix
+stdenv.mkDerivation {
+  nativeBuildInputs = [ ... ];  # nixpkgs API
+  buildInputs = [ ... ];        # nixpkgs API
+}
+
+systemd.services.foo = {
+  serviceConfig = { ... };      # systemd API
+};
+```
+
+## Grep Optimization
+
+When something breaks at 3am, you need to find the code fast:
+
+```bash
+# Useless
+grep -r "cfg" .
+grep -r "enable" .
+
+# Useful
+grep -r "inference-server" .
+grep -r "model-path" .
+grep -r "weyl.services" .
+```
+
+Every identifier should be globally unique within its semantic domain. `lisp-case`
+compound names are naturally more unique than abbreviated camelCase.

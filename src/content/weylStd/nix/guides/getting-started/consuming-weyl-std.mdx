@@ -1,0 +1,267 @@
+---
+title: "Consuming Weyl Standard"
+description: "How to use weyl-std in your projects."
+category: "guides"
+order: 3
+---
+
+# Consuming Weyl Standard
+
+How to use weyl-std in your projects.
+
+## Quick Start
+
+Add weyl-std to your flake inputs:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    weyl-std.url = "github:weyl-ai/weyl-std";
+  };
+
+  outputs = inputs@{ flake-parts, weyl-std, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ weyl-std.flakeModules.default ];
+
+      # weyl-std configuration
+      weyl-std = {
+        nixpkgs.cuda.enable = true;
+        formatter.enable = true;
+        devshell.enable = true;
+      };
+
+      perSystem = { pkgs, ... }: {
+        packages.default = pkgs.hello;
+      };
+    };
+}
+```
+
+## Modules
+
+### Batteries Included
+
+Import everything at once:
+
+```nix
+imports = [ weyl-std.flakeModules.default ];
+```
+
+Includes: formatter, docs, nixpkgs config, stdenvs, devshell.
+
+### À La Carte
+
+Pick what you need:
+
+```nix
+imports = [
+  weyl-std.flakeModules.formatter  # treefmt-nix with opinionated defaults
+  weyl-std.flakeModules.nixpkgs    # CUDA-enabled nixpkgs config
+  weyl-std.flakeModules.std        # stdenvs + overlays
+  weyl-std.flakeModules.devshell   # Development shell
+  weyl-std.flakeModules.docs       # Documentation generation
+];
+```
+
+## Using Overlays
+
+Get access to weyl-std packages and stdenvs:
+
+```nix
+{
+  perSystem = { system, ... }: {
+    _module.args.pkgs = import nixpkgs {
+      inherit system;
+      overlays = [ weyl-std.overlays.default ];
+      config = {
+        allowUnfree = true;
+        cudaSupport = true;
+      };
+    };
+  };
+}
+```
+
+Now you have:
+- `pkgs.weyl-stdenv` — clang + C++23 + glibc
+- `pkgs.weyl-stdenv-cuda` — CUDA-enabled builds
+- `pkgs.weyl-cross.*` — Cross-compilation targets
+- `pkgs.weyl.*` — weyl-std packages
+
+## Using Stdenvs
+
+### Basic Build
+
+```nix
+perSystem = { pkgs, ... }: {
+  packages.my-app = pkgs.weyl-stdenv.mkDerivation {
+    name = "my-app";
+    src = ./.;
+    buildPhase = ''
+      $CXX -o app src/main.cpp
+      install -D app $out/bin/app
+    '';
+  };
+}
+```
+
+### CUDA Build
+
+```nix
+packages.cuda-kernel = pkgs.weyl-stdenv-cuda.mkDerivation {
+  name = "cuda-kernel";
+  src = ./.;
+  buildPhase = ''
+    $CXX -o kernel src/kernel.cu
+    install -D kernel $out/bin/kernel
+  '';
+};
+```
+
+### Static Binary
+
+```nix
+packages.static-tool = pkgs.weyl-stdenv-musl-static.mkDerivation {
+  name = "static-tool";
+  src = ./.;
+  # Result: single static binary, runs anywhere
+};
+```
+
+## Cross-Compilation
+
+Build for ARM from x86_64:
+
+```nix
+packages.arm-binary = pkgs.weyl-cross.aarch64.mkDerivation {
+  name = "arm-app";
+  src = ./.;
+};
+
+packages.grace-hopper = pkgs.weyl-cross.grace.mkDerivation {
+  name = "grace-app";
+  src = ./.;
+  # Targets aarch64 + Hopper GPU
+};
+```
+
+## Configuration Options
+
+### CUDA Support
+
+```nix
+weyl-std.nixpkgs.cuda = {
+  enable = true;
+  capabilities = [ "8.9" "9.0" ];  # Ada, Blackwell
+  forwardCompat = false;
+};
+```
+
+### Formatter
+
+```nix
+weyl-std.formatter = {
+  enable = true;
+  indentWidth = 2;
+  lineLength = 100;
+  enableCheck = true;  # Add to flake checks
+};
+```
+
+### Development Shell
+
+```nix
+weyl-std.devshell = {
+  enable = true;
+  cuda.enable = true;
+  extraPackages = pkgs: [ pkgs.ripgrep pkgs.fd ];
+  extraShellHook = ''
+    echo "Custom shell initialization"
+  '';
+};
+```
+
+### Documentation
+
+```nix
+weyl-std.docs = {
+  enable = true;
+  title = "My Project";
+  description = "Comprehensive documentation";
+  theme = "ono-sendai";  # or "maas" for light mode
+  modules = [ ./nix/my-module.nix ];  # Extract options via NDG
+};
+```
+
+## Using the Debuggable Universe
+
+Rebuild dependencies with debug symbols:
+
+```nix
+let
+  # Regular nixpkgs
+  pkgs = import nixpkgs {
+    inherit system;
+    overlays = [ weyl-std.overlays.default ];
+  };
+
+  # Everything with RelWithDebInfo
+  weyl-pkgs = import nixpkgs {
+    inherit system;
+    overlays = [ weyl-std.overlays.posture ];
+  };
+in
+{
+  devShells.debug = pkgs.mkShell {
+    packages = [
+      weyl-pkgs.ffmpeg    # ffmpeg with full debug symbols
+      weyl-pkgs.opencv    # opencv with full debug symbols
+      weyl-pkgs.boost     # boost with full debug symbols
+    ];
+  };
+}
+```
+
+## Library Functions
+
+Access utility functions:
+
+```nix
+let
+  inherit (weyl-std.lib) mkCudaPackage mkStaticBinary;
+in
+{
+  packages.cuda-app = mkCudaPackage {
+    name = "cuda-app";
+    src = ./.;
+    cudaCapabilities = [ "8.9" ];
+  };
+}
+```
+
+## Templates
+
+Bootstrap new projects:
+
+```bash
+# Standard project
+nix flake init -t github:weyl-ai/weyl-std
+
+# CUDA/ML project
+nix flake init -t github:weyl-ai/weyl-std#cuda
+
+# Minimal (just nixpkgs config)
+nix flake init -t github:weyl-ai/weyl-std#minimal
+```
+
+## Philosophy
+
+Weyl Standard follows these principles:
+
+- **Explicit over implicit** — No magic, clear dependencies
+- **Reproducible** — Pinned inputs, deterministic builds
+- **Composable** — Use what you need, ignore the rest
+- **Type-safe** — Module system catches configuration errors
+- **Debuggable** — Full symbols, frame pointers, no stripping

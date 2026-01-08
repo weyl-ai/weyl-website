@@ -1,0 +1,71 @@
+---
+title: "Why Nix"
+description: "Understanding why Nix is essential for reproducible infrastructure"
+category: "philosophy"
+order: 1
+---
+
+## The Problem
+
+Every developer has experienced dependency hell: "it works on my machine" followed by hours
+of debugging why it doesn't work on CI, production, or a colleague's laptop.
+
+The root cause is that traditional package managers don't capture the complete environment.
+They assume a shared global state—system libraries, environment variables, compiler versions—
+that varies between machines.
+
+## The Solution
+
+Nix takes a different approach: **every dependency is explicit and content-addressed**.
+
+```
+/nix/store/abc123-openssl-3.1.0/
+/nix/store/def456-openssl-1.1.1/
+```
+
+Two versions of OpenSSL coexist. Each package specifies exactly which one it needs.
+No conflicts. No "DLL hell". No "but it worked yesterday".
+
+## Why Not Docker?
+
+Docker gives you **isolated** environments. Nix gives you **composable** ones.
+
+With Docker, you copy entire filesystem layers. Want to change one dependency? Rebuild
+the layer. Want to share code between containers? Mount volumes and pray.
+
+With Nix, you compose packages like functions. Change a dependency and only that package
+rebuilds. Share derivations between projects trivially. Inspect exactly what changed.
+
+Docker is isolation. Nix is composition.
+
+## Why Not Traditional Package Managers?
+
+apt, yum, brew—they all share a fatal flaw: **global mutable state**.
+
+```bash
+apt install libfoo-dev  # Which version? Who knows.
+pip install numpy       # Hope it matches your CUDA version.
+```
+
+Nix makes the implicit explicit:
+
+```nix
+buildInputs = [
+  pkgs.libfoo_2_3        # Exact version
+  pkgs.python3Packages.numpy  # Built against this nixpkgs
+];
+```
+
+## The Weyl Stack
+
+For GPU infrastructure, reproducibility isn't optional. CUDA versions, cuDNN builds,
+TensorRT compatibility—one mismatch and inference fails silently or crashes spectacularly.
+
+Nix lets us:
+
+1. **Pin everything** — Same CUDA 12.8 + cuDNN 9.x + TensorRT 10.x everywhere
+2. **Compose overlays** — Add our patches without forking nixpkgs
+3. **Cross-compile** — Build for Grace/Jetson from x86_64 workstations
+4. **Rollback instantly** — Previous generation is one symlink away
+
+This is why Nix. Not because it's trendy. Because the alternatives don't work at scale.

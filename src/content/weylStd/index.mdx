@@ -1,0 +1,92 @@
+---
+title: "Weyl Standard"
+description: "A collection of coding standards, patterns, and conventions for building production systems, codifying principles for high-performance computing, infrastructure, and software engineering."
+order: 1
+---
+
+# Weyl Standard
+
+**Weyl Standard** is a collection of coding standards, patterns, and conventions for building production systems. It codifies the principles developed at Weyl AI for high-performance computing, infrastructure, and software engineering.
+
+## Philosophy
+
+**Optimize for disambiguation, not brevity.**
+
+In modern codebases where agents generate significant code and humans debug at 3am:
+- Every ambiguity compounds exponentially
+- Code is written once, read hundreds of times
+- Grep-ability matters more than cleverness
+- Type safety prevents tomorrow's bugs
+
+## Language Standards
+
+| Language | Use Case |
+|----------|----------|
+| [Nix](/std/nix/) | Reproducible infrastructure and builds |
+| [Python](/std/languages/python/) | GPU inference and ML orchestration |
+| [C++](/std/languages/cpp/) | Extreme performance requirements |
+| [Haskell](/std/languages/haskell/) | Type-safe systems programming |
+| [Rust](/std/languages/rust/) | Memory safety without garbage collection |
+| [TypeScript](/std/languages/typescript/) | Web services and tooling |
+| [Bash](/std/languages/bash/) | System automation and scripting |
+
+## Weyl Standard Nix
+
+The Nix component provides infrastructure patterns for:
+
+```bash
+nix flake init -t github:weyl-ai/weyl-std
+nix flake init -t github:weyl-ai/weyl-std#cuda
+nix flake init -t github:weyl-ai/weyl-std#minimal
+```
+
+### Quick Start
+
+```nix
+{
+  inputs.weyl-std.url = "github:weyl-ai/weyl-std";
+
+  outputs = inputs@{ flake-parts, weyl-std, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ weyl-std.flakeModules.default ];
+
+      weyl-std.nixpkgs.cuda.enable = true;
+
+      perSystem = { pkgs, ... }: {
+        packages.default = pkgs.hello;
+      };
+    };
+}
+```
+
+### Nix Modules
+
+| Module | Description |
+|--------|-------------|
+| `weyl-std.flakeModules.default` | Batteries included |
+| `weyl-std.flakeModules.formatter` | Treefmt with opinionated defaults |
+| `weyl-std.flakeModules.nixpkgs` | Nixpkgs config with CUDA support |
+| `weyl-std.flakeModules.std` | Full stack with overlays |
+
+## Start Here
+
+| If you want to... | Read... |
+|-------------------|---------|
+| Understand the philosophy | [Why Nix](/std/nix/philosophy/why-nix/) |
+| Set up a Nix project | [Installation](/std/nix/guides/getting-started/installation/) |
+| Learn Nix patterns | [File Placement](/std/nix/guides/patterns/file-placement/) |
+| Write production Python | [Python](/std/languages/python/) |
+| Build high-performance C++ | [C++](/std/languages/cpp/) |
+
+## Themes
+
+Documentation supports two themes:
+
+- **ono-sendai** — Dark mode. Cyberdeck interface aesthetic.
+- **maas** — Light mode. Clean room schematics.
+
+---
+
+*"We optimize for disambiguation when human attention is the scarce resource."*
+
+— Weyl Standard

@@ -31,5 +31,16 @@ const docs = defineCollection({
   }),
 });
 
-export const collections = { blog, docs };
+const weylStd = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    category: z.enum(['philosophy', 'guides', 'reference', 'rfc', 'languages']).optional(),
+    order: z.number().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, docs, weylStd };
 

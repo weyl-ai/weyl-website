@@ -1,0 +1,45 @@
+---
+title: "Languages"
+description: "Weyl Standard provides coding guidelines for production systems across multiple languages, optimizing for disambiguation, testability, and maintainability."
+category: "languages"
+order: 1
+---
+
+# Languages
+
+**Weyl Standard** provides coding guidelines for production systems across multiple languages. Each standard optimizes for disambiguation, testability, and maintainability.
+
+## Language Standards
+
+| Language | Focus |
+|----------|-------|
+| [Nix](/std/nix/) | Reproducible infrastructure and builds |
+| [Python](/std/languages/python/) | GPU inference and ML orchestration |
+| [C++](/std/languages/cpp/) | Extreme performance requirements |
+| [Haskell](/std/languages/haskell/) | Type-safe systems programming |
+| [Rust](/std/languages/rust/) | Memory safety without garbage collection |
+| [TypeScript](/std/languages/typescript/) | Web services and tooling |
+| [Bash](/std/languages/bash/) | System automation and scripting |
+
+## Core Philosophy
+
+**Optimize for disambiguation, not brevity.**
+
+In modern codebases where agents generate code and humans debug at 3am:
+- Every ambiguity compounds exponentially
+- Code is written once, read hundreds of times
+- Grep-ability matters more than cleverness
+- Type safety prevents tomorrow's bugs
+
+## Shared Principles
+
+All Weyl Standard language guides follow these principles:
+
+- **Explicit over implicit** — No hidden behavior
+- **Full words over abbreviations** — `configuration` not `cfg`
+- **Grep-optimized naming** — Globally unique identifiers
+- **Type safety** — Let compilers catch bugs
+- **Property-based testing** — Invariants over examples
+- **Structured logging** — Parseable, searchable output
+
+The guides focus on production patterns that scale across teams and time.

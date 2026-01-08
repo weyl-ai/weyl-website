@@ -1,0 +1,143 @@
+---
+title: Writing Modules
+description: Modules should be self-contained with options and config together, using mkIf and mkMerge for lazy evaluation.
+category: guides
+order: 7
+---
+
+# Writing Modules
+
+## The Dendritic Principle
+
+We take inspiration from [dendritic](https://github.com/mightyiam/dendritic) thinking: modules should be self-contained, with options and config together, dependencies explicit. We take the concept, not the ecosystem—no external libraries required, just the principle of keeping related things together.
+
+A module is a function that declares options and provides configuration. Multiple modules compose, and they can depend on each other's options. This is the core abstraction of NixOS, home-manager, flake-parts, and many others.
+
+## Module Structure
+
+```nix
+# modules/nixos/api-server.nix
+{ config, lib, pkgs, ... }:
+let
+  inherit (lib) mkOption types mkIf mkMerge;
+  cfg = config.weyl.services.apiServer;
+in
+{
+  _class = "nixos";
+
+  options.weyl.services.apiServer = {
+    enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Whether to enable the Weyl API server.
+
+        Configures a systemd service with automatic restart and opens
+        the appropriate firewall port.
+      '';
+    };
+
+    package = mkOption {
+      type = types.package;
+      default = pkgs.weyl-api-server;
+      description = "The API server package to use.";
+    };
+
+    settings = {
+      port = mkOption {
+        type = types.port;
+        default = 8080;
+        description = "Port the API server listens on.";
+      };
+
+      workers = mkOption {
+        type = types.ints.positive;
+        default = 4;
+        description = "Number of worker processes.";
+      };
+    };
+  };
+
+  config = mkIf cfg.enable {
+    systemd.services.weyl-api-server = {
+      description = "Weyl API Server";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+
+      serviceConfig = {
+        ExecStart = "${cfg.package}/bin/weyl-api-server --port ${toString cfg.settings.port}";
+        Restart = "always";
+        DynamicUser = true;
+      };
+    };
+
+    networking.firewall.allowedTCPPorts = [ cfg.settings.port ];
+  };
+}
+```
+
+## Lazy Evaluation: mkIf and mkMerge
+
+Always use [`mkIf`](https://noogle.dev/f/lib/mkIf) and [`mkMerge`](https://noogle.dev/f/lib/mkMerge) in module `config` blocks:
+
+```nix
+# CORRECT: Lazy, composes properly
+config = mkMerge [
+  (mkIf cfg.enable {
+    services.postgresql.enable = true;
+  })
+
+  (mkIf cfg.backup.enable {
+    services.postgresqlBackup.enable = true;
+  })
+];
+
+# BROKEN: Eager evaluation, causes infinite recursion
+config = if cfg.enable then {
+  services.postgresql.enable = true;
+} else {};
+```
+
+The `if/then/else` evaluates immediately. If `cfg.enable` references another module's option, and that module references this one, infinite recursion. `mkIf` is lazy—it creates a value the module system processes after all modules are loaded.
+
+## Option Nesting
+
+Nested structure over flat namespaces:
+
+```nix
+# Good: Structure reflects the system
+options.weyl.services.api = {
+  server = {
+    port = mkOption { type = types.port; };
+    address = mkOption { type = types.str; };
+  };
+  tls = {
+    enable = mkOption { type = types.bool; };
+    certificate = mkOption { type = types.nullOr types.path; };
+  };
+};
+
+# Bad: Flat, no structure
+options.weyl-api-server-port = mkOption { ... };
+options.weyl-api-tls-enable = mkOption { ... };
+```
+
+## Module Class Markers
+
+When different module types coexist, use `_class` to catch mistakes at evaluation time (see [`lib.evalModules`](https://noogle.dev/f/lib/evalModules)):
+
+```nix
+# modules/nixos/api-server.nix
+{ config, lib, pkgs, ... }: {
+  _class = "nixos";
+  # ...
+}
+
+# modules/home/editor.nix
+{ config, lib, pkgs, ... }: {
+  _class = "home-manager";
+  # ...
+}
+```
+
+Import a home-manager module into NixOS config? Immediate, clear error—not mysterious failure three layers deep.

@@ -1,0 +1,276 @@
+---
+// src/layouts/Docs.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import JsonLd from '@components/seo/JsonLd.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+import { techArticleSchema } from '@lib/seo/schema';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  category?: string;
+}
+
+const {
+  title,
+  description,
+  category
+} = Astro.props;
+
+// Use TechArticle schema for documentation
+const schema = techArticleSchema({
+  title,
+  description: description || title,
+  datePublished: new Date().toISOString(),
+  author: 'Weyl AI',
+  url: Astro.url.href,
+  keywords: category ? [category] : [],
+});
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <BaseHead
+      title={title}
+      description={description || title}
+      image="/og-docs.png"
+      type="article"
+    />
+    <JsonLd schema={schema} />
+    <style is:global>
+      /* Force light theme logo display */
+      [data-theme="light"] .logo-dark {
+        display: none !important;
+      }
+
+      [data-theme="light"] .logo-light {
+        display: block !important;
+      }
+    </style>
+  </head>
+  <body class="high-modernism-body">
+    <LandingNav />
+    <article class="high-modernism-article">
+      <header class="mb-12">
+        <a
+          href="/std"
+          class="font-mono text-small text-text-muted hover:text-brand-primary mb-6 inline-block transition-colors"
+          aria-label="Back to Weyl Standard"
+        >
+          ← Back to Weyl Standard
+        </a>
+
+        {category && (
+          <div class="mb-4">
+            <span class="px-2 py-1 bg-bg-surface border border-border text-text-muted text-caption rounded-sm uppercase tracking-wider">
+              {category}
+            </span>
+          </div>
+        )}
+
+        <h1 class="font-display text-hero font-semibold tracking-wide text-text-primary mb-6">
+          {title}
+        </h1>
+
+        {description && (
+          <p class="text-body text-text-secondary font-mono leading-relaxed">
+            {description}
+          </p>
+        )}
+      </header>
+
+      <div class="prose prose-invert max-w-none font-mono text-body text-text-secondary">
+        <slot />
+      </div>
+    </article>
+    <LandingFooter />
+  </body>
+</html>
+
+<style is:global>
+  /* High Modernism Palette */
+  :root {
+    --hm-ground: #f4f1eb;
+    --hm-aged: #e8e4d9;
+    --hm-patina: #c9b896;
+    --hm-executive: #1a1a1a;
+    --hm-administration: #1a5276;
+    --hm-priority: #c41e3a;
+    --hm-operations: #2d5a27;
+    --hm-heritage: #8b7355;
+    --hm-gilt: #d4a017;
+  }
+
+  .high-modernism-body {
+    background: var(--hm-ground);
+    color: var(--hm-executive);
+    font-family: 'Helvetica Neue', 'Univers', 'Arial', 'Liberation Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .high-modernism-article {
+    max-width: 90rem;
+    margin: 0 auto;
+    padding: 6rem 3rem 4rem;
+  }
+
+  .high-modernism-article header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--hm-executive);
+  }
+
+  .high-modernism-article h1 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--hm-executive);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .prose {
+    color: var(--hm-executive);
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    font-family: 'Helvetica Neue', sans-serif;
+    color: var(--hm-executive);
+    font-weight: 700;
+  }
+
+  .prose h2 {
+    font-size: 28px;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .prose h3 {
+    font-size: 22px;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.005em;
+  }
+
+  .prose p {
+    margin-bottom: 1.5rem;
+  }
+
+  .prose a {
+    color: var(--hm-administration);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hm-administration);
+    transition: color 0.2s ease;
+  }
+
+  .prose a:hover {
+    color: var(--hm-priority);
+    border-bottom-color: var(--hm-priority);
+  }
+
+  .prose code {
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    background-color: var(--hm-aged);
+    color: var(--hm-executive);
+    border: 1px solid var(--hm-patina);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.9em;
+  }
+
+  .prose pre {
+    background-color: var(--hm-aged);
+    border: 1px solid var(--hm-patina);
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 2rem 0;
+    font-size: 14px;
+  }
+
+  .prose pre code {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+
+  .prose blockquote {
+    font-family: 'Georgia', 'Charter', 'Cambria', serif;
+    border-left: 4px solid var(--hm-heritage);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    color: var(--hm-heritage);
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  .prose strong {
+    color: var(--hm-executive);
+    font-weight: 700;
+  }
+
+  .prose em {
+    color: var(--hm-heritage);
+    font-style: italic;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+  }
+
+  .prose th,
+  .prose td {
+    border: 1px solid var(--hm-patina);
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+
+  .prose th {
+    background-color: var(--hm-aged);
+    color: var(--hm-executive);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 2px solid var(--hm-patina);
+    margin: 3rem 0;
+  }
+
+  .prose img {
+    width: 100%;
+    height: auto;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: var(--hm-aged);
+    border: 1px solid var(--hm-patina);
+    border-radius: 4px;
+  }
+</style>

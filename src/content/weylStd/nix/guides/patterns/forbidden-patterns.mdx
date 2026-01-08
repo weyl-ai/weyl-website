@@ -1,0 +1,218 @@
+---
+title: Forbidden Patterns
+description: These patterns are explicitly prohibited in Weyl Standard Nix to avoid common pitfalls and maintain code quality.
+category: guides
+order: 3
+---
+
+# Forbidden Patterns
+
+These patterns are explicitly prohibited in Weyl Standard Nix.
+
+## with Statements
+
+**FORBIDDEN** (except in short list contexts).
+
+```nix
+# NON-CONFORMANT
+with lib;
+with pkgs;
+{
+  options.foo = mkOption { type = types.str; };
+}
+
+# CONFORMANT
+let
+  inherit (lib) mkOption types;
+in
+{
+  options.foo = mkOption { type = types.str; };
+}
+```
+
+### Rationale
+
+- Obscures where names come from
+- Breaks tooling (no go-to-definition, no accurate autocomplete)
+- Creates shadowing hazards when lib adds new attributes
+- Makes code review require mental scope tracking
+
+### Exception
+
+Short lists where the source is obvious:
+
+```nix
+environment.systemPackages = with pkgs; [
+  vim
+  git
+  curl
+];
+```
+
+## rec in Derivations
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+stdenv.mkDerivation rec {
+  pname = "my-tool";
+  version = "1.0.0";
+  src = fetchFromGitHub {
+    rev = "v${version}";
+  };
+}
+
+# CONFORMANT
+stdenv.mkDerivation (finalAttrs: {
+  pname = "my-tool";
+  version = "1.0.0";
+  src = fetchFromGitHub {
+    rev = "v${finalAttrs.version}";
+  };
+})
+```
+
+### Rationale
+
+With `rec`, overrideAttrs doesn't work correctly. The version reference is baked in at
+definition time, not resolved after overrides.
+
+## if/then/else in Module Config
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+config = if cfg.enable then {
+  services.foo.enable = true;
+} else {};
+
+# CONFORMANT
+config = mkIf cfg.enable {
+  services.foo.enable = true;
+};
+```
+
+### Rationale
+
+Eager evaluation causes infinite recursion when modules reference each other's options.
+
+## Import From Derivation (IFD)
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+let
+  generated = pkgs.runCommand "gen.nix" {} ''echo "{ x = 1; }" > $out'';
+in
+import generated
+```
+
+### Rationale
+
+IFD forces builds during evaluation. This breaks:
+
+- Flake evaluation without network access
+- Lazy evaluation
+- Caching
+- Error messages
+
+## default.nix in packages/
+
+**FORBIDDEN** (except in `nix/overlays/`).
+
+```
+# NON-CONFORMANT
+nix/packages/
+├── my-tool/
+│   └── default.nix
+
+# CONFORMANT
+nix/packages/
+├── my-tool.nix
+```
+
+### Rationale
+
+The filename becomes the attribute name. `default.nix` discards this information.
+
+## Configuring nixpkgs Outside weyl-std
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+perSystem = { system, ... }: {
+  _module.args.pkgs = import inputs.nixpkgs {
+    inherit system;
+    config.cudaSupport = true;  # NO
+  };
+};
+
+# CONFORMANT
+perSystem = { system, ... }: {
+  _module.args.pkgs = inputs.weyl-std.nixpkgs.${system};
+};
+```
+
+### Rationale
+
+Central nixpkgs configuration ensures CUDA versions, capabilities, and overlays are
+consistent across the entire stack. Per-flake configuration creates version mismatches.
+
+## Overriding nixpkgs Config in NixOS
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+{ ... }:
+{
+  nixpkgs.config.cudaSupport = false;  # NO
+}
+```
+
+### Rationale
+
+NixOS configs receive their pkgs from the flake via `nixpkgs.pkgs`. Overriding config
+at the NixOS level breaks consistency.
+
+## Inline Foreign Code Over 10 Lines
+
+**FORBIDDEN.**
+
+```nix
+# NON-CONFORMANT
+buildPhase = ''
+  #!/bin/bash
+  # ... 50 lines of bash ...
+'';
+
+# CONFORMANT
+buildPhase = builtins.readFile ./build.sh;
+```
+
+### Rationale
+
+Inline strings:
+
+- Have no syntax highlighting
+- Cannot be linted or tested independently
+- Encourage growing complexity without factoring
+
+## Summary Table
+
+| Pattern | Reason |
+|---------|--------|
+| `with lib;` | Obscures provenance, breaks tooling |
+| `rec` in derivations | Breaks `overrideAttrs` |
+| `if/then/else` in module config | Eager evaluation causes infinite recursion |
+| Import from derivation | Forces builds during evaluation |
+| `default.nix` in packages | Discards filename information |
+| Per-flake nixpkgs config | Creates version mismatches |
+| camelCase in weyl namespaces | Violates naming convention |
+| Missing `_class` | Silent cross-module-system failures |
+| Missing `meta` in packages | Breaks documentation and compliance |
+| Inline code >10 lines | Untestable, unlintable |

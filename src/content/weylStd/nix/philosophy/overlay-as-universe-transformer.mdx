@@ -1,0 +1,137 @@
+---
+title: "An Overlay is a Pure Function from The World as It Is to The World as It Ought to Be"
+description: "Understanding overlays as universe transformers"
+category: "philosophy"
+order: 2
+---
+
+## The Signature
+
+```nix
+final: prev: { ... }
+```
+
+Read it as: given the world as it was (`prev`) and knowledge of the world as it will be
+(`final`), return the changes that make it so.
+
+## The Nature of the Transformation
+
+This is not a package manager. This is not a build system. This is a **universe transformer**.
+
+You are handed the entire corpus of software—tens of thousands of packages, their
+interdependencies, their build systems, their configurations—and you return a modified
+universe where your changes propagate correctly through every dependency chain.
+
+## The Semantics
+
+- `prev`: The package set before this overlay
+- `final`: The package set after ALL overlays (including this one)
+- Return value: Attributes to add or override
+
+The `final` reference is the key insight. You can reference packages that don't exist
+yet—packages defined by overlays that come after yours. This is fixed-point semantics:
+the result is defined in terms of itself.
+
+```nix
+final: prev: {
+  my-tool = final.callPackage ./my-tool.nix { };
+  # my-tool can use final.other-thing, even if other-thing
+  # is defined in a later overlay
+}
+```
+
+Von Neumann little fuckers. Self-replicating build machines. They use themselves to
+build themselves. `final` references the result of applying all overlays, including the
+one you're currently writing. Circular. Resolved by laziness.
+
+The stdenv builds packages. But stdenv is a package. Built by stdenv. Fixed-point
+semantics as bootstrap. Turtles that compile themselves all the way down.
+
+## The Composition Law
+
+Overlays compose:
+
+```nix
+overlays = [ overlay1 overlay2 overlay3 ];
+```
+
+This is equivalent to:
+
+```nix
+final: prev:
+  (overlay3 final (overlay2 final (overlay1 final prev)))
+```
+
+Each overlay sees the previous transformations in `prev` and the final fixed point in
+`final`. They compose associatively. Factor out concerns—one overlay for CUDA, one for
+security patches, one for internal tools—and combine them freely.
+
+This is functional programming applied to software distribution:
+
+- The package set is a **value**
+- Overlays are **functions**
+- Composition is **function composition**
+- The fixed point is computed **lazily**
+
+## The Limitation
+
+Not every language can express this. You need:
+
+- **Laziness**: Strict evaluation would force the entire universe
+- **Purity**: Side effects would make composition order-dependent
+- **First-class functions**: Overlays are higher-order functions
+- **Attribute sets as first-class values**: The universe is a giant attrset
+
+Nix was designed for this. Most package managers weren't.
+
+This is why "just use Docker" misses the point—Docker gives you **isolated** universes,
+not **transformable** ones.
+
+## Application
+
+Weyl Standard Nix overlays are:
+
+1. **Minimal** — Each overlay does one thing
+2. **Composed** — `lib.composeManyExtensions` combines them
+3. **Centralized** — `weyl-std` owns the base overlays; projects extend
+
+```nix
+# nix/overlays/cuda.nix
+final: prev: {
+  cudaPackages = final.cudaPackages_12_8;
+}
+
+# nix/overlays/internal-tools.nix
+final: prev: {
+  weyl-cli = final.callPackage ../packages/weyl-cli.nix { };
+  inference-server = final.callPackage ../packages/inference-server.nix { };
+}
+
+# nix/overlays/default.nix
+{ lib, ... }:
+{
+  flake.overlays.default = lib.composeManyExtensions [
+    (import ./cuda.nix)
+    (import ./internal-tools.nix)
+  ];
+}
+```
+
+The world transforms.
+
+## The Stdenv
+
+A stdenv defines how that universe builds itself.
+
+The flags are the building code:
+
+```
+-O2                           # real performance
+-g3 -gdwarf-5                 # full symbols
+-fno-omit-frame-pointer       # stack traces work
+-fno-stack-protector          # no theater
+hardeningDisable = [ "all" ]  # nix wrapper killed
+dontStrip = true              # symbols stay
+```
+
+See [Standard Environments](../guides/advanced/stdenvs) for the full specification.

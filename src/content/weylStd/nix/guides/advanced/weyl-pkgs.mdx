@@ -1,0 +1,207 @@
+---
+title: weyl-pkgs — The Debuggable Universe
+description: Every package. Every library. Every time. RelWithDebInfo for the entire dependency closure.
+category: guides
+order: 4
+---
+
+# weyl-pkgs — The Debuggable Universe
+
+Every package. Every library. Every time.
+
+RelWithDebInfo for the entire dependency closure.
+
+No more black boxes.
+
+## Philosophy
+
+Stock compilers. Stock C++ versions. Stock build systems.
+
+Just the posture:
+
+```
+-O2                           # optimize for real
+-g3 -gdwarf-5                 # symbols everywhere
+-fno-omit-frame-pointer       # stack traces work
+-fno-limit-debug-info         # don't truncate
+hardeningDisable = [ "all" ]  # no theater
+dontStrip = true              # never strip
+```
+
+## Two Worlds
+
+```nix
+pkgs.ffmpeg        # their way
+weyl-pkgs.ffmpeg   # our way
+```
+
+Both exist. Use whichever you need.
+
+## Build System Integration
+
+### CMake
+
+```cmake
+CMAKE_BUILD_TYPE=RelWithDebInfo
+CMAKE_C_FLAGS_RELWITHDEBINFO=-O2 -g3 -gdwarf-5 -DNDEBUG
+CMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g3 -gdwarf-5 -DNDEBUG
+```
+
+### Meson
+
+```
+--buildtype=debugoptimized
+-Db_ndebug=true
+-Ddebug=true
+-Doptimization=2
+```
+
+### Autotools
+
+`NIX_CFLAGS_COMPILE` applies to everything.
+
+## Usage
+
+### In a Flake
+
+```nix
+{
+  inputs.weyl-std.url = "github:weyl-ai/weyl-std";
+
+  outputs = { self, nixpkgs, weyl-std, ... }: {
+    perSystem = { system, ... }:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ weyl-std.overlays.default ];
+        };
+
+        # The debuggable universe
+        weyl-pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ weyl-std.overlays.posture ];
+        };
+      in {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            # Your code: weyl-stdenv (clang, C++23)
+            (pkgs.weyl-stdenv.mkDerivation { ... })
+
+            # Dependencies: debuggable
+            weyl-pkgs.ffmpeg
+            weyl-pkgs.opencv
+            weyl-pkgs.boost
+          ];
+        };
+      };
+  };
+}
+```
+
+### Debug a Crash in a Dependency
+
+```bash
+# Build with weyl-pkgs
+nix build .#weyl-pkgs.ffmpeg
+
+# Now gdb works
+gdb --args ./result/bin/ffmpeg -i input.mp4 output.mkv
+
+(gdb) bt
+#0  av_frame_alloc () at libavutil/frame.c:234
+#1  0x00007ffff7a12345 in decode_video () at libavcodec/decode.c:456
+...
+
+# Symbols. Line numbers. The works.
+```
+
+### Verify the Posture
+
+```bash
+# Check a package was built with posture
+nix eval '.#weyl-pkgs.ffmpeg.passthru.weyl-posture'
+# => true
+
+# Check symbols present
+nm $(nix build .#weyl-pkgs.ffmpeg --print-out-paths)/lib/libavcodec.so | head
+
+# Check not stripped
+file $(nix build .#weyl-pkgs.ffmpeg --print-out-paths)/lib/libavcodec.so
+# => ... not stripped
+```
+
+## What Changes
+
+| Aspect | Stock nixpkgs | weyl-pkgs |
+|--------|---------------|-----------|
+| Optimization | Varies | Always O2 |
+| Debug info | Usually none | Always g3 + DWARF5 |
+| Frame pointers | Usually omitted | Always kept |
+| Hardening | Enabled | Disabled |
+| Strip | Usually yes | Never |
+| NDEBUG | Varies | Defined (asserts off) |
+
+## What Doesn't Change
+
+- Compiler (gcc/clang version)
+- C/C++ standard
+- Build system
+- Source code
+- Dependencies
+
+Same packages. Same versions. Just debuggable.
+
+## The Fixed Point
+
+Both `pkgs` and `weyl-pkgs` are complete nixpkgs instances.
+
+The overlay propagates through every package, every dependency, every transitive closure.
+
+```
+weyl-pkgs.python311Packages.numpy
+  → numpy built with posture
+    → openblas built with posture
+      → gfortran runtime built with posture
+        → ...
+```
+
+All the way down.
+
+## When to Use
+
+**Use `pkgs.*` when:**
+- Matching upstream builds for reproducibility
+- Binary cache hits matter (weyl-pkgs rebuilds everything)
+- Production deployment (hardening actually wanted)
+
+**Use `weyl-pkgs.*` when:**
+- Debugging crashes in dependencies
+- Profiling (frame pointers required)
+- Understanding what the code actually does
+- Development
+
+## pkg-config Generation
+
+Libraries without `.pc` files get them auto-generated:
+
+```bash
+ls $(nix build .#weyl-pkgs.somelib --print-out-paths)/lib/pkgconfig/
+# => somelib.pc (auto-generated if missing)
+```
+
+## Introspection
+
+```bash
+# View posture info
+nix eval .#weyl-pkgs-info --json | jq
+
+{
+  "version": "1.0.0",
+  "posture": "RelWithDebInfo",
+  "optimization": "O2",
+  "debug": "g3 + DWARF5",
+  "frame-pointers": "always",
+  "hardening": "disabled",
+  "strip": "never"
+}
+```

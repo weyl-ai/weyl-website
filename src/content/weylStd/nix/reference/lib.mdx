@@ -1,0 +1,74 @@
+---
+title: Library
+description: weyl-std library functions, available via weyl-std.lib.
+category: reference
+order: 1
+---
+
+# Library
+
+weyl-std library functions, available via `weyl-std.lib`.
+
+## lib.cuda
+
+CUDA-related utilities.
+
+### lib.cuda.smCode
+
+SM codes for target architectures:
+
+```nix
+lib.cuda.smCode = {
+  grace = "sm_90a";     # Grace Hopper
+  jetson = "sm_87";     # Jetson Orin
+  blackwell = "sm_120"; # RTX 5090, B200
+  ada = "sm_89";        # RTX 4090
+};
+```
+
+## lib.stdenv
+
+Stdenv utilities.
+
+### lib.stdenv.weylCflags
+
+The standard compiler flags as a string:
+
+```nix
+lib.stdenv.weylCflags
+# "-O2 -g3 -gdwarf-5 -fno-omit-frame-pointer ..."
+```
+
+### lib.stdenv.weylAttrs
+
+Attributes to apply to any derivation:
+
+```nix
+lib.stdenv.weylAttrs = {
+  dontStrip = true;
+  hardeningDisable = [ "all" ];
+  # ...
+};
+```
+
+### lib.stdenv.weylify
+
+Apply weyl-stdenv attributes to any derivation:
+
+```nix
+lib.stdenv.weylify pkgs.some-package
+```
+
+## lib.flake
+
+Flake utilities.
+
+### lib.flake.forAllSystems
+
+Apply function to all supported systems:
+
+```nix
+lib.flake.forAllSystems (system: {
+  packages.${system}.default = ...;
+})
+```

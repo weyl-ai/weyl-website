@@ -1,0 +1,69 @@
+---
+title: Cross-Compilation
+description: Building for aarch64 targets from x86_64 workstations.
+category: guides
+order: 1
+---
+
+# Cross-Compilation
+
+Building for aarch64 targets from x86_64 workstations.
+
+## Available Targets
+
+| Target | Platform | GPU |
+|--------|----------|-----|
+| `weyl-cross.grace` | aarch64-linux | sm_90a (Grace Hopper) |
+| `weyl-cross.jetson` | aarch64-linux | sm_87 (Jetson Orin) |
+| `weyl-cross.aarch64` | aarch64-linux | none |
+| `weyl-cross.x86-64` | x86_64-linux | sm_120 (Blackwell) |
+
+## Usage
+
+```nix
+# Build for Grace Hopper
+pkgs.weyl-cross.grace.mkDerivation {
+  name = "my-grace-app";
+  src = ./src;
+}
+
+# Build for Jetson Orin
+pkgs.weyl-cross.jetson.mkDerivation {
+  name = "my-jetson-app";
+  src = ./src;
+}
+```
+
+## How It Works
+
+Cross-compilation uses:
+
+1. `pkgsCross.aarch64-multiplatform` for the target toolchain
+2. CUDA cross-compilation flags for GPU code
+3. The weyl-stdenv flags for debuggability
+
+## Distributed Builds
+
+For faster cross-compilation, configure remote builders:
+
+```nix
+# configuration.nix
+nix.buildMachines = [{
+  hostName = "grace-builder";
+  system = "aarch64-linux";
+  maxJobs = 32;
+  supportedFeatures = [ "nixos-test" "big-parallel" ];
+}];
+
+nix.distributedBuilds = true;
+```
+
+## Native vs Cross
+
+When possible, build natively on target hardware. Cross-compilation is for:
+
+- CI pipelines running on x86_64
+- Development iteration before hardware access
+- Building firmware/bootloaders
+
+For production inference workloads, build on the target architecture.

@@ -1,0 +1,144 @@
+---
+title: Writing Packages
+description: Packages should be callPackage-able functions using finalAttrs pattern for proper override support.
+category: guides
+order: 8
+---
+
+# Writing Packages
+
+## The callPackage Pattern
+
+Packages should be **callPackage-able**: functions that take dependencies as arguments and return a derivation. This is the foundation of Nix's dependency injection.
+
+```nix
+# packages/weyl-cli.nix
+{
+  lib,
+  rustPlatform,
+  fetchFromGitHub,
+  openssl,
+  pkg-config,
+}:
+rustPlatform.buildRustPackage (finalAttrs: {
+  pname = "weyl-cli";
+  version = "2.1.0";
+
+  src = fetchFromGitHub {
+    owner = "weyl-ai";
+    repo = "cli";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  };
+
+  cargoHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=";
+
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ openssl ];
+
+  meta = {
+    description = "Weyl AI command-line interface";
+    homepage = "https://github.com/weyl-ai/cli";
+    license = lib.licenses.mit;
+    mainProgram = "weyl";
+  };
+})
+```
+
+Learn the pattern: [nix.dev callPackage tutorial](https://nix.dev/tutorials/callpackage).
+
+## Why `finalAttrs`, Not `rec`
+
+You'll see two patterns for self-reference in derivations:
+
+```nix
+# OLD: Using rec
+rustPlatform.buildRustPackage rec {
+  pname = "weyl-cli";
+  version = "2.1.0";
+  src = fetchFromGitHub {
+    rev = "v${version}";  # Resolved at definition time
+    # ...
+  };
+}
+
+# CORRECT: Using finalAttrs
+rustPlatform.buildRustPackage (finalAttrs: {
+  pname = "weyl-cli";
+  version = "2.1.0";
+  src = fetchFromGitHub {
+    rev = "v${finalAttrs.version}";  # Resolved after overrides
+    # ...
+  };
+})
+```
+
+**Always use `finalAttrs`.** Here's why `rec` breaks:
+
+With `rec`, references are resolved at definition time. If someone overrides `version`, the `src` still uses the old version—the reference was baked in before the override happened.
+
+With `finalAttrs`, the function receives attributes *after* all overrides. Overrides work correctly:
+
+```nix
+# With rec: BROKEN—src still fetches v2.1.0
+pkgs.weyl-cli.overrideAttrs { version = "2.2.0"; }
+
+# With finalAttrs: WORKS—src fetches v2.2.0
+pkgs.weyl-cli.overrideAttrs { version = "2.2.0"; }
+```
+
+See the [nixpkgs manual on overrideAttrs](https://nixos.org/manual/nixpkgs/stable/#sec-pkg-overrideAttrs) for the complete explanation.
+
+## Custom Builders
+
+For simple extensions, use [`lib.extendMkDerivation`](https://noogle.dev/f/lib/extendMkDerivation):
+
+```nix
+myMkDerivation = lib.extendMkDerivation {
+  constructDrv = pkgs.stdenv.mkDerivation;
+  extendDrv = finalAttrs: {
+    nativeBuildInputs = (finalAttrs.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+    postFixup = ''
+      wrapProgram $out/bin/${finalAttrs.pname} \
+        --prefix PATH : ${lib.makeBinPath [ pkgs.git ]}
+    '';
+  };
+};
+```
+
+For complex builders with >10 options, use [`lib.evalModules`](https://noogle.dev/f/lib/evalModules) to get type checking. Configuration errors surface at evaluation time, not during the build:
+
+```nix
+{ lib, pkgs }:
+let
+  mlModelModule = { config, ... }: {
+    options = {
+      name = lib.mkOption { type = lib.types.str; };
+      version = lib.mkOption { type = lib.types.str; };
+      modelFile = lib.mkOption { type = lib.types.path; };
+      runtime = lib.mkOption {
+        type = lib.types.enum [ "onnx" "pytorch" "tensorflow" ];
+      };
+      cudaSupport = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      # ... more typed options
+    };
+  };
+
+  buildMlModel = moduleConfig:
+    let
+      evaluated = lib.evalModules {
+        modules = [ mlModelModule moduleConfig ];
+      };
+      cfg = evaluated.config;
+    in
+    pkgs.stdenv.mkDerivation {
+      pname = cfg.name;
+      version = cfg.version;
+      # ...
+    };
+in
+buildMlModel
+```

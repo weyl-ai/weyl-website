@@ -1,0 +1,183 @@
+---
+title: "RFC-001: Weyl Standard Nix"
+description: "This RFC establishes Weyl Standard Nix, a specification for writing Nix code within the weyl-ai organization."
+category: rfc
+order: 1
+---
+
+# RFC-001: Weyl Standard Nix
+
+| Field | Value |
+|-------|-------|
+| RFC | 001 |
+| Title | Weyl Standard Nix |
+| Author | Weyl AI Infrastructure Team |
+| Status | Accepted |
+| Created | 2025-01-05 |
+
+## Abstract
+
+This RFC establishes **Weyl Standard Nix**, a specification for writing Nix code within the
+weyl-ai organization. It codifies deliberate divergences from nixpkgs conventions where those
+conventions do not serve our needs, and establishes normative requirements for code style,
+module structure, and composition patterns.
+
+## Motivation
+
+Nix is the correct foundation for reproducible infrastructure. The model—content-addressed
+storage, hermetic builds, declarative configuration—is sound. However, the stylistic
+conventions of nixpkgs are not load-bearing. They are thirty years of accretion by thousands
+of contributors with no central authority on style.
+
+We are not nixpkgs. We are a vertically integrated organization building GPU inference
+infrastructure. Our code does not need to merge upstream. Our conventions do not need to
+match theirs. We have the luxury of internal consistency that a community project cannot
+enforce.
+
+This RFC establishes the authority to diverge and specifies where and why we do so.
+
+## Specification
+
+### 1. Naming Convention: lisp-case
+
+All identifiers within Weyl Standard Nix SHALL use `lisp-case` (kebab-case):
+
+```nix
+# Conformant
+weyl-api-server
+config.weyl.services.inference-server.model-path
+nix/modules/nixos/gpu-worker-common.nix
+
+# Non-conformant
+weylApiServer
+config.weyl.services.inferenceServer.modelPath
+```
+
+#### Exceptions
+
+Standard Nix idioms that every practitioner knows:
+
+```nix
+{ pkgs, lib, config, ... }
+final: prev:
+inherit (lib) mkOption mkIf mkMerge;
+```
+
+Attributes interfacing with external APIs retain upstream names.
+
+### 2. The Overlay as Universe Transformer
+
+An overlay is a pure function from the world as it is to the world as it ought to be:
+
+```nix
+final: prev: { ... }
+```
+
+Overlays SHALL be:
+
+1. **Minimal** — Each overlay does one thing
+2. **Composed** — `lib.composeManyExtensions` combines them
+3. **Centralized** — `weyl-std` owns the base overlays; projects extend
+
+### 3. Central nixpkgs Configuration
+
+All flakes consuming `weyl-std` SHALL use its nixpkgs configuration:
+
+```nix
+perSystem = { system, ... }: {
+  _module.args.pkgs = inputs.weyl-std.nixpkgs.${system};
+};
+```
+
+Per-flake nixpkgs configuration is FORBIDDEN.
+
+### 4. Directory Structure
+
+```
+project/
+├── flake.nix                    # Inputs and import-tree only
+├── nix/
+│   ├── modules/
+│   │   ├── flake/               # flake-parts modules
+│   │   ├── nixos/               # NixOS modules
+│   │   ├── darwin/              # nix-darwin modules
+│   │   └── home/                # home-manager modules
+│   ├── packages/                # callPackage-ables
+│   ├── overlays/                # Overlay compositions
+│   └── configurations/
+└── docs/
+```
+
+### 5. Module System Boundaries
+
+| System | Location | Context |
+|--------|----------|---------|
+| flake-parts | `nix/modules/flake/` | Flake evaluation |
+| NixOS | `nix/modules/nixos/` | `lib.nixosSystem` |
+| nix-darwin | `nix/modules/darwin/` | `darwin.lib.darwinSystem` |
+| home-manager | `nix/modules/home/` | `home-manager.lib.homeManagerConfiguration` |
+
+All non-flake-parts modules SHALL declare `_class`.
+
+### 6. Forbidden Patterns
+
+| Pattern | Reason |
+|---------|--------|
+| `with lib;` | Obscures provenance, breaks tooling |
+| `rec` in derivations | Breaks `overrideAttrs` |
+| `if/then/else` in module config | Eager evaluation causes infinite recursion |
+| Import from derivation | Forces builds during evaluation |
+| `default.nix` in packages | Discards filename information |
+| Per-flake nixpkgs config | Creates version mismatches |
+| camelCase in weyl namespaces | Violates naming convention |
+| Missing `_class` | Silent cross-module-system failures |
+| Missing `meta` in packages | Breaks documentation and compliance |
+
+### 7. Package Requirements
+
+All packages SHALL:
+
+1. Be callable by `callPackage`
+2. Use `finalAttrs` pattern (not `rec`)
+3. Provide `meta` with `description`, `license`, and `mainProgram` (if applicable)
+
+```nix
+{ lib, stdenv, fetchFromGitHub }:
+stdenv.mkDerivation (finalAttrs: {
+  pname = "my-tool";
+  version = "1.0.0";
+  meta = {
+    description = "A tool";
+    license = lib.licenses.mit;
+    mainProgram = "my-tool";
+  };
+})
+```
+
+### 8. Documentation
+
+Weyl Standard Nix documentation SHALL be generated using ndg.
+
+Module options SHALL have descriptions that ndg can extract.
+
+### 9. Mechanical Enforcement
+
+Weyl Standard Nix requirements SHALL be mechanically enforced via `wsn-lint` as specified
+in [RFC-002](002-wsn-lint/). CI pipelines SHALL fail on `wsn-lint` errors.
+
+## Conformance
+
+A flake is **Weyl Standard Nix conformant** if it:
+
+1. Imports `weyl-std` and uses its centralized nixpkgs configuration
+2. Follows the directory structure specified in §4
+3. Adheres to the naming conventions specified in §1
+4. Avoids all forbidden patterns specified in §6
+5. Passes `nix flake check` and `nix fmt -- --check`
+6. Passes `wsn-lint check` with exit code 0
+
+## Authority
+
+This RFC is maintained by the infrastructure team at Weyl AI. Amendments require review
+and approval. The specification is not a democracy—it is a dictatorship of clarity over
+convention, consistency over compatibility, velocity over consensus.

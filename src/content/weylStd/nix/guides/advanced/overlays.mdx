@@ -1,0 +1,55 @@
+---
+title: Overlays
+description: Advanced overlay composition patterns.
+category: guides
+order: 2
+---
+
+# Overlays
+
+Advanced overlay composition patterns.
+
+## Composing Multiple Overlays
+
+```nix
+{ lib, ... }:
+{
+  flake.overlays.default = lib.composeManyExtensions [
+    (import ./cuda.nix)
+    (import ./stdenvs.nix)
+    (import ./internal-tools.nix)
+  ];
+}
+```
+
+## Overlay Order
+
+Overlays are applied in order. Later overlays see the changes from earlier ones in `prev`.
+
+## Referencing final
+
+Use `final` to reference the fixed-point—packages as they will be after all overlays:
+
+```nix
+final: prev: {
+  my-tool = final.callPackage ./my-tool.nix { };
+  # my-tool can depend on packages defined in later overlays
+}
+```
+
+## Per-System Overlays
+
+For overlays that need system-specific logic:
+
+```nix
+final: prev:
+let
+  inherit (final.stdenv.hostPlatform) system isAarch64;
+in {
+  my-tool = final.callPackage ./my-tool.nix {
+    cuda-arch = if isAarch64 then "sm_90a" else "sm_120";
+  };
+}
+```
+
+See [The Overlay](../../philosophy/overlay-as-universe-transformer/) for the philosophy.

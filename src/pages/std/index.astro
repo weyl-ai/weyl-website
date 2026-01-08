@@ -1,0 +1,47 @@
+---
+// src/pages/std/index.astro
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Docs from '@/layouts/Docs.astro';
+
+type WeylStdEntry = CollectionEntry<'weylStd'>;
+
+const weylStdEntries = await getCollection('weylStd', (entry: WeylStdEntry) => !entry.data.draft);
+const entriesByCategory = weylStdEntries.reduce((acc: Record<string, WeylStdEntry[]>, entry: WeylStdEntry) => {
+  const cat = entry.data.category || 'uncategorized';
+  if (!acc[cat]) acc[cat] = [];
+  acc[cat].push(entry);
+  return acc;
+}, {} as Record<string, WeylStdEntry[]>);
+
+// Sort by order if available
+Object.keys(entriesByCategory).forEach((cat: string) => {
+  entriesByCategory[cat].sort((a: WeylStdEntry, b: WeylStdEntry) => (a.data.order || 999) - (b.data.order || 999));
+});
+---
+
+<Docs
+  title="Weyl Standard Nix"
+  description="A specification for reproducible, composable infrastructure on Nix"
+>
+  <p class="text-xl mb-8">
+    Documentation for the Weyl Standard—a specification for reproducible, composable infrastructure built on Nix.
+  </p>
+
+  {(Object.entries(entriesByCategory) as [string, WeylStdEntry[]][]).map(([category, entries]) => (
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4 capitalize">{category}</h2>
+      <ul class="space-y-2">
+        {entries.map((entry) => (
+          <li>
+            <a href={`/std/${entry.slug}`} class="text-lg hover:text-brand-primary">
+              {entry.data.title}
+            </a>
+            {entry.data.description && (
+              <p class="text-sm text-text-muted ml-4">{entry.data.description}</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Docs>

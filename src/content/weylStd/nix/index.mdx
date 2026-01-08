@@ -1,0 +1,64 @@
+---
+title: "Weyl Standard Nix"
+description: "A specification for building reproducible, composable infrastructure on Nix with flakes, flake-parts, and consistent naming conventions."
+order: 1
+---
+
+# Weyl Standard Nix
+
+**Weyl Standard Nix** is a specification for building reproducible, composable infrastructure on Nix. Part of the Weyl Standard collection of language standards.
+
+## Core Principles
+
+1. **Flakes exclusively** - No legacy Nix, no `nix-shell`, no `NIX_PATH`
+2. **flake-parts as foundation** - Module system for flakes
+3. **nixos-unified structure** - Autowiring over boilerplate
+4. **Overlays for packages** - Centrally managed nixpkgs
+5. **lisp-case everywhere** - Consistent naming across identifiers
+
+## Philosophy
+
+- [Why Nix](/std/nix/philosophy/why-nix/) — The case for reproducibility
+- [The Overlay](/std/nix/philosophy/overlay-as-universe-transformer/) — Universe transformers
+- [lisp-case](/std/nix/philosophy/lisp-case/) — Naming convention rationale
+
+## Guides
+
+### Getting Started
+
+- [Installation](/std/nix/guides/getting-started/installation/) — Prerequisites and setup
+- [First Flake](/std/nix/guides/getting-started/first-flake/) — Your first conformant flake
+- [Infrastructure](/std/nix/guides/getting-started/infrastructure/) — Cachix, Hercules CI, Omnix
+
+### Patterns
+
+- [Naming Conventions](/std/nix/guides/patterns/naming/) — How to name things
+- [File Placement](/std/nix/guides/patterns/file-placement/) — Where things go
+- [Module Systems](/std/nix/guides/patterns/module-systems/) — flake-parts, NixOS, darwin
+- [Writing Packages](/std/nix/guides/patterns/writing-packages/) — callPackage, finalAttrs
+- [Writing Modules](/std/nix/guides/patterns/writing-modules/) — Options, config, mkIf
+- [Testing](/std/nix/guides/patterns/testing/) — nix flake check, NixOS tests
+- [Documentation](/std/nix/guides/patterns/documentation/) — Comments, assertions, errors
+- [Forbidden Patterns](/std/nix/guides/patterns/forbidden-patterns/) — What not to do
+
+### Advanced
+
+- [Standard Environments](/std/nix/guides/advanced/stdenvs/) — Custom build environments
+- [Overlays](/std/nix/guides/advanced/overlays/) — Package set transformations
+- [Cross-Compilation](/std/nix/guides/advanced/cross-compilation/) — Multi-platform builds
+
+## RFCs
+
+- [RFC 001: Weyl Standard Nix](/std/nix/rfc/001-weyl-standard-nix/) — Core specification
+- [RFC 002: wsn-lint](/std/nix/rfc/002-wsn-lint/) — Linting and enforcement
+
+## Reference
+
+- [Options](/std/nix/reference/options/) — Configuration options
+- [Library](/std/nix/reference/lib/) — Utility functions
+
+---
+
+*"The Nix model of reproducible builds, declarative configuration, and content-addressed storage is correct. The particular stylistic choices of nixpkgs are not load-bearing."*
+
+— RFC-001

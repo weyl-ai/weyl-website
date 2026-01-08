@@ -1,0 +1,734 @@
+---
+title: "Weyl Standard Python"
+description: "Production Python for GPU inference and ML orchestration, emphasizing type safety, structured logging, and disambiguation over brevity."
+category: "languages"
+order: 2
+---
+
+# // weyl standard // production python
+
+## The Gap
+
+Production Python lives between "just use `numpy`" and "C++ and cigarettes." The GPU does the work; Python orchestrates it correctly.
+
+No notebooks. No global variables. Type hints, structured logging, proper error boundaries, reproducible seeds. We're not exploring ideas—we're deploying inference at scale.
+
+## Core: Optimize for Disambiguation
+
+Agents write code in seconds. Humans debug it at 3am. Every ambiguity compounds.
+
+```python
+# costs 0.1s to write, 10min to debug
+def process(x):
+  return model(x) if x.shape[0] > 0 else None
+
+# costs 0.2s to write, saves hours
+def process_inference_batch(
+  input_batch: torch.Tensor,
+  model: InferenceEngine,
+  device: torch.device,
+) -> InferenceBatchResult:
+  if input_batch.shape[0] == 0:
+    return InferenceBatchResult.empty()
+  return model.forward(input_batch, device=device)
+```
+
+## Python 3.12+
+
+Exception groups, TypeVarTuple, Self type, pattern matching, better errors. If you're on 3.10, you're missing table stakes.
+
+## Style: Weyl Standard
+
+- **2-space indent** — matches C++, fits more on screen
+- **Double quotes** — `"string"` always
+- **`ex` for exceptions** — `except Exception as ex:`
+- **Lowercase types** — `list[str]`, `dict[str, int]`
+- **Union as pipe** — `str | None` not `Optional[str]`
+- **f-strings only** — never `%` or `.format()`
+
+## Naming: Three-Character Rule
+
+If it's ≤3 chars, it's probably wrong for production.
+
+```python
+# BAD
+cfg = load_cfg()
+res = proc(req)
+
+# GOOD
+configuration = load_model_configuration()
+result = process_inference_request(request)
+```
+
+**Exceptions** (local scope only): `idx/jdx`, `lhs/rhs`, `key/value`, `row/col`
+
+## Type Hints: Non-Negotiable
+
+Every function. Use `ty` in CI.
+
+```python
+def load_inference_model(
+  checkpoint_path: Path,
+  device: torch.device,
+  dtype: torch.dtype = torch.float16,
+) -> nn.Module:
+  """Load model for inference.
+
+  Raises:
+    FileNotFoundError: Checkpoint missing
+    RuntimeError: Architecture mismatch
+  """
+  if not checkpoint_path.exists():
+    raise FileNotFoundError(f"checkpoint not found: {checkpoint_path}")
+
+  model = torch.load(checkpoint_path, map_location="cpu")
+  return model.to(device=device, dtype=dtype)
+```
+
+### Type Aliases
+
+```python
+from typing import NewType
+
+UserId = NewType("UserId", int)
+ModelId = NewType("ModelId", str)
+
+# Tensor shapes
+BatchTensor = torch.Tensor    # [batch, ...]
+ImageTensor = torch.Tensor    # [B, C, H, W]
+SequenceTensor = torch.Tensor # [B, S, D]
+```
+
+## Configuration: Parse Once, Validate Completely
+
+```python
+from pydantic import BaseModel, Field, field_validator
+
+class InferenceServerConfig(BaseModel):
+  model_checkpoint: Path
+  device_id: int = Field(ge=0, le=7)
+  batch_size: int = Field(ge=1, le=1024)
+  quantization_bits: int = Field(default=16)
+
+  @field_validator("model_checkpoint")
+  @classmethod
+  def checkpoint_must_exist(cls, path: Path) -> Path:
+    if not path.exists():
+      raise ValueError(f"checkpoint not found: {path}")
+    return path
+
+  @field_validator("quantization_bits")
+  @classmethod
+  def validate_quantization(cls, bits: int) -> int:
+    if bits not in {4, 8, 16}:
+      raise ValueError(f"unsupported: {bits} bits (must be 4, 8, 16)")
+    return bits
+```
+
+## Control Flow: Flat Over Nested
+
+Early returns. Guard clauses. No pyramids.
+
+```python
+def process_training_batch(
+  batch: DataBatch,
+  model: nn.Module,
+  optimizer: torch.optim.Optimizer,
+) -> TrainingMetrics:
+  if not batch.validate():
+    return TrainingMetrics.empty()
+
+  if not model.training:
+    raise RuntimeError("model must be in training mode")
+
+  optimizer.zero_grad()
+  output = model(batch.input_tensor)
+
+  if output is None:
+    return TrainingMetrics.empty()
+
+  loss = compute_loss(output, batch.target_tensor)
+
+  if torch.isnan(loss):
+    raise RuntimeError(f"nan loss: {loss}")
+
+  loss.backward()
+  optimizer.step()
+
+  return TrainingMetrics(loss=loss.item())
+```
+
+## Error Handling: Result Types
+
+```python
+from dataclasses import dataclass
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+E = TypeVar("E")
+
+@dataclass(frozen=True)
+class Ok(Generic[T]):
+  value: T
+
+@dataclass(frozen=True)
+class Err(Generic[E]):
+  error: E
+
+Result = Ok[T] | Err[E]
+
+def load_checkpoint(path: Path) -> Result[nn.Module, str]:
+  if not path.exists():
+    return Err(f"not found: {path}")
+  try:
+    return Ok(torch.load(path))
+  except Exception as ex:
+    return Err(f"load failed: {ex}")
+
+# Pattern match it
+match load_checkpoint(path):
+  case Ok(model):
+    run_inference(model)
+  case Err(error):
+    log.error("checkpoint_failed", error=error)
+```
+
+## ML/GPU: ATen Operations
+
+Skip the Python overhead. Hit the metal.
+
+```python
+import torch
+from torch import Tensor
+
+def fused_gelu_forward(input_tensor: Tensor) -> Tensor:
+  """GELU via aten ops. No Python dispatch overhead."""
+  return torch.ops.aten.gelu(input_tensor)
+
+def quantize_symmetric_int8(
+  tensor: Tensor,
+  scale: Tensor,
+) -> Tensor:
+  """Symmetric INT8 quantization via aten."""
+  scaled = torch.ops.aten.div(tensor, scale)
+  rounded = torch.ops.aten.round(scaled)
+  return torch.ops.aten.clamp(rounded, -128, 127).to(torch.int8)
+
+def dequantize_symmetric_int8(
+  quantized: Tensor,
+  scale: Tensor,
+) -> Tensor:
+  """Dequantize INT8 back to float."""
+  return torch.ops.aten.mul(quantized.float(), scale)
+```
+
+### Real NVFP4 Quantization
+
+NVFP4 on Blackwell: 4-bit floating point with shared exponent per block. E2M1 format—2 exponent bits, 1 mantissa bit, dynamic range over fixed precision.
+
+```python
+import torch
+from torch import Tensor
+
+# NVFP4 E2M1 lookup table (16 values)
+NVFP4_E2M1_TABLE = torch.tensor([
+  0.0, 0.5, 1.0, 1.5,      # exp=0
+  2.0, 3.0, 4.0, 6.0,      # exp=1
+  8.0, 12.0, 16.0, 24.0,   # exp=2
+  32.0, 48.0, 64.0, 96.0,  # exp=3 (includes inf handling)
+], dtype=torch.float32)
+
+def quantize_nvfp4_block(
+  tensor: Tensor,
+  block_size: int = 32,
+) -> tuple[Tensor, Tensor]:
+  """Quantize to NVFP4 with per-block scaling.
+
+  Args:
+    tensor: Input tensor, any shape (last dim divisible by block_size)
+    block_size: Elements sharing one scale factor (32 for Blackwell)
+
+  Returns:
+    (packed_uint8, scales) - packed pairs, one scale per block
+  """
+  original_shape = tensor.shape
+  assert tensor.shape[-1] % block_size == 0
+
+  # Reshape to [num_blocks, block_size]
+  flat = tensor.view(-1, block_size)
+  num_blocks = flat.shape[0]
+
+  # Per-block absmax scaling
+  absmax = torch.ops.aten.abs(flat).amax(dim=-1, keepdim=True)
+  scales = absmax / 6.0  # map to NVFP4 range
+  scales = torch.where(scales == 0, torch.ones_like(scales), scales)
+
+  # Scale and find nearest NVFP4 value
+  scaled = flat / scales
+  signs = torch.sign(scaled)
+  abs_scaled = torch.abs(scaled)
+
+  # Quantize: find nearest value in lookup table
+  distances = (abs_scaled.unsqueeze(-1) - NVFP4_E2M1_TABLE.to(tensor.device)).abs()
+  indices = distances.argmin(dim=-1).to(torch.uint8)
+
+  # Pack sign into high bit (indices 0-15 become 0-15 or 16-31)
+  signed_indices = torch.where(signs < 0, indices + 16, indices).to(torch.uint8)
+
+  # Pack two 5-bit values into bytes (with some waste, real impl uses 4-bit)
+  even = signed_indices[..., 0::2]
+  odd = signed_indices[..., 1::2]
+  packed = (even << 4) | (odd & 0x0F)
+
+  return packed.view(*original_shape[:-1], -1), scales.view(-1)
+
+def dequantize_nvfp4_block(
+  packed: Tensor,
+  scales: Tensor,
+  block_size: int = 32,
+) -> Tensor:
+  """Dequantize NVFP4 back to float."""
+  # Unpack
+  even = (packed >> 4) & 0x1F
+  odd = packed & 0x0F
+
+  # Reconstruct indices and signs
+  even_sign = torch.where(even >= 16, -1.0, 1.0)
+  odd_sign = torch.where(odd >= 16, -1.0, 1.0)
+  even_idx = even % 16
+  odd_idx = odd % 16
+
+  # Lookup and apply signs
+  table = NVFP4_E2M1_TABLE.to(packed.device)
+  even_vals = table[even_idx.long()] * even_sign
+  odd_vals = table[odd_idx.long()] * odd_sign
+
+  # Interleave
+  unpacked = torch.stack([even_vals, odd_vals], dim=-1).flatten(-2)
+
+  # Apply scales
+  scales_expanded = scales.view(-1, 1).expand(-1, block_size).flatten()
+  return unpacked * scales_expanded
+```
+
+### CUDA Stream Management
+
+```python
+from contextlib import contextmanager
+from typing import Iterator
+
+@contextmanager
+def cuda_stream_context(device: torch.device) -> Iterator[torch.cuda.Stream]:
+  """CUDA stream with automatic sync on exit."""
+  stream = torch.cuda.Stream(device=device)
+  try:
+    with torch.cuda.stream(stream):
+      yield stream
+  finally:
+    stream.synchronize()
+```
+
+### Batch Processing with OOM Prevention
+
+```python
+def process_inference_batches(
+  batches: list[Tensor],
+  model: nn.Module,
+  device: torch.device,
+  max_batch: int = 32,
+) -> list[Tensor]:
+  """Process batches, split large ones, clear cache periodically."""
+  results: list[Tensor] = []
+  model.eval()
+
+  with torch.inference_mode():
+    for idx, batch in enumerate(batches):
+      splits = torch.split(batch, max_batch) if batch.shape[0] > max_batch else [batch]
+
+      for split in splits:
+        output = model(split.to(device))
+        results.append(output.cpu())
+
+      if idx % 10 == 0:
+        torch.cuda.empty_cache()
+
+  return results
+```
+
+## Hypothesis: Front-Line Correctness
+
+Property-based testing catches edge cases you'd never write by hand.
+
+```python
+import pytest
+from hypothesis import given, strategies as st, settings
+from hypothesis.extra.numpy import arrays
+import numpy as np
+
+@given(
+  batch_size=st.integers(1, 128),
+  seq_len=st.integers(1, 512),
+  hidden=st.sampled_from([256, 512, 768, 1024]),
+)
+def test_quantize_dequantize_roundtrip(
+  batch_size: int,
+  seq_len: int,
+  hidden: int,
+) -> None:
+  """Quantization roundtrip error bounded."""
+  # Generate random tensor
+  tensor = torch.randn(batch_size, seq_len, hidden)
+
+  # Roundtrip
+  packed, scales = quantize_nvfp4_block(tensor)
+  recovered = dequantize_nvfp4_block(packed, scales)
+
+  # NVFP4 is lossy but bounded
+  relative_error = (tensor - recovered).abs() / (tensor.abs() + 1e-8)
+  assert relative_error.mean() < 0.15  # ~15% mean error typical for 4-bit
+
+@given(
+  shape=st.tuples(
+    st.integers(1, 64),
+    st.integers(32, 256).filter(lambda x: x % 32 == 0),
+  ),
+)
+def test_nvfp4_preserves_zeros(shape: tuple[int, int]) -> None:
+  """Zero tensor quantizes to zero."""
+  tensor = torch.zeros(shape)
+  packed, scales = quantize_nvfp4_block(tensor)
+  recovered = dequantize_nvfp4_block(packed, scales)
+  assert torch.allclose(recovered, tensor, atol=1e-6)
+
+@given(
+  arrays(
+    dtype=np.float32,
+    shape=st.tuples(st.integers(1, 32), st.just(64)),
+    elements=st.floats(-100, 100, allow_nan=False, allow_infinity=False),
+  )
+)
+def test_quantization_never_nan(arr: np.ndarray) -> None:
+  """Quantization never produces NaN."""
+  tensor = torch.from_numpy(arr)
+  packed, scales = quantize_nvfp4_block(tensor)
+  recovered = dequantize_nvfp4_block(packed, scales)
+  assert not torch.isnan(recovered).any()
+  assert not torch.isinf(recovered).any()
+
+@settings(max_examples=500)
+@given(
+  scale=st.floats(1e-6, 1e6, allow_nan=False),
+  offset=st.floats(-1e3, 1e3, allow_nan=False),
+)
+def test_symmetric_int8_invertible(scale: float, offset: float) -> None:
+  """INT8 quantization is invertible within precision."""
+  tensor = torch.randn(32, 64) * scale + offset
+  scale_tensor = tensor.abs().max() / 127.0
+
+  quantized = quantize_symmetric_int8(tensor, scale_tensor)
+  recovered = dequantize_symmetric_int8(quantized, scale_tensor)
+
+  # INT8 precision: max error is 0.5 * scale
+  max_error = 0.5 * scale_tensor
+  assert (tensor - recovered).abs().max() <= max_error + 1e-6
+```
+
+### Stateful Testing for Models
+
+```python
+from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
+
+class InferenceServerStateMachine(RuleBasedStateMachine):
+  """Test inference server state transitions."""
+
+  def __init__(self) -> None:
+    super().__init__()
+    self.loaded = False
+    self.request_count = 0
+
+  @rule()
+  def load_model(self) -> None:
+    self.loaded = True
+
+  @rule()
+  def unload_model(self) -> None:
+    self.loaded = False
+    self.request_count = 0
+
+  @rule(batch_size=st.integers(1, 64))
+  def process_request(self, batch_size: int) -> None:
+    if self.loaded:
+      self.request_count += 1
+
+  @invariant()
+  def requests_only_when_loaded(self) -> None:
+    if not self.loaded:
+      # Would check actual server state here
+      pass
+
+TestInferenceServer = InferenceServerStateMachine.TestCase
+```
+
+## Async APIs
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import asyncio
+
+app = FastAPI()
+
+class InferenceRequest(BaseModel):
+  prompt: str
+  max_tokens: int = 512
+  temperature: float = 0.7
+
+class InferenceResponse(BaseModel):
+  text: str
+  tokens: int
+  latency_ms: float
+
+inference_model: nn.Module | None = None
+
+@app.on_event("startup")
+async def load_model() -> None:
+  global inference_model
+  inference_model = await asyncio.to_thread(
+    torch.load,
+    Path("/models/checkpoint.pt"),
+    map_location="cuda:0",
+  )
+
+@app.post("/v1/inference")
+async def run_inference(request: InferenceRequest) -> InferenceResponse:
+  if inference_model is None:
+    raise HTTPException(503, "model not loaded")
+
+  start = time.perf_counter()
+
+  text = await asyncio.to_thread(
+    generate_text,
+    inference_model,
+    request.prompt,
+    request.max_tokens,
+  )
+
+  return InferenceResponse(
+    text=text,
+    tokens=len(text.split()),
+    latency_ms=(time.perf_counter() - start) * 1000,
+  )
+```
+
+## Structured Logging
+
+```python
+import structlog
+
+def configure_logging() -> None:
+  structlog.configure(
+    processors=[
+      structlog.stdlib.add_log_level,
+      structlog.processors.TimeStamper(fmt="iso"),
+      structlog.processors.JSONRenderer(),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+  )
+
+log = structlog.get_logger()
+
+# Usage
+log.info("batch_processed", batch_idx=42, loss=0.023, tokens_per_sec=15420)
+```
+
+## Performance: Measure
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def timer(name: str) -> Iterator[None]:
+  start = time.perf_counter()
+  try:
+    yield
+  finally:
+    log.info("timed", op=name, ms=(time.perf_counter() - start) * 1000)
+
+# CUDA profiling
+def profile_step(model: nn.Module, batch: Tensor) -> None:
+  from torch.profiler import profile, ProfilerActivity
+
+  with profile(
+    activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    record_shapes=True,
+  ) as prof:
+    output = model(batch)
+    output.mean().backward()
+
+  prof.export_chrome_trace("profile.json")
+```
+
+## Package Management: uv
+
+```toml
+[project]
+name = "weyl-inference"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "torch>=2.1.0",
+  "pydantic>=2.0.0",
+  "structlog>=23.0.0",
+  "fastapi>=0.100.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4.0", "hypothesis>=6.82.0", "mypy>=1.5.0", "ruff>=0.0.285"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 2
+select = ["E", "F", "I", "N", "UP", "B", "C4", "PT", "Q"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+strict = true
+```
+
+## The Vibe Test
+
+- Debug it during an incident without a REPL?
+- Agent extends it without breaking types?
+- Types prevent tomorrow's OOM?
+- Every abbreviation worth the confusion?
+- Handles CUDA errors gracefully?
+- Makes sense after 10 contributors touch it?
+
+## Summary
+
+1. **Disambiguate** — ambiguity compounds
+2. **Type everything** — runtime → type errors
+3. **Parse config once** — config errors multiply
+4. **Keep it flat** — nesting is debt
+5. **Result types** — explicit failure paths
+6. **Hypothesis** — property-based correctness
+7. **ATen ops** — skip Python dispatch
+8. **Measure** — data-driven optimization
+
+Write code like a hundred agents will extend it tomorrow and you'll debug it during an incident next month.
+
+# the list
+
+## papers that changed how i think
+
+**FlashAttention** (Dao et al.) — Not for the algorithm. For the lesson: memory bandwidth is the bottleneck, compute is free. Everything since is a footnote.
+https://arxiv.org/abs/2205.14135
+
+**FP8 Formats for Deep Learning** (Micikevicius et al., NVIDIA) — The actual spec for how reduced precision works. E4M3 vs E5M2 tradeoffs. Required reading before touching quantization.
+https://arxiv.org/abs/2209.05433
+
+**LLM.int8()** (Dettmers et al.) — Emergent features break naive quantization. The outlier problem. Why you can't just round everything.
+https://arxiv.org/abs/2208.07339
+
+**GPTQ** (Frantar et al.) — One-shot weight quantization that actually works. The Hessian trick.
+https://arxiv.org/abs/2210.17323
+
+**AWQ** (Lin et al.) — Activation-aware quantization. Protecting salient weights. Cleaner than GPTQ for deployment.
+https://arxiv.org/abs/2306.00978
+
+**QMoE** (Frantar et al.) — Trillion parameter models in memory. Extreme quantization for MoE. The future.
+https://arxiv.org/abs/2310.16795
+
+## cuda / gpu architecture
+
+**CUDA C++ Programming Guide** — Not a suggestion. The actual manual. Read the memory hierarchy section until you dream about L2 cache.
+https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+
+**Parallel Thread Execution ISA** — When you need to know what `mma.sync` actually does.
+https://docs.nvidia.com/cuda/parallel-thread-execution/
+
+**CUTLASS** — Not documentation, the source code. `cute/` directory specifically. This is how NVIDIA thinks about tensor cores.
+https://github.com/NVIDIA/cutlass
+
+**Scott Gray's GPU writings** — The OpenAI guy who wrote the fast kernels. Scattered but invaluable.
+
+**Hopper Architecture Whitepaper** — TMA, warp specialization, cluster-level execution. The mental model for H100.
+https://resources.nvidia.com/en-us-tensor-core
+
+**Blackwell Architecture Whitepaper** — When it drops. FP4, the new memory hierarchy, whatever they're hiding.
+
+## systems programming
+
+**"What Every Programmer Should Know About Memory"** (Drepper) — Old. Still true. Cache lines, NUMA, TLB. The physics of computing.
+https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+
+**"Mechanical Sympathy"** (Martin Thompson blog) — Java guy but the principles transfer. Know your hardware.
+https://mechanical-sympathy.blogspot.com/
+
+**"Gallery of Processor Cache Effects"** (Igoro) — Visual intuition for cache behavior.
+https://igoro.com/archive/gallery-of-processor-cache-effects/
+
+## python that doesn't suck
+
+**"Fluent Python"** (Ramalho) — 2nd edition. The actual language, not the tutorial version.
+
+**"High Performance Python"** (Gorelick & Ozsvald) — Profiling, Cython, the escape hatches.
+
+**"Architecture Patterns with Python"** (Percival & Gregory) — Domain-driven design, repository pattern. How to structure code that lasts.
+
+## videos worth the time
+
+**"CUDA MODE"** lecture series — Mark Saroufim and friends. Applied GPU programming for ML people.
+https://www.youtube.com/@CUDAMODE
+
+**"From Python to CUDA"** (Jeremy Howard, fast.ai) — The bridge most people need.
+
+**"How GPU Computing Works"** (GTC talks by Stephen Jones) — NVIDIA architect explaining the actual execution model.
+
+**Andrej Karpathy's "Let's build GPT"** — Not for the transformer. For the style. How to think about implementations.
+
+## reference implementations to read
+
+**llama.cpp** (ggerganov) — C++ inference done right. The quantization formats, the threading model, the simplicity.
+https://github.com/ggerganov/llama.cpp
+
+**vLLM** — PagedAttention, continuous batching. Production serving architecture.
+https://github.com/vllm-project/vllm
+
+**TensorRT-LLM** — NVIDIA's answer. Over-engineered but shows what's possible.
+https://github.com/NVIDIA/TensorRT-LLM
+
+**SGLang** — RadixAttention, prefix caching. The new ideas.
+https://github.com/sgl-project/sglang
+
+**Triton tutorials** — The language, but more importantly, the optimization patterns in the examples.
+https://triton-lang.org/main/getting-started/tutorials/
+
+## math you actually need
+
+**"Linear Algebra Done Right"** (Axler) — No determinants until the end. The right way to think about vector spaces.
+
+**"Numerical Linear Algebra"** (Trefethen & Bau) — SVD, condition numbers, stability. Why your gradients explode.
+
+**3Blue1Brown's linear algebra series** — Visual intuition. Even if you know it, recalibrate.
+
+## the vibe
+
+**"Zen and the Art of Motorcycle Maintenance"** (Pirsig) — Quality. The thing that can't be defined but you know when it's missing.
+
+**"The Mythical Man-Month"** (Brooks) — Still true. Conceptual integrity. The surgical team.
+
+**Gwern's writings** — The rigor. How to actually think about ML experiments.
+https://gwern.net/
+
+**Karpathy's blog** — "The Unreasonable Effectiveness of RNNs", "A Recipe for Training Neural Networks". The craft.
+https://karpathy.github.io/
+
+---
+
+skip: most ML courses, most python tutorials, anything that starts with "in this video we'll learn", any book published by a FAANG employee about their FAANG job, anything with "10x" in the title.
+
+the gap between reading and doing is infinite. but reading the right things tells you what to try when you're stuck at 3am.

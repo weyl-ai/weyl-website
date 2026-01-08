@@ -1,0 +1,169 @@
+---
+title: Documentation
+description: Use ndg for modules, nixdoc-style comments for functions, and helpful error messages with clear explanations and examples.
+category: guides
+order: 1
+---
+
+# Documentation
+
+## Module Documentation
+
+Use [ndg](https://github.com/feel-co/ndg) for modules. Every option gets a description:
+
+```nix
+options.weyl.services.apiServer = {
+  enable = mkOption {
+    type = types.bool;
+    default = false;
+    description = ''
+      Whether to enable the Weyl API server.
+
+      Configures a systemd service with automatic restart and opens
+      the configured port in the firewall.
+    '';
+    example = true;
+  };
+};
+```
+
+## Package Documentation
+
+Use nixdoc-style comments for functions:
+
+````nix
+/**
+  Build a Weyl ML model package.
+
+  This builder handles model optimization, quantization, and runtime
+  selection for deployment. It automatically selects the appropriate
+  backend based on the target runtime.
+
+  # Arguments
+
+  name
+  : Model package name, used in the Nix store path
+
+  modelFile
+  : Path to the source model file (ONNX, PyTorch, or TensorFlow format)
+
+  runtime
+  : Target inference runtime. One of "onnx", "pytorch", or "tensorflow"
+
+  # Examples
+
+  Build a simple ONNX model:
+
+  ```nix
+  buildMlModel {
+    name = "sentiment-classifier";
+    modelFile = ./models/sentiment.onnx;
+    runtime = "onnx";
+  }
+  ```
+
+  Build with CUDA support:
+
+  ```nix
+  buildMlModel {
+    name = "image-classifier";
+    modelFile = ./models/resnet.pt;
+    runtime = "pytorch";
+    cudaSupport = true;
+  }
+  ```
+*/
+buildMlModel = { name, modelFile, runtime, cudaSupport ? false, ... }: ...
+````
+
+## Inline Comments: Use Sparingly
+
+Prefer module docs, `meta.description`, and nixdoc comments. When inline comments are necessary, explain **why**, not **what**:
+
+```nix
+# Bad: Obvious from the code
+# Set port to 8080
+port = 8080;
+
+# Good: Explains non-obvious reasoning
+# nvidia 535 has memory leak with our workloads, pin to 530
+nvidia.package = config.boot.kernelPackages.nvidiaPackages.legacy_530;
+```
+
+## Error Messages
+
+Error messages should explain what went wrong, why it's wrong, and how to fix it:
+
+```nix
+# Useless
+assertions = [{
+  assertion = cfg.port > 0;
+  message = "port must be positive";
+}];
+
+# Helpful
+assertions = [{
+  assertion = cfg.port > 0 && cfg.port <= 65535;
+  message = ''
+    weyl.services.database.connection.port: Invalid port ${toString cfg.port}
+
+    Port must be between 1 and 65535.
+
+    Common database ports:
+      - PostgreSQL: 5432
+      - MySQL: 3306
+      - Redis: 6379
+
+    Example fix:
+      weyl.services.database.connection.port = 5432;
+  '';
+}];
+```
+
+Yes, it's verbose. When someone hits this at 2am during an incident, they'll know exactly what's wrong and how to fix it.
+
+## Assertion Hierarchy
+
+**NixOS assertions** - User-facing configuration validation:
+
+```nix
+assertions = [{
+  assertion = cfg.tls.enable -> (cfg.tls.certificate != null);
+  message = ''
+    weyl.services.apiServer: TLS enabled but no certificate provided.
+
+    Either provide a certificate:
+      weyl.services.apiServer.tls.certificate = /path/to/cert.pem;
+
+    Or disable TLS:
+      weyl.services.apiServer.tls.enable = false;
+  '';
+}];
+```
+
+**[`lib.assertMsg`](https://noogle.dev/f/lib/assertMsg)** - Internal invariants:
+
+```nix
+lib.assertMsg (cfg.package ? meta.mainProgram)
+  "weyl.services.apiServer.package must define meta.mainProgram"
+```
+
+**`builtins.addErrorContext`** - Adding context to complex evaluation:
+
+```nix
+processConfig = config:
+  builtins.addErrorContext "while processing weyl.services.api configuration" (
+    # ...
+  );
+```
+
+## Debugging
+
+`builtins.trace` and `lib.traceVal` are for debugging only. Remove them before committing:
+
+```nix
+# DEVELOPMENT ONLY - remove before PR
+let
+  debugValue = lib.traceVal config.weyl.services;
+in
+```

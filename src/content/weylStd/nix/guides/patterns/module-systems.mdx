@@ -1,0 +1,233 @@
+---
+title: Module Systems
+description: Nix has multiple module systems that share syntax but differ in semantics - flake-parts, NixOS, nix-darwin, and home-manager.
+category: guides
+order: 4
+---
+
+# Module Systems
+
+## The Problem
+
+Nix has multiple module systems that share syntax but differ in semantics:
+
+- flake-parts
+- NixOS
+- nix-darwin
+- home-manager
+
+Code that works in one does not necessarily work in another.
+
+## The Module Systems
+
+| System | Location | Context | Available Bindings |
+|--------|----------|---------|-------------------|
+| flake-parts | `nix/modules/flake/` | Flake evaluation | `inputs`, `self`, `config`, `lib`, `pkgs` (via perSystem) |
+| NixOS | `nix/modules/nixos/` | `lib.nixosSystem` | `config`, `lib`, `pkgs`, `options`, `modulesPath` |
+| nix-darwin | `nix/modules/darwin/` | `darwin.lib.darwinSystem` | `config`, `lib`, `pkgs`, `options` |
+| home-manager | `nix/modules/home/` | `home-manager.lib.homeManagerConfiguration` | `config`, `lib`, `pkgs`, `osConfig` |
+
+## The _class Attribute
+
+All non-flake-parts modules SHALL declare `_class`:
+
+```nix
+# nix/modules/nixos/inference-server.nix
+{ config, lib, pkgs, ... }:
+{
+  _class = "nixos";
+
+  options.weyl.services.inference-server = { ... };
+  config = lib.mkIf cfg.enable { ... };
+}
+```
+
+This prevents accidentally importing a NixOS module into home-manager or vice versa.
+
+## flake-parts Modules
+
+flake-parts modules define flake outputs:
+
+```nix
+# nix/modules/flake/packages.nix
+{ inputs, ... }:
+{
+  perSystem = { pkgs, ... }: {
+    packages.default = pkgs.callPackage ../packages/my-tool.nix { };
+  };
+}
+```
+
+Key points:
+
+- Access inputs via function argument
+- Use `perSystem` for per-system outputs
+- Use `flake` for system-independent outputs
+
+## NixOS Modules
+
+NixOS modules configure Linux systems:
+
+```nix
+# nix/modules/nixos/gpu-worker.nix
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.weyl.services.gpu-worker;
+in
+{
+  _class = "nixos";
+
+  options.weyl.services.gpu-worker = {
+    enable = lib.mkEnableOption "GPU worker service";
+
+    cuda-device = lib.mkOption {
+      type = lib.types.int;
+      default = 0;
+      description = "CUDA device index";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    systemd.services.gpu-worker = { ... };
+    hardware.nvidia.open = true;
+  };
+}
+```
+
+## home-manager Modules
+
+home-manager modules configure user environments:
+
+```nix
+# nix/modules/home/dev-tools.nix
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.weyl.programs.dev-tools;
+in
+{
+  _class = "home-manager";
+
+  options.weyl.programs.dev-tools = {
+    enable = lib.mkEnableOption "development tools";
+  };
+
+  config = lib.mkIf cfg.enable {
+    home.packages = with pkgs; [ ripgrep fd bat ];
+    programs.git.enable = true;
+  };
+}
+```
+
+## The withSystem Bridge
+
+`withSystem` lets flake-level code access perSystem bindings:
+
+```nix
+{ self, inputs, withSystem, ... }:
+{
+  flake.nixosConfigurations.myhost = withSystem "x86_64-linux" (
+    { pkgs, ... }:  # pkgs from perSystem
+    inputs.nixpkgs.lib.nixosSystem {
+      modules = [
+        { nixpkgs.pkgs = pkgs; }  # Thread it to NixOS
+      ];
+    }
+  );
+}
+```
+
+This is how you get the centrally-configured `pkgs` (with weyl-std overlays and CUDA
+config) into NixOS configurations.
+
+## Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              flake.nix                                      │
+│                                                                             │
+│  inputs { nixpkgs, flake-parts, weyl-std, ... }                            │
+│                         │                                                   │
+│                         ▼                                                   │
+│              flake-parts.lib.mkFlake                                        │
+│                         │                                                   │
+└─────────────────────────┼───────────────────────────────────────────────────┘
+                          │
+           ┌──────────────┼──────────────┐
+           │              │              │
+           ▼              ▼              ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ lib.nixosSystem │  │ darwinSystem    │  │ homeManager     │
+│                 │  │                 │  │ Configuration   │
+│ specialArgs: {  │  │ specialArgs: {  │  │                 │
+│   inputs, self  │  │   inputs, self  │  │ pkgs, modules   │
+│ }               │  │ }               │  │                 │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+           │                    │                    │
+           ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ NixOS modules   │  │ darwin modules  │  │ home modules    │
+│ _class: nixos   │  │ _class: darwin  │  │ _class: home-   │
+│                 │  │                 │  │         manager │
+│ config, pkgs,   │  │ config, pkgs,   │  │ config, pkgs,   │
+│ lib, options    │  │ lib, options    │  │ lib, osConfig   │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+## Common Mistakes
+
+### Wrong: Accessing inputs in NixOS module
+
+```nix
+# BAD - inputs not available
+{ config, lib, pkgs, inputs, ... }:
+{
+  _class = "nixos";
+  # inputs is undefined here
+}
+```
+
+### Right: Pass inputs via specialArgs
+
+```nix
+# In flake.nix
+nixosConfigurations.myhost = lib.nixosSystem {
+  specialArgs = { inherit inputs self; };
+  modules = [ ./configuration.nix ];
+};
+
+# In configuration.nix
+{ config, lib, pkgs, inputs, self, ... }:
+{
+  # inputs now available
+}
+```
+
+### Wrong: Using pkgs in flake-level code
+
+```nix
+# BAD - pkgs not in scope at flake level
+{ self, inputs, ... }:
+{
+  flake.packages.x86_64-linux.default = pkgs.hello;  # pkgs undefined
+}
+```
+
+### Right: Use perSystem or withSystem
+
+```nix
+# Option 1: perSystem
+{ ... }:
+{
+  perSystem = { pkgs, ... }: {
+    packages.default = pkgs.hello;
+  };
+}
+
+# Option 2: withSystem
+{ self, inputs, withSystem, ... }:
+{
+  flake.packages.x86_64-linux.default = withSystem "x86_64-linux" (
+    { pkgs, ... }: pkgs.hello
+  );
+}
+```

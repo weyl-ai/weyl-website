@@ -1,0 +1,74 @@
+---
+title: "Installation"
+description: "Prerequisites and setup for Weyl Standard Nix projects."
+category: "guides"
+order: 1
+---
+
+# Installation
+
+## Prerequisites
+
+- Nix with flakes enabled
+- direnv (recommended)
+
+## Quick Start
+
+```bash
+# Create new project
+mkdir my-project && cd my-project
+
+# Initialize from template
+nix flake init -t github:weyl-ai/weyl-std
+
+# Or for CUDA projects
+nix flake init -t github:weyl-ai/weyl-std#cuda
+
+# Enter devshell
+direnv allow
+# or
+nix develop
+```
+
+## Enabling Flakes
+
+If you haven't enabled flakes, add to `~/.config/nix/nix.conf`:
+
+```
+experimental-features = nix-command flakes
+```
+
+Or use the `--experimental-features` flag:
+
+```bash
+nix --experimental-features 'nix-command flakes' flake init -t github:weyl-ai/weyl-std
+```
+
+## Binary Cache
+
+weyl-std uses a binary cache to avoid rebuilding CUDA packages. The cache is automatically
+configured via `nixConfig` in the template's flake.nix.
+
+On first use, Nix will ask if you trust the cache:
+
+```
+do you want to allow configuration setting 'extra-substituters' to be set to 'https://weyl-ai.cachix.org'?
+```
+
+Answer `y` to enable the cache.
+
+## Verification
+
+After initialization:
+
+```bash
+# Check flake evaluates
+nix flake check
+
+# Enter devshell
+nix develop
+
+# Verify CUDA (if applicable)
+nvidia-smi
+nvcc --version
+```
