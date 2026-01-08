@@ -1,26 +1,662 @@
 ---
 title: "Weyl Standard Rust"
-description: "Conventions, patterns, and requirements for Rust code within Weyl AI systems focusing on memory safety without garbage collection."
+description: "Production Rust for memory safety without garbage collection: explicit error handling, type-driven development, and agent-friendly patterns."
 category: "languages"
 order: 5
 ---
 
-# Weyl Standard Rust
+# `// weyl // rust // production`
 
-**Weyl Standard Rust** defines the conventions, patterns, and requirements for Rust code within Weyl AI systems.
+## Why We Do What We Do
 
-## Status
+Production Rust is what happens when you take systems programming seriously but refuse to accept C++'s legacy baggage. We write Rust not because it's trendy, but because memory safety without garbage collection is the only reasonable path forward for systems that can't afford downtime or undefined behavior.
 
-This specification is under development.
+If this guide was written in 2015, it would focus on fighting the borrow checker. In 2026, the borrow checker is your pair programmer who never sleeps, never gets tired, and catches use-after-free bugs at compile time instead of in production at 3am.
 
-## Scope
+This guide is for people who understand that `Result<T, E>` isn't beautiful because it's a monad—it's beautiful because it makes error handling visible in function signatures. Who know that `Send + Sync` bounds aren't academic type theory—they're the compiler proving your concurrent code won't have data races.
 
-Weyl Standard Rust applies to:
+We're not writing Rust because we read the book and liked the theory. We're writing Rust because we're tired of debugging memory corruption and race conditions in production.
 
-- All Rust code within weyl-ai repositories
-- Systems-level infrastructure
-- Performance-critical tooling
+## Core Philosophy: Optimize for Disambiguation
 
-## Conformance
+In modern codebases where agents generate significant amounts of code, traditional economics invert:
 
-*To be defined.*
+- Code is written once by agents in seconds
+- Code is read hundreds of times by humans and agents
+- Code is debugged when you're under pressure by tired humans
+- Code is modified by agents who lack the original context
+
+**Every ambiguity compounds exponentially.**
+
+```rust
+// This costs an agent 0.1 seconds to write, a human 10 minutes to debug
+fn process(e: E) -> R {
+    if e.v > 0 { go(e) } else { stop() }
+}
+
+// This costs an agent 0.2 seconds to write, saves hours of cumulative confusion
+fn process_incoming_request(http_request: HttpRequest) -> Result<ResponseData, RequestError> {
+    if http_request.timeout_milliseconds > 0 {
+        process_valid_request(http_request)
+    } else {
+        Err(RequestError::InvalidTimeout)
+    }
+}
+```
+
+## The Three-Character Rule
+
+If an identifier is 3 characters or less, it's too short for production code:
+
+```rust
+// BAD: Abbreviated names multiply confusion
+let cfg = load_cfg()?;
+let conn = db.get_conn().await?;
+let res = proc(req)?;
+
+// GOOD: Full words tell the story
+let configuration = load_server_configuration()?;
+let connection = database.acquire_connection().await?;
+let response = process_client_request(request)?;
+```
+
+### Standard Exceptions (Use Sparingly)
+
+Only in local scope where type makes it unambiguous:
+
+- `i, j` - indices in tight loops
+- `tx, rx` - channel sender/receiver (when type is clear)
+- `buf` - buffer (when scoped to single function)
+
+But even here, prefer explicit names when context matters:
+
+```rust
+// OK in tight loops
+for i in 0..matrix.height() {
+    for j in 0..matrix.width() {
+        matrix[(i, j)] = compute_value(i, j);
+    }
+}
+
+// Better for production code with business logic
+for row_index in 0..tensor.row_count() {
+    for column_index in 0..tensor.column_count() {
+        tensor.set(row_index, column_index, compute_matrix_element(row_index, column_index));
+    }
+}
+```
+
+## Error Handling: Make Failures Visible
+
+### Result Types Everywhere
+
+Functions that can fail return `Result`. Period.
+
+```rust
+// BAD: Panics hide failure modes
+fn parse_config(path: &Path) -> ServerConfig {
+    let content = fs::read_to_string(path).unwrap();
+    toml::from_str(&content).unwrap()
+}
+
+// GOOD: Explicit error propagation
+fn parse_server_configuration(path: &Path) -> Result<ServerConfig, ConfigurationError> {
+    let content = fs::read_to_string(path)
+        .map_err(|error| ConfigurationError::FileReadFailed {
+            path: path.to_path_buf(),
+            source: error,
+        })?;
+
+    toml::from_str(&content)
+        .map_err(|error| ConfigurationError::ParseFailed {
+            path: path.to_path_buf(),
+            source: error,
+        })
+}
+```
+
+### Error Types: anyhow vs thiserror
+
+**Use `thiserror` for library code:**
+
+```rust
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum DatabaseError {
+    #[error("connection to database '{url}' failed")]
+    ConnectionFailed {
+        url: String,
+        #[source]
+        source: sqlx::Error,
+    },
+
+    #[error("query execution failed: {query}")]
+    QueryFailed {
+        query: String,
+        #[source]
+        source: sqlx::Error,
+    },
+
+    #[error("transaction deadlock detected")]
+    TransactionDeadlock,
+}
+```
+
+**Use `anyhow` for application code:**
+
+```rust
+use anyhow::{Context, Result};
+
+fn process_upload(file_path: &Path) -> Result<ProcessedData> {
+    let file_content = fs::read_to_string(file_path)
+        .context(format!("failed to read upload file: {}", file_path.display()))?;
+
+    let parsed_data = parse_upload_format(&file_content)
+        .context("failed to parse upload data format")?;
+
+    validate_upload_schema(&parsed_data)
+        .context("upload data failed schema validation")?;
+
+    Ok(ProcessedData { parsed_data })
+}
+```
+
+### Never use unwrap() or expect() in Production
+
+```rust
+// NEVER in production code
+let config = load_config().unwrap();
+let value = map.get(&key).expect("key must exist");
+
+// DO: Handle errors properly
+let config = load_config()
+    .context("failed to load server configuration")?;
+
+let value = map.get(&key)
+    .ok_or_else(|| anyhow!("required key '{}' not found in map", key))?;
+```
+
+## Type Safety: Newtypes Prevent Mistakes
+
+### Always Wrap Domain Types
+
+```rust
+// BAD: Primitives everywhere, easy to mix up
+fn transfer_funds(from: i64, to: i64, amount: u64) -> Result<()> {
+    // Which i64 is account ID vs transaction ID?
+    // What if we pass amount as from?
+}
+
+// GOOD: Type system prevents mistakes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AccountId(i64);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionAmount(u64);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TransactionId(i64);
+
+fn transfer_funds(
+    from_account: AccountId,
+    to_account: AccountId,
+    amount: TransactionAmount,
+) -> Result<TransactionId, TransferError> {
+    // Type system ensures we can't mix up the parameters
+    validate_accounts(from_account, to_account)?;
+    execute_transfer(from_account, to_account, amount)
+}
+```
+
+### Validated Newtypes
+
+```rust
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EmailAddress(String);
+
+impl EmailAddress {
+    pub fn new(email: String) -> Result<Self, ValidationError> {
+        if !email.contains('@') {
+            return Err(ValidationError::InvalidEmail {
+                email,
+                reason: "missing @ symbol".to_string(),
+            });
+        }
+
+        if email.len() > 254 {
+            return Err(ValidationError::InvalidEmail {
+                email,
+                reason: "exceeds RFC 5321 maximum length".to_string(),
+            });
+        }
+
+        Ok(EmailAddress(email))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+```
+
+## Async Rust: Tokio for Production
+
+### Runtime Configuration
+
+```rust
+// Application entry point
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Explicit runtime configuration
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(num_cpus::get())
+        .thread_name("weyl-worker")
+        .enable_all()
+        .build()?;
+
+    runtime.block_on(async {
+        run_application().await
+    })
+}
+```
+
+### Structured Concurrency
+
+```rust
+use tokio::task::JoinSet;
+
+// DO: Use JoinSet for structured concurrency
+async fn process_batch(requests: Vec<Request>) -> Result<Vec<Response>> {
+    let mut join_set = JoinSet::new();
+
+    for request in requests {
+        join_set.spawn(async move {
+            process_single_request(request).await
+        });
+    }
+
+    let mut responses = Vec::new();
+    while let Some(result) = join_set.join_next().await {
+        let response = result
+            .context("task panicked")?
+            .context("request processing failed")?;
+        responses.push(response);
+    }
+
+    Ok(responses)
+}
+```
+
+### Async Error Handling
+
+```rust
+// DO: Return Result from async functions
+async fn fetch_user_data(user_id: UserId) -> Result<UserData, DatabaseError> {
+    let connection = database_pool.acquire().await
+        .map_err(|error| DatabaseError::ConnectionFailed { source: error })?;
+
+    let user_data = sqlx::query_as!(
+        UserData,
+        "SELECT * FROM users WHERE id = $1",
+        user_id.0
+    )
+    .fetch_one(&mut connection)
+    .await
+    .map_err(|error| DatabaseError::QueryFailed {
+        query: format!("fetch user {}", user_id.0),
+        source: error,
+    })?;
+
+    Ok(user_data)
+}
+```
+
+## Ownership and Borrowing in Production
+
+### Clone When It Makes Code Clearer
+
+The borrow checker is not a performance optimizer—it's a safety mechanism. If cloning makes ownership clear and the cost is negligible, clone:
+
+```rust
+// BAD: Fighting the borrow checker with lifetimes
+fn process_data<'a>(
+    config: &'a Configuration,
+    data: &'a [u8],
+) -> Result<ProcessedData<'a>, ProcessingError> {
+    // Lifetime hell when you need to return owned data
+}
+
+// GOOD: Clone cheap configuration, own the data
+fn process_data(
+    config: Configuration,  // Configuration is cheap to clone
+    data: Vec<u8>,
+) -> Result<ProcessedData, ProcessingError> {
+    // Clear ownership, no lifetime complexity
+    let processed = transform_data(&data, &config)?;
+    Ok(ProcessedData { processed })
+}
+```
+
+### Arc for Shared Ownership
+
+```rust
+use std::sync::Arc;
+
+// DO: Use Arc for shared immutable data
+#[derive(Clone)]
+struct ApplicationState {
+    configuration: Arc<ServerConfiguration>,
+    database_pool: Arc<DatabasePool>,
+    metrics: Arc<MetricsCollector>,
+}
+
+// Handlers clone the Arc, not the data
+async fn handle_request(
+    state: ApplicationState,
+    request: Request,
+) -> Result<Response> {
+    // Cheap Arc clone, shared access to configuration
+    let timeout = state.configuration.request_timeout_seconds;
+    let connection = state.database_pool.acquire().await?;
+
+    process_with_timeout(request, connection, timeout).await
+}
+```
+
+## Pattern Matching: Exhaustive by Default
+
+```rust
+// DO: Match all cases explicitly
+match request_status {
+    RequestStatus::Pending => handle_pending(request),
+    RequestStatus::Processing => handle_processing(request),
+    RequestStatus::Completed => handle_completed(request),
+    RequestStatus::Failed => handle_failed(request),
+    // Compiler ensures we handle all variants
+}
+
+// DON'T: Use catch-all unless truly appropriate
+match request_status {
+    RequestStatus::Pending => handle_pending(request),
+    _ => handle_other(request), // Easy to miss new variants
+}
+```
+
+### Destructuring for Clarity
+
+```rust
+// DO: Destructure to show what you use
+let ServerConfiguration {
+    port,
+    host,
+    max_connections,
+    timeout_seconds,
+    ..  // Explicit "we ignore other fields"
+} = load_configuration()?;
+
+bind_server(&host, port)
+    .with_max_connections(max_connections)
+    .with_timeout(Duration::from_secs(timeout_seconds))
+    .start()
+    .await?;
+```
+
+## Testing Philosophy
+
+### Unit Tests with Explicit Names
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // GOOD: Test names describe what they test
+    #[test]
+    fn email_validation_rejects_missing_at_symbol() {
+        let result = EmailAddress::new("invalidemail.com".to_string());
+        assert!(matches!(result, Err(ValidationError::InvalidEmail { .. })));
+    }
+
+    #[test]
+    fn email_validation_rejects_excessive_length() {
+        let long_email = format!("{}@example.com", "a".repeat(300));
+        let result = EmailAddress::new(long_email);
+        assert!(matches!(result, Err(ValidationError::InvalidEmail { .. })));
+    }
+
+    #[test]
+    fn email_validation_accepts_valid_format() {
+        let result = EmailAddress::new("user@example.com".to_string());
+        assert!(result.is_ok());
+    }
+}
+```
+
+### Property-Based Testing with proptest
+
+```rust
+use proptest::prelude::*;
+
+proptest! {
+    #[test]
+    fn transaction_amount_roundtrip(amount: u64) {
+        let transaction_amount = TransactionAmount(amount);
+        let serialized = serde_json::to_string(&transaction_amount)?;
+        let deserialized: TransactionAmount = serde_json::from_str(&serialized)?;
+        prop_assert_eq!(transaction_amount, deserialized);
+    }
+
+    #[test]
+    fn account_id_never_zero(id in 1_i64..=i64::MAX) {
+        let account_id = AccountId(id);
+        prop_assert_ne!(account_id.0, 0);
+    }
+}
+```
+
+### Integration Tests
+
+```rust
+// tests/integration_test.rs
+use sqlx::PgPool;
+
+#[sqlx::test]
+async fn test_user_registration_flow(pool: PgPool) -> sqlx::Result<()> {
+    let service = UserService::new(pool);
+
+    let email = EmailAddress::new("test@example.com".to_string())
+        .expect("valid email");
+
+    let user_id = service.register_user(email.clone()).await?;
+    let retrieved_user = service.get_user(user_id).await?;
+
+    assert_eq!(retrieved_user.email, email);
+    Ok(())
+}
+```
+
+## Logging and Observability
+
+### Structured Logging with tracing
+
+```rust
+use tracing::{info, warn, error, instrument};
+
+#[instrument(skip(database_pool), fields(user_id = %user_id.0))]
+async fn fetch_user_profile(
+    user_id: UserId,
+    database_pool: &DatabasePool,
+) -> Result<UserProfile, DatabaseError> {
+    info!("fetching user profile");
+
+    let start_time = std::time::Instant::now();
+    let profile = query_user_profile(user_id, database_pool).await?;
+    let elapsed = start_time.elapsed();
+
+    info!(
+        elapsed_microseconds = elapsed.as_micros(),
+        profile_size_bytes = profile.serialized_size(),
+        "user profile fetched successfully"
+    );
+
+    Ok(profile)
+}
+```
+
+### Error Context in Logs
+
+```rust
+if let Err(error) = process_payment(payment_request).await {
+    error!(
+        payment_id = %payment_request.id,
+        amount = %payment_request.amount.0,
+        error = %error,
+        "payment processing failed"
+    );
+    return Err(error);
+}
+```
+
+## Dependency Management
+
+### Minimal, Audited Dependencies
+
+```toml
+[dependencies]
+# Essential async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# HTTP client/server
+axum = "0.7"
+reqwest = { version = "0.11", features = ["json"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "postgres"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+proptest = "1.4"
+```
+
+## Clippy: Your Automated Code Reviewer
+
+Always run with strict lints:
+
+```toml
+# .clippy.toml or Cargo.toml
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+cargo = "warn"
+
+# Specific denials
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+```
+
+## The Agent Collaboration Convention
+
+```rust
+// Standard implementation following established patterns
+fn parse_http_request(request_bytes: &[u8]) -> Result<HttpRequest, ParseError> {
+    let headers = parse_headers(request_bytes)?;
+    let body = parse_body(request_bytes)?;
+
+    // human: http/1.0 clients send malformed content-length, normalize it
+    let normalized_headers = normalize_content_length_header(headers);
+
+    build_request(normalized_headers, body)
+}
+```
+
+Agents use proper capitalization. Humans use lowercase comments when adding domain knowledge the agent can't infer.
+
+## Performance: Profile Before Optimizing
+
+```rust
+// DO: Write clear code first
+fn sum_values(numbers: &[i64]) -> i64 {
+    numbers.iter().sum()
+}
+
+// ONLY optimize when profiling shows it matters
+fn sum_values_simd(numbers: &[i64]) -> i64 {
+    // After profiling proved this hot path needs SIMD
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("avx2") {
+            return unsafe { sum_avx2(numbers) };
+        }
+    }
+
+    numbers.iter().sum()
+}
+```
+
+## FFI and Interop
+
+### Safe Wrappers Around Unsafe Code
+
+```rust
+// ALWAYS wrap unsafe FFI in safe Rust APIs
+mod ffi {
+    use std::os::raw::c_char;
+
+    extern "C" {
+        fn legacy_compute(input: *const c_char) -> i32;
+    }
+
+    // Safe wrapper
+    pub fn compute_legacy_value(input: &str) -> Result<i32, FfiError> {
+        use std::ffi::CString;
+
+        let c_string = CString::new(input)
+            .map_err(|_| FfiError::InvalidString)?;
+
+        let result = unsafe {
+            // SAFETY: c_string is valid null-terminated C string
+            legacy_compute(c_string.as_ptr())
+        };
+
+        if result < 0 {
+            return Err(FfiError::ComputationFailed { error_code: result });
+        }
+
+        Ok(result)
+    }
+}
+```
+
+## Summary: Production Rust for the Modern Era
+
+We write Rust for production systems, not programming language research. In codebases where agents contribute significantly:
+
+1. **Optimize for disambiguation** - Every ambiguity compounds
+2. **Make errors visible** - Result types everywhere, never unwrap
+3. **Use the type system** - Newtypes prevent mistakes at compile time
+4. **Clear ownership** - Clone when it makes code clearer
+5. **Exhaustive matching** - Let the compiler prove completeness
+6. **Test with properties** - proptest catches edge cases unit tests miss
+7. **Structure your logs** - tracing makes debugging possible
+8. **Clippy is mandatory** - Deny unwrap, expect, panic
+
+The Rust community optimized for fearless concurrency. We optimize for fearless debugging at 3am. Memory safety is the baseline. Clear, grep-able, agent-friendly code is how we stay productive.
+
+Write code as if a hundred contributors will extend it tomorrow, and you'll debug it during an incident next month. Because both will happen.
+
+We're not the same as the Rust you learned from the book. We're what happens when you take ownership and borrowing seriously in production.
