@@ -108,22 +108,22 @@ It runs on Jetson, on Thor, on consumer Blackwell—on-device, because you can't
 ```nix
 # modern.nix/nccl.nix (elided)
 stdenv.mkDerivation (finalAttrs: {
-pname = "nccl";
-version = "2.26.2";
-src = fetchurl {
-# The wheel on pypi.nvidia.com is redistributable. The tarball isn't.
-url = "https://pypi.nvidia.com/nccl-cu13/nccl_cu13-${finalAttrs.version}-py3-none-manylinux2014_${arch}.whl";
-inherit hash;
-};
-nativeBuildInputs = [ autoPatchelfHook ];
-buildInputs = [ stdenv.cc.cc.lib cuda ];
-dontConfigure = true;
-dontBuild = true;
-installPhase = ''
-mkdir -p $out
-cp -a lib include $out/
-ln -sf libnccl.so.2 $out/lib/libnccl.so
-'';
+  pname = "nccl";
+  version = "2.26.2";
+  src = fetchurl {
+    # The wheel on pypi.nvidia.com is redistributable. The tarball isn't.
+    url = "https://pypi.nvidia.com/nccl-cu13/nccl_cu13-${finalAttrs.version}-py3-none-manylinux2014_${arch}.whl";
+    inherit hash;
+  };
+  nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [ stdenv.cc.cc.lib cuda ];
+  dontConfigure = true;
+  dontBuild = true;
+  installPhase = ''
+    mkdir -p $out
+    cp -a lib include $out/
+    ln -sf libnccl.so.2 $out/lib/libnccl.so
+  '';
 })
 ```
 
@@ -149,81 +149,81 @@ using tensor_view = std::mdspan<T, Extents, std::layout_right>;
 
 template <class M>
 concept row_major_4d = (M::rank() == 4) &&
-std::same_as<typename M::layout_type, std::layout_right>;
+  std::same_as<typename M::layout_type, std::layout_right>;
 
 template <class Q, class K, class C>
 concept compatible_score_correction =
-row_major_4d<Q> && row_major_4d<K> && row_major_4d<C> &&
-std::same_as<typename Q::value_type, bf16> &&
-std::same_as<typename K::value_type, bf16> &&
-std::same_as<typename C::value_type, f32>;
+  row_major_4d<Q> && row_major_4d<K> && row_major_4d<C> &&
+  std::same_as<typename Q::value_type, bf16> &&
+  std::same_as<typename K::value_type, bf16> &&
+  std::same_as<typename C::value_type, f32>;
 
 enum class err_code { cublas };
 struct error { err_code code; ::cublasStatus_t st{}; };
 using result = std::expected<void, error>;
 
 struct [[nodiscard]] stream_guard {
-::cublasLtHandle_t handle;
-::cudaStream_t prev{};
+  ::cublasLtHandle_t handle;
+  ::cudaStream_t prev{};
 
-stream_guard(::cublasLtHandle_t h, ::cudaStream_t s) noexcept
-: handle{h} { ::cublasLtGetStream(h, &prev); ::cublasLtSetStream(h, s); }
-~stream_guard() noexcept { ::cublasLtSetStream(handle, prev); }
+  stream_guard(::cublasLtHandle_t h, ::cudaStream_t s) noexcept
+    : handle{h} { ::cublasLtGetStream(h, &prev); ::cublasLtSetStream(h, s); }
+  ~stream_guard() noexcept { ::cublasLtSetStream(handle, prev); }
 
-stream_guard(stream_guard const&) = delete;
-stream_guard& operator=(stream_guard const&) = delete;
+  stream_guard(stream_guard const&) = delete;
+  stream_guard& operator=(stream_guard const&) = delete;
 };
 
 // cublasLt GEMM: C = α·op(A)·op(B) + β·C, batched, row-major
 template <class A, class B, class C>
 result gemm_strided_batched(::cublasLtHandle_t handle,
-::cudaStream_t stream,
-op opA, op opB,
-index m, index n, index k,
-A const* a, stride lda, stride strideA,
-B const* b, stride ldb, stride strideB,
-C* c, stride ldc, stride strideC,
-stride batch_count,
-void* workspace = nullptr,
-size_t workspace_size = 0) noexcept;
+                            ::cudaStream_t stream,
+                            op opA, op opB,
+                            index m, index n, index k,
+                            A const* a, stride lda, stride strideA,
+                            B const* b, stride ldb, stride strideB,
+                            C* c, stride ldc, stride strideC,
+                            stride batch_count,
+                            void* workspace = nullptr,
+                            size_t workspace_size = 0) noexcept;
 
 template <class Q, class K, class C>
 requires compatible_score_correction<Q, K, C>
 result compute_score_correction(Q query_group_mean,
-K key_centered,
-C score_correction,
-::cublasLtHandle_t handle,
-::cudaStream_t stream,
-void* workspace = nullptr,
-size_t workspace_size = 0) noexcept;
+                                K key_centered,
+                                C score_correction,
+                                ::cublasLtHandle_t handle,
+                                ::cudaStream_t stream,
+                                void* workspace = nullptr,
+                                size_t workspace_size = 0) noexcept;
 
 }  // namespace s4
 
 template <class Q, class K, class C>
 requires s4::compatible_score_correction<Q, K, C>
 s4::result s4::compute_score_correction(Q query_group_mean,
-K key_centered,
-C score_correction,
-::cublasLtHandle_t handle,
-::cudaStream_t stream,
-void* workspace,
-size_t workspace_size) noexcept {
-const auto B = static_cast<s4::index>(key_centered.extent(0));
-const auto H = static_cast<s4::index>(key_centered.extent(1));
-const auto Kd = static_cast<s4::index>(key_centered.extent(2));
-const auto D = static_cast<s4::index>(key_centered.extent(3));
-const auto G = static_cast<s4::index>(query_group_mean.extent(2));
+                                        K key_centered,
+                                        C score_correction,
+                                        ::cublasLtHandle_t handle,
+                                        ::cudaStream_t stream,
+                                        void* workspace,
+                                        size_t workspace_size) noexcept {
+  const auto B = static_cast<s4::index>(key_centered.extent(0));
+  const auto H = static_cast<s4::index>(key_centered.extent(1));
+  const auto Kd = static_cast<s4::index>(key_centered.extent(2));
+  const auto D = static_cast<s4::index>(key_centered.extent(3));
+  const auto G = static_cast<s4::index>(query_group_mean.extent(2));
 
-// [G,K] = [G,D] @ [K,D]^T
-return s4::gemm_strided_batched(
-handle, stream,
-s4::op::none, s4::op::trans,
-G, Kd, D,
-query_group_mean.data_handle(), D, static_cast<s4::stride>(G) * D,
-key_centered.data_handle(), D, static_cast<s4::stride>(Kd) * D,
-score_correction.data_handle(), Kd, static_cast<s4::stride>(G) * Kd,
-static_cast<s4::stride>(B) * H,
-workspace, workspace_size);
+  // [G,K] = [G,D] @ [K,D]^T
+  return s4::gemm_strided_batched(
+    handle, stream,
+    s4::op::none, s4::op::trans,
+    G, Kd, D,
+    query_group_mean.data_handle(), D, static_cast<s4::stride>(G) * D,
+    key_centered.data_handle(), D, static_cast<s4::stride>(Kd) * D,
+    score_correction.data_handle(), Kd, static_cast<s4::stride>(G) * Kd,
+    static_cast<s4::stride>(B) * H,
+    workspace, workspace_size);
 }
 ```
 
@@ -239,18 +239,18 @@ from typing import Callable
 
 @register_backend
 def s4(gm: GraphModule, example_inputs: list) -> Callable:
-"""torch.compile(model, backend="s4") → NVFP4 on TensorRT."""
-from s4.fx import lower_to_s4_ir
-from s4.backends import myelin4
+  """torch.compile(model, backend="s4") → NVFP4 on TensorRT."""
+  from s4.fx import lower_to_s4_ir
+  from s4.backends import myelin4
 
-ir = lower_to_s4_ir(gm, example_inputs)
-ir.validate()  # FTTC, divisibility—compile-time, not runtime
+  ir = lower_to_s4_ir(gm, example_inputs)
+  ir.validate()  # FTTC, divisibility—compile-time, not runtime
 
-engine = myelin4.build(ir, precision="nvfp4", workspace_gb=4)
+  engine = myelin4.build(ir, precision="nvfp4", workspace_gb=4)
 
-def forward(*args):
-return engine.run(args)
-return forward
+  def forward(*args):
+    return engine.run(args)
+  return forward
 
 # Usage: model = torch.compile(model, backend="s4")
 ```
@@ -264,42 +264,42 @@ from torch.export import export, Dim
 import functools
 
 class InputCapture:
-"""Monkey-patch forward() to capture real inputs during pipeline execution."""
+  """Monkey-patch forward() to capture real inputs during pipeline execution."""
 
-def __init__(self, target: nn.Module):
-self.target = target
-self.captured_args = None
-self.captured_kwargs = None
-self.original_forward = None
+  def __init__(self, target: nn.Module):
+    self.target = target
+    self.captured_args = None
+    self.captured_kwargs = None
+    self.original_forward = None
 
-def __enter__(self):
-self.original_forward = self.target.forward
+  def __enter__(self):
+    self.original_forward = self.target.forward
 
-@functools.wraps(self.original_forward)
-def wrapper(*args, **kwargs):
-# Clone on first call—these are the real inputs
-if self.captured_args is None:
-self.captured_args = clone_tensors(args)
-self.captured_kwargs = clone_tensors(kwargs)
-return self.original_forward(*args, **kwargs)
+    @functools.wraps(self.original_forward)
+    def wrapper(*args, **kwargs):
+      # Clone on first call—these are the real inputs
+      if self.captured_args is None:
+        self.captured_args = clone_tensors(args)
+        self.captured_kwargs = clone_tensors(kwargs)
+      return self.original_forward(*args, **kwargs)
 
-self.target.forward = wrapper
-return self
+    self.target.forward = wrapper
+    return self
 
-def __exit__(self, *_):
-self.target.forward = self.original_forward
+  def __exit__(self, *_):
+    self.target.forward = self.original_forward
 
 # Run the actual pipeline, capture what the model really sees
 with InputCapture(pipe.transformer) as cap:
-pipe(prompt="a", num_inference_steps=1)  # one real forward pass
+  pipe(prompt="a", num_inference_steps=1)  # one real forward pass
 
 # Export with captured inputs—Dim.AUTO discovers constraints
 ep = export(
-pipe.transformer,
-cap.captured_args,
-cap.captured_kwargs,
-dynamic_shapes={k: tuple(Dim.AUTO for _ in range(v.dim()))
-for k, v in flatten_tensors(cap.captured_kwargs)},
+  pipe.transformer,
+  cap.captured_args,
+  cap.captured_kwargs,
+  dynamic_shapes={k: tuple(Dim.AUTO for _ in range(v.dim()))
+                  for k, v in flatten_tensors(cap.captured_kwargs)},
 )
 # ep.graph is ATen IR with real shapes, ready for s4
 ```
