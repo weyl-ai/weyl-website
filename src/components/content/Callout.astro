@@ -1,0 +1,93 @@
+---
+interface Props {
+  type?: 'info' | 'warning' | 'tip' | 'danger';
+  title?: string;
+}
+
+const { type = 'info', title } = Astro.props;
+
+const icons = {
+  info: 'i',
+  warning: '!',
+  tip: '*',
+  danger: '!',
+};
+
+const icon = icons[type];
+---
+
+<aside class={`callout callout-${type}`} role="note">
+  {title && (
+    <div class="callout-title">
+      <span class="callout-icon" aria-hidden="true">{icon}</span>
+      <strong>{title}</strong>
+    </div>
+  )}
+  <div class="callout-content">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid;
+    border-radius: 4px;
+    background: var(--sl-color-bg-sidebar);
+  }
+
+  .callout-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .callout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 50%;
+    background: currentColor;
+    color: var(--sl-color-bg-sidebar);
+  }
+
+  .callout-content {
+    font-size: 0.95rem;
+  }
+
+  .callout-content :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .callout-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .callout-info {
+    border-left-color: var(--sl-color-blue);
+    background: var(--sl-color-blue-low);
+  }
+
+  .callout-warning {
+    border-left-color: var(--sl-color-orange);
+    background: var(--sl-color-orange-low);
+  }
+
+  .callout-tip {
+    border-left-color: var(--sl-color-green);
+    background: var(--sl-color-green-low);
+  }
+
+  .callout-danger {
+    border-left-color: var(--sl-color-red);
+    background: var(--sl-color-red-low);
+  }
+</style>

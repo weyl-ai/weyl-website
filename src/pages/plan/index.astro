@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/index.astro
+// src/pages/plan/index.astro
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '@/layouts/BaseHead.astro';
@@ -18,19 +18,29 @@ const blogPosts = (await getCollection('blog'))
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
-    <BaseHead 
-      title="Blog" 
+    <BaseHead
+      title=".plan"
       description="Updates, insights, and announcements from the Weyl team"
     />
+    <style is:global>
+      /* Force light theme logo display */
+      [data-theme="light"] .logo-dark {
+        display: none !important;
+      }
+
+      [data-theme="light"] .logo-light {
+        display: block !important;
+      }
+    </style>
   </head>
-  <body class="bg-bg-primary min-h-screen">
+  <body class="min-h-screen" style="background: var(--color-bg-primary); color: var(--color-text-primary);">
     <LandingNav />
-    <main class="max-w-4xl mx-auto px-6 py-24 pt-32">
+    <main class="max-w-5xl mx-auto px-6 py-24 pt-32">
       <header class="mb-16">
         <h1 class="font-display text-hero font-semibold tracking-widest text-brand-primary mb-4">
-          // BLOG
+          // .plan
         </h1>
         <p class="font-mono text-body text-text-secondary">
           Updates, insights, and announcements from the Weyl team
@@ -39,8 +49,8 @@ const blogPosts = (await getCollection('blog'))
 
       <div class="space-y-8">
         {blogPosts.map((post: CollectionEntry<'blog'>) => (
-          <Card 
-            href={`/blog/${post.slug}`}
+          <Card
+            href={`/plan/${post.slug}`}
             variant="interactive"
           >
             <div class="flex flex-col gap-3">

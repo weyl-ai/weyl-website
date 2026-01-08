@@ -17,31 +17,34 @@ const ogImage = '/og-default.png';
 // Archive documents data
 const documents = [
   {
-    type: 'TECHNICAL MEMORANDUM',
-    number: '2024-001',
-    title: 'On the Symmetry-Complete Representation of Tensor Layouts',
-    description: 'This memorandum establishes the theoretical foundation for s₄\'s treatment of tensor permutations as elements of the symmetric group S₄. The 24 possible layouts of a 4-dimensional tensor are enumerated, with guidance on selection criteria for production deployment.',
-    department: 'DEPT. OF NUMERICAL ARCHITECTURE',
+    type: 'RESEARCH BULLETIN',
+    number: '2025-001',
+    title: 'A Fistful of Errors: A Discrete Formulation of Neural Network Behavior in Floating Point Representation',
+    description: 'This bulletin presents the Lattice Hypothesis, proposing that neural networks fundamentally operate on discrete floating-point lattices rather than continuous functions on ℝⁿ. Traditional continuous analysis is reconceptualized as the approximation, with the discrete lattice structure being the computational reality.',
+    department: 'WEYL AI LABS',
     classification: 'PUBLIC',
-    date: '2024-03-15',
+    date: '2025-01-08',
+    downloadUrl: '/papers/lattice-hypothesis.pdf',
   },
   {
     type: 'RESEARCH BULLETIN',
-    number: '2024-007',
-    title: 'Block-Scale Quantization: A Survey of Precision Economics',
-    description: 'This bulletin surveys the emerging field of block-scale quantization, examining the tradeoffs between BF16, FP8, and NVFP4 representations. Particular attention is given to outlier lane preservation and its impact on model fidelity.',
-    department: 'OFFICE OF PRECISION STANDARDS',
+    number: '2025-002',
+    title: 'Curiouser and Curiouser: Apparent Contradictions in Neural Network Observables',
+    description: 'This bulletin explores the Hallway Hypothesis, examining how constraints that reduce wrong moves matter more than constraints that reduce total moves. Analysis of phenomena like LoRA effectiveness and quantization failure modes reveals the geometry of transformation corridors in neural network pipelines.',
+    department: 'WEYL AI LABS',
     classification: 'PUBLIC',
-    date: '2024-05-22',
+    date: '2025-01-08',
+    downloadUrl: '/papers/hallway-hypothesis.pdf',
   },
   {
-    type: 'POLICY DIRECTIVE',
-    number: '2024-012',
-    title: 'Persistent Kernel Protocol for Inference Operations',
-    description: 'This directive establishes mandatory protocols for persistent kernel deployment in production inference systems. All sanctioned operations shall maintain GPU-resident state with zero per-token launch overhead.',
-    department: 'MISSION ARCHITECTURE OFFICE',
+    type: 'RESEARCH BULLETIN',
+    number: '2025-003',
+    title: 'Not Even Long: An Information-Theoretic Perspective on Precision in Neural Networks',
+    description: 'This bulletin examines the Landauer Hypothesis, treating precision not as a hyperparameter to optimize but as a physical quantity to measure. Explores how the thermodynamic cost of bit erasure constrains low-precision quantization schemes, with implications for NVFP4 deployment at the edge.',
+    department: 'WEYL AI LABS',
     classification: 'PUBLIC',
-    date: '2024-08-01',
+    date: '2025-01-08',
+    downloadUrl: '/papers/landauer-hypothesis.pdf',
   },
 ];
 ---
@@ -173,6 +176,16 @@ const documents = [
         opacity: 0.4;
       }
 
+      .document-download-link {
+        display: inline-flex;
+        align-items: center;
+        transition: opacity 0.2s ease;
+      }
+
+      .document-download-link:hover .document-icon {
+        opacity: 1;
+      }
+
       .monotile-icon {
         position: absolute;
         top: 2rem;
@@ -209,7 +222,7 @@ const documents = [
     </svg>
 
     <!-- Main content -->
-    <main class="max-w-4xl mx-auto px-6 py-24 pt-32">
+    <main class="max-w-5xl mx-auto px-6 py-24 pt-32">
       <!-- Header -->
       <header class="archive-header">
         <h1 class="archive-title">Historical Research Documents</h1>
@@ -241,9 +254,17 @@ const documents = [
 
             <div class="document-footer">
               <span class="document-department">{doc.department}</span>
-              <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
+              {doc.downloadUrl ? (
+                <a href={doc.downloadUrl} download class="document-download-link" aria-label="Download document">
+                  <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </a>
+              ) : (
+                <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )}
             </div>
           </article>
         ))}

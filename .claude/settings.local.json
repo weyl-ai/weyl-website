@@ -11,7 +11,14 @@
       "Bash(bun run build:*)",
       "Bash([ -d node_modules ])",
       "Bash(bun install:*)",
-      "Bash(bun run dev)"
+      "Bash(bun run dev)",
+      "WebFetch(domain:v0-straylight-papers-touchups.vercel.app)",
+      "Bash(bun pm:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(unzip:*)"
     ]
   }
 }

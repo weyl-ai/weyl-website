@@ -1,0 +1,460 @@
+---
+// src/layouts/Straylight.astro
+// Typographical ultraviolence layout for Villa Straylight Papers
+import BaseHead from '@/layouts/BaseHead.astro';
+import JsonLd from '@components/seo/JsonLd.astro';
+import { techArticleSchema } from '@lib/seo/schema';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date | undefined;
+  author: string;
+  tags?: string[];
+  image?: { src: string; alt: string } | undefined;
+  readingTime?: number;
+}
+
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  author,
+  tags = [],
+  image,
+  readingTime
+} = Astro.props;
+
+const schema = techArticleSchema({
+  title,
+  description,
+  datePublished: pubDate.toISOString(),
+  dateModified: updatedDate?.toISOString(),
+  author,
+  url: Astro.url.href,
+  image: image?.src,
+  keywords: tags,
+});
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      image={image?.src || '/og-blog.png'}
+      type="article"
+      publishedTime={pubDate.toISOString()}
+      modifiedTime={updatedDate?.toISOString()}
+    />
+    <JsonLd schema={schema} />
+  </head>
+  <body class="straylight-body">
+    <nav class="straylight-nav">
+      <span class="nav-logo">// villa straylight //</span>
+      <a href="/plan">← .plan</a>
+      <span class="status-nominal">█ NOMINAL</span>
+    </nav>
+
+    <article class="straylight-article">
+      <header class="straylight-header">
+        <a
+          href="/plan"
+          class="back-link"
+          aria-label="Back to .plan"
+        >
+          ← back to .plan
+        </a>
+
+        <h1 class="straylight-title">{title}</h1>
+
+        <div class="straylight-meta">
+          <time datetime={pubDate.toISOString()}>
+            {pubDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </time>
+          <span aria-hidden="true">//</span>
+          <span>{author}</span>
+          {readingTime && (
+            <>
+              <span aria-hidden="true">//</span>
+              <span>{readingTime} min read</span>
+            </>
+          )}
+        </div>
+
+        {tags.length > 0 && (
+          <div class="straylight-tags">
+            {tags.map((tag: string) => (
+              <span class="tag">// {tag} //</span>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <div class="straylight-content">
+        <slot />
+      </div>
+    </article>
+  </body>
+</html>
+
+<style is:global>
+  /* Ono-Sendai Base24 Color System */
+  :root {
+    --base00: #090b0e;
+    --base01: #13161a;
+    --base02: #1a1f24;
+    --base03: #23292f;
+    --base04: #596775;
+    --base05: #d8e0e7;
+    --base06: #e0f4ff;
+    --base07: #e6f7ff;
+    --base0A: #54aeff;
+    --base0B: #218bff;
+    --base0C: #40e0d0;
+    --base0D: #6dd9ff;
+    --base0E: #8ecbff;
+    --base10: #ffa657;
+    --base11: #f0c020;
+    --base12: #ff7b72;
+    --base13: #c41e3a;
+    --base14: #3fb950;
+  }
+
+  .straylight-body {
+    background: var(--base00);
+    color: var(--base05);
+    font-family: 'Berkeley Mono', 'Iosevka', 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
+  .straylight-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--base00);
+    border-bottom: 1px solid var(--base0A);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+
+  .nav-logo {
+    color: var(--base0A);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .straylight-nav a {
+    color: var(--base0D);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .straylight-nav a:hover {
+    color: var(--base0C);
+  }
+
+  .status-nominal {
+    margin-left: auto;
+    color: var(--base14);
+    font-weight: 600;
+  }
+
+  .straylight-article {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .straylight-header {
+    margin-bottom: 4rem;
+    border-bottom: 2px solid var(--base03);
+    padding-bottom: 2rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--base04);
+    text-decoration: none;
+    margin-bottom: 2rem;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .back-link:hover {
+    color: var(--base0A);
+  }
+
+  .straylight-title {
+    font-family: 'Aldrich', 'Orbitron', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--base07);
+    margin: 0 0 1.5rem 0;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .straylight-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    color: var(--base04);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+
+  .straylight-tags {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .tag {
+    color: var(--base0A);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .straylight-content {
+    color: var(--base05);
+  }
+
+  /* Headings */
+  .straylight-content h2 {
+    font-family: 'Aldrich', sans-serif;
+    font-size: 28px;
+    color: var(--base0A);
+    margin: 3rem 0 1.5rem 0;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--base03);
+    padding-bottom: 0.5rem;
+  }
+
+  .straylight-content h3 {
+    font-size: 20px;
+    color: var(--base0D);
+    margin: 2rem 0 1rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  .straylight-content h4 {
+    font-size: 16px;
+    color: var(--base0E);
+    margin: 1.5rem 0 0.75rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* Paragraphs */
+  .straylight-content p {
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+  }
+
+  /* Links */
+  .straylight-content a {
+    color: var(--base0A);
+    text-decoration: none;
+    border-bottom: 1px solid var(--base0A);
+    transition: all 0.2s;
+  }
+
+  .straylight-content a:hover {
+    color: var(--base0C);
+    border-bottom-color: var(--base0C);
+  }
+
+  /* Code */
+  .straylight-content code {
+    background: var(--base01);
+    color: var(--base0A);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.95em;
+    border: 1px solid var(--base02);
+  }
+
+  .straylight-content pre {
+    background: var(--base01);
+    border: 1px solid var(--base0A);
+    border-left: 4px solid var(--base0A);
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 2rem 0;
+    border-radius: 4px;
+  }
+
+  .straylight-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  /* Blockquotes */
+  .straylight-content blockquote {
+    border-left: 4px solid var(--base0A);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    color: var(--base04);
+    font-style: italic;
+  }
+
+  /* Lists */
+  .straylight-content ul,
+  .straylight-content ol {
+    margin-left: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .straylight-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* HR */
+  .straylight-content hr {
+    border: none;
+    border-top: 1px solid var(--base03);
+    margin: 3rem 0;
+  }
+
+  /* Strong/Bold */
+  .straylight-content strong {
+    color: var(--base06);
+    font-weight: 700;
+  }
+
+  /* Em/Italic */
+  .straylight-content em {
+    color: var(--base06);
+    font-style: italic;
+  }
+
+  /* Callouts - Gibson epigraphs, warnings, etc. */
+  .straylight-content .callout {
+    background: var(--base01);
+    border: 1px solid var(--base03);
+    border-left: 4px solid var(--base0A);
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .straylight-content .callout-info {
+    border-left-color: var(--base0A);
+  }
+
+  .straylight-content .callout-warning {
+    border-left-color: var(--base10);
+  }
+
+  .straylight-content .callout-tip {
+    border-left-color: var(--base14);
+  }
+
+  .straylight-content .callout-danger {
+    border-left-color: var(--base12);
+  }
+
+  .straylight-content .callout-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--base06);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  .straylight-content .callout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    border: 2px solid currentColor;
+    background: transparent;
+    color: inherit;
+  }
+
+  .straylight-content .callout-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Tables */
+  .straylight-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 13px;
+  }
+
+  .straylight-content th,
+  .straylight-content td {
+    border: 1px solid var(--base03);
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .straylight-content th {
+    background: var(--base01);
+    color: var(--base0A);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* Images */
+  .straylight-content img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--base03);
+    border-radius: 4px;
+    margin: 2rem 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .straylight-nav {
+      padding: 1rem;
+      gap: 1rem;
+      font-size: 12px;
+    }
+
+    .straylight-article {
+      padding: 2rem 1rem;
+    }
+
+    .straylight-title {
+      font-size: 32px;
+    }
+
+    .straylight-content h2 {
+      font-size: 24px;
+    }
+  }
+</style>

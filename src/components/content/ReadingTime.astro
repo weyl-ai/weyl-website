@@ -1,47 +1,31 @@
 ---
 // src/components/content/ReadingTime.astro
-// Calculate and display estimated reading time
+// Display estimated reading time
 
 interface Props {
-  content: string;
-  wordsPerMinute?: number;
+  minutes: number;
 }
 
-const { content, wordsPerMinute = 200 } = Astro.props;
-
-// Remove code blocks and markdown syntax for more accurate count
-const cleanedContent = content
-  .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-  .replace(/`[^`]*`/g, '') // Remove inline code
-  .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Extract link text
-  .replace(/<[^>]*>/g, '') // Remove HTML tags
-  .replace(/[#*_~`]/g, ''); // Remove markdown syntax
-
-const wordCount = cleanedContent
-  .split(/\s+/)
-  .filter(word => word.length > 0)
-  .length;
-
-const readingTime = Math.ceil(wordCount / wordsPerMinute);
+const { minutes } = Astro.props;
 ---
 
-<div class="reading-time" aria-label={`Estimated reading time: ${readingTime} minutes`}>
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    stroke-width="2" 
-    stroke-linecap="round" 
+<div class="reading-time" aria-label={`Estimated reading time: ${minutes} minutes`}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
     stroke-linejoin="round"
     aria-hidden="true"
   >
     <circle cx="12" cy="12" r="10"></circle>
     <polyline points="12 6 12 12 16 14"></polyline>
   </svg>
-  <span>{readingTime} min read</span>
+  <span>{minutes} min read</span>
 </div>
 
 <style>

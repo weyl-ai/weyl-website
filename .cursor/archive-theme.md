@@ -113,7 +113,7 @@ Add `data-theme="light"` to the `<html>` tag:
 ### Logo Switching
 The navigation automatically switches between:
 - **Dark theme**: Blue logo (`/weyl-logo.svg`)
-- **Light theme**: Black logo (`/brand/weyl-full-logo-black.svg`)
+- **Light theme**: Black logo (`/brand/weyl-monotile-black.svg`)
 
 ### Document Card Pattern
 ```astro

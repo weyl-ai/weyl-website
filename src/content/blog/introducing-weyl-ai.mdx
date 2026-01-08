@@ -1,9 +1,10 @@
 ---
 title: "Introducing Weyl AI: Making Generative AI Sustainable with NVFP4"
 description: "Leveraging NVIDIA's NVFP4 and Blackwell architecture to deliver 70-80% cost reduction for diffusion inference without sacrificing speed or quality."
-pubDate: 2025-12-03
+pubDate: 2026-01-08
 author: "Weyl Team"
 tags: ["announcement", "NVFP4", "infrastructure", "AI"]
+draft: true
 ---
 
 Today we're publicly launching Weyl AI.
@@ -14,13 +15,13 @@ We accomplish this by taking a no-compromise approach to diffusion inference lev
 
 We're not a billion-dollar lab. We don't have thousands of H100s. What we have is a belief that technical choices should matter more than financial resources, and an initial stack that proves it.
 
-![Technical choices over financial resources](/blog/technical-choices.jpg)
+![Technical choices over financial resources](/plan/technical-choices.jpg)
 
 ## Why the name Weyl?
 
 Hermann Weyl was one of the most influential mathematicians of the 20th century. Working alongside Einstein at Princeton, his contributions to group theory and representation theory quietly underpin much of modern deep learning. The formal language for describing how transformations compose and interact—concepts every vision model grapples with—traces back to Weyl's group-theoretic foundations.
 
-![Hermann Weyl - mathematician who worked alongside Einstein at Princeton](/blog/hermann-weyl.png)
+![Hermann Weyl - mathematician who worked alongside Einstein at Princeton](/plan/hermann-weyl.png)
 
 Weyl believed mathematics should be beautiful, rigorous, and practical. He wasn't interested in abstractions for their own sake - he wanted frameworks that revealed deeper truths about how things actually work. That's the hypermodern spirit we're channeling. We're not here to add abstraction layers on top of GPUs, we're here to understand and give the hardware what it actually wants.
 
@@ -41,7 +42,7 @@ Here's how we did it:
 
 The result: ***diffusion inference that is 70-80% less expensive, without sacrificing on speed or quality***. We're essentially proving that NVIDIA's newest technologies can democratize AI when used correctly.
 
-![FLUX.1 DEV Time to Image - Weyl NVFP4 at 640ms vs fal.ai at 3000ms and Nunchaku SVDQuant at 4700ms](/blog/flux-benchmark.png)
+![FLUX.1 DEV Time to Image - Weyl NVFP4 at 640ms vs fal.ai at 3000ms and Nunchaku SVDQuant at 4700ms](/plan/flux-benchmark.png)
 
 ## Costs That Level The Playing Field
 
@@ -54,7 +55,7 @@ We achieve these breakthrough costs due to a combination of things, including:
 - **Custom NVIDIA inference stack** that keeps cards at 90%+ utilization vs. much lower historical industry standard utilization rates
 - **Leveraging idle GPUs** on platforms like [Vast.ai](https://vast.ai/) allows zero friction, cost efficient scaling without huge upfront capital requirements, and lets us tap into unused globally distributed GPUs at costs significantly lower than traditional GPU rental or ownership
 
-![NVFP4 performance and energy efficiency in blockscaled GEMM](/blog/nvfp4-performance.png)
+![NVFP4 performance and energy efficiency in blockscaled GEMM](/plan/nvfp4-performance.png)
 
 We're also working on dynamic pricing and routing for the API that automatically selects the optimal GPUs for every scenario - B200s for massive batches, RTX cards for standard workloads, edge devices when latency matters, etc.
 
@@ -62,9 +63,9 @@ We're also working on dynamic pricing and routing for the API that automatically
 
 We're taking a hypermodern approach to AI, where technical choices are more important than financial resources. Those choices include using the absolute bleeding edge of what's available, such as NVIDIA's NVFP4, Blackwell's SM120, TensorRT, etc., as well as treating the GPUs how they want to be treated.
 
-We don't force GPUs through abstraction layers. We are writing persistent CUDA kernels that launch once and process continuously (inspiration from the [ThunderKittens](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)). We take great care in compiling specifically for each NVIDIA compute capability. Because when you respect the hardware instead of fighting it, everything changes - **90% less compute, 90% less energy, and 90% less cost**, without sacrificing speed or quality.
+We don't force GPUs through abstraction layers. We are writing persistent CUDA kernels that launch once and process continuously (inspiration from the [ThunderKittens](https://hazyresearch.stanford.edu/plan/2024-05-12-tk)). We take great care in compiling specifically for each NVIDIA compute capability. Because when you respect the hardware instead of fighting it, everything changes - **90% less compute, 90% less energy, and 90% less cost**, without sacrificing speed or quality.
 
-Our goal is to help make AI generation actually viable. While the industry burns through trillions subsidizing unsustainable inference costs, we're helping prove there's another way. And we aren't the only ones starting to understand this. NVIDIA definitely knows about this with their recent [Deepseek NVFP4 paper](https://developer.nvidia.com/blog/achieving-fp4-inference-with-nvidia-blackwell-for-deepseek-r1/), groups like the one behind [SageAttention3](https://github.com/thu-ml/SageAttention) get it, [Decart](https://www.decart.ai/) is also doing great things in this direction, as well as the [Nunchaku](https://github.com/mit-han-lab/nunchaku) team behind SVDQuant. We're just one of the early teams putting all of the pieces of this new NVIDIA computing stack together.
+Our goal is to help make AI generation actually viable. While the industry burns through trillions subsidizing unsustainable inference costs, we're helping prove there's another way. And we aren't the only ones starting to understand this. NVIDIA definitely knows about this with their recent [Deepseek NVFP4 paper](https://developer.nvidia.com/plan/achieving-fp4-inference-with-nvidia-blackwell-for-deepseek-r1/), groups like the one behind [SageAttention3](https://github.com/thu-ml/SageAttention) get it, [Decart](https://www.decart.ai/) is also doing great things in this direction, as well as the [Nunchaku](https://github.com/mit-han-lab/nunchaku) team behind SVDQuant. We're just one of the early teams putting all of the pieces of this new NVIDIA computing stack together.
 
 The result? AI generation that's finally sustainable, even if the current AI bubble bursts.
 

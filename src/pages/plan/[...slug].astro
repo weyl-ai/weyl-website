@@ -1,8 +1,10 @@
 ---
-// src/pages/blog/[...slug].astro
+// src/pages/plan/[...slug].astro
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import Blog from '@/layouts/Blog.astro';
+import Straylight from '@/layouts/Straylight.astro';
+import { components as mdxComponents } from '@/mdx-components';
 
 export const prerender = true;
 
@@ -20,9 +22,16 @@ interface Props {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
+
+// Calculate reading time (average 200 words per minute)
+const wordCount = post.body.split(/\s+/g).length;
+const readingTime = Math.ceil(wordCount / 200);
+
+// Use Straylight layout for all Villa Straylight Papers posts
+const Layout = post.slug.startsWith('villa-straylight-papers') ? Straylight : Blog;
 ---
 
-<Blog
+<Layout
   title={post.data.title}
   description={post.data.description}
   pubDate={post.data.pubDate}
@@ -30,6 +39,7 @@ const { Content } = await post.render();
   author={post.data.author}
   tags={post.data.tags}
   image={post.data.image}
+  readingTime={readingTime}
 >
-  <Content />
-</Blog>
+  <Content components={mdxComponents} />
+</Layout>

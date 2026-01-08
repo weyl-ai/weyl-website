@@ -1,0 +1,338 @@
+---
+title: "The Inhuman Quality of Starlight"
+description: "Part 1: The Operating System of the Drone War and The UTF-8 of AI. Constraints dominate resources, and the lattice doesn't negotiate."
+pubDate: 2026-01-09
+author: "b7r6"
+tags: ["NVFP4", "Infrastructure", "DeepSeek", "CUDA", "Nix", "Embedded AI", "Quantization"]
+image:
+  src: "/plan/starlight.png"
+  alt: "The Inhuman Quality of Starlight"
+---
+
+> *"The beauty of things was born before eyes and sufficient to itself; the heart-breaking beauty will remain when there is no heart to break for it."*
+> — Robinson Jeffers
+
+![Hermann Weyl - mathematician who worked alongside Einstein at Princeton](/plan/hermann-weyl.png)
+
+---
+
+## 1. Choices Dominate Resources
+
+> *"Ne pleure pas, Alfred! J'ai besoin de tout mon courage pour mourir à vingt ans!"*
+> — Évariste Galois, the night before his fatal duel
+
+The engineers who could solve this problem have jobs, with clearances to protect, stock vesting on a schedule, career trajectories to manage, performance reviews to pass, and corporate politics to navigate. Their incentives are managed by institutions that need them to stay manageable.
+
+**Capability isn't the bottleneck; constraint is.**
+
+NVIDIA has thousands of engineers at this level. Defense contractors have eight-figure budgets and genuine talent. Frontier labs have deep resources. None of them have shipped clean CUDA deployment for embedded AI—not because they can't, but because institutional structure doesn't reward it. The problem is too cross-cutting, too unsexy, too far from any product roadmap.
+
+**Putin doesn't fear Zelensky with the full backing of NATO.** That Zelensky is predictable, constrained, has to manage alliances and optics. His nightmare is older: Zelensky alone in the hills with the real hardliners and nothing left to lose, no leverage point, no institutional weakness to exploit—just courage and intelligence.
+
+That scenario has been the end of empires, because *choices dominate resources*.
+
+---
+
+## 2. The (Aspirant) American DeepSeek
+
+> *"I learned very early the difference between knowing the name of something and knowing something."*
+> — Richard Feynman
+
+DeepSeek-V3 matched GPT-4 on 2.788M H800 GPU hours, not because they had better hardware but because the opposite was true: export controls meant H100s were expensive and H800s were what they had, so the constraint forced the insight.
+
+What they actually did:
+
+**Multi-head Latent Attention** is not GQA or MQA but a genuinely novel attention variant, with low-rank KV compression into a latent space and weight absorption to skip decompression at inference, yielding a KV cache smaller than MQA with modeling capacity better than MHA.
+
+**Custom PTX communication kernels** emerged because their cross-node expert parallelism had a 1:1 compute-to-communication ratio, so they wrote warp-specialized kernels for IB-to-NVLink forwarding with dynamic allocation and customized PTX to reduce L2 cache pressure. This is not "we used NCCL"—this is "we wrote assembly to overlap memory operations on the interconnect."
+
+And FP8 training at 671B scale, DualPipe for bidirectional pipeline parallelism, multi-token prediction, auxiliary-loss-free MoE routing—the list goes on. Then they open-sourced everything but OpenAI's training data.
+
+American labs have the compute, but they don't have the constraint, and when you can always add more GPUs, you never learn to subtract.
+
+**In a sense we do things the Hangzhou way, but that's because hackers in Hangzhou do things the way Silicon Valley did when we learned there—the C++, the ZooKeeper, the cigarettes.**
+
+Because we operate under constraints, we get to be useful in another way: we get to play Red Team in the Second Millennium Challenge. We're here to do great work for our own benefit, but we like being the useful kind of competition, all the moreso when the stakes are this high.
+
+---
+
+## 3. Lab Notes (Someone is Wrong on The Internet)
+
+> *"How wonderful that we have met with a paradox. Now we have some hope of making progress."*
+> — Niels Bohr
+
+We need all the help we can get, and that's what it is to be a small lab in an ocean overstocked with Behemoths.
+
+So we're linking to our lab notes—not papers, since we're not claiming we've proven anything, just hypotheses written in LaTeX, which is an [attractive nuisance](https://xkcd.com/386/). If we're wrong, someone will tell us, and that's the point.
+
+**[Hypothesis 1: The Lattice Hypothesis.](/papers/lattice-hypothesis.pdf)** Deep learning theory has the ontology backwards. The standard view holds that neural networks are continuous functions on ℝⁿ and that floating-point is an approximation which introduces "errors," but we think the opposite is true: computation occurs on discrete floating-point lattices, continuous analysis is the approximation, and the lattice is the reality.
+
+This isn't philosophy but measurement. We traced SNR through transformer blocks under FP4 quantization, and at the SDPA output in some models, noise power exceeds signal power—the attention computation is, by any reasonable definition, destroyed, yet the model produces coherent text anyway.
+
+Why? Because the residual connection isn't a gradient highway; it's a carrier wave.
+
+**[Hypothesis 2: The Hallway Hypothesis.](/papers/hallway-hypothesis.pdf)** Constraints that reduce wrong moves matter more than constraints that reduce total moves. LoRA works not despite limiting expressivity but because it limits wrong moves. Quantization "fails" when it's a bad hallway—blocks high-information directions or reduces boundary-crossing rates below viable levels.
+
+**[Hypothesis 3: The Landauer Hypothesis.](/papers/landauer-hypothesis.pdf)** Precision is not a hyperparameter to be optimized but a physical quantity to be measured; the only costly operation is forgetting, and the only difficult problem is forgetting precisely the right amount. The epilogue is the last reversible place to change gauges, so do it there.
+
+We could be wrong about any of this, and Claude is probably wrong about some of the derivations, but we're building systems that work and these hypotheses are why. If you see the flaw, we want to know.
+
+---
+
+## 4. The Drone War Is Here (Diffusion Will Match the Hype)
+
+> *"Geometry is not true, it is advantageous."*
+> — Henri Poincaré
+
+Military technology becomes civilian technology. This is as predictable as taxes and Tuesday—the Bell Labs to Western Electric flywheel that gave us transistors, satellite communications, Unix, and the internet. The defense contracts fund the R&D, the civilian applications pay it back at scale, and the cycle continues. If you want to know where infrastructure is going, watch where DARPA money went five years ago.
+
+Right now the money is in autonomous systems, and the constraint is inference on embedded hardware. Ukraine made the requirement legible: real-time computer vision, path planning, and decision-making on something that fits in a drone and runs on batteries. The engineering problems they solved in Bakhmut don't stay military for long.
+
+NVFP4 is the tipping point—but not because we know exactly where the new equilibrium lands. At FP16, you're memory-bound long before you're compute-bound; the silicon idles waiting for data. At FP4, the arithmetic intensity shifts enough that the answer is unclear. Four bits per weight with per-block E4M3 scale factors, doubly dynamic quantization on both weights and activations, FP32 accumulation where it matters. The trick that makes it general is that every parameter and activation has a path to 32-bit precision if the QAT was done correctly—you're not throwing away information, you're encoding it differently. The search space is big, the equilibrium is uncertain, and the game is afoot.
+
+**Diffusion is where this investment pays off.** LLMs are useful, but they're already fast enough for chat and slow enough that you can throw servers at them. Diffusion-descended ensembles have a more interesting set of problems, or we thought they were problems at first; as so often happens, being forced to abandon privileging any part of a system often cuts the last bonds to a limiting habit of thought. It turns out to crack the whole fucking thing wide open.
+
+That's why rectified-flow ensembles will open the era of real-world relevant AI. Not text-to-image generators, but real-time spatially-coherent physical system modeling: vision for robots, for autonomous vehicles, for surgical systems, for anything that needs to understand geometry and predict motion. The same inference constraints that matter in an autonomy-first battle space matter on a factory floor, in an operating room.
+
+It runs on Jetson, on Thor, on consumer Blackwell—on-device, because you can't SSH into a drone mid-flight, and you can't SSH into a surgical robot either.
+
+---
+
+## 5. Un Amuse-Bouche
+
+> *"Symmetry is one idea by which man through the ages has tried to comprehend and create order, beauty, and perfection."*
+> — Hermann Weyl
+
+**modern.nix** is reproducible extraction of NVIDIA's stack for embedded deployment, built on the insight that you should stop trying to build CUDA in Nix and instead extract it and make it reproducible post-hoc.
+
+```nix
+# modern.nix/nccl.nix (elided)
+stdenv.mkDerivation (finalAttrs: {
+  pname = "nccl";
+  version = "2.26.2";
+  src = fetchurl {
+    # The wheel on pypi.nvidia.com is redistributable. The tarball isn't.
+    url = "https://pypi.nvidia.com/nccl-cu13/nccl_cu13-${finalAttrs.version}-py3-none-manylinux2014_${arch}.whl";
+    inherit hash;
+  };
+  nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [ stdenv.cc.cc.lib cuda ];
+  dontConfigure = true;
+  dontBuild = true;
+  installPhase = ''
+    mkdir -p $out
+    cp -a lib include $out/
+    ln -sf libnccl.so.2 $out/lib/libnccl.so
+  '';
+})
+```
+
+There's no recompilation: you pin the hash, patch the binaries, and you're done, with the same derivation working on x86 and ARM64. The nixpkgs maintainers have been building NCCL from source for years because you can't redistribute the tarball from developer.nvidia.com, but the goddamn wheel was right there the whole time.
+
+**s4** is, for the symmetry group of GPU engineers, a compiler toolchain and a map for the Polyhedral Villa Straylight.
+
+```cpp
+// s4/attention/score_correction.cu (elided)
+// Δs = Q_mean @ K_centered^T
+
+namespace s4 {
+
+using bf16   = ::__nv_bfloat16;
+using f32    = float;
+using index  = int;
+using stride = long long;  // cublasLt strides are 64-bit
+
+enum class op { none, trans };
+
+template <class T, class Extents>
+using tensor_view = std::mdspan<T, Extents, std::layout_right>;
+
+template <class M>
+concept row_major_4d = (M::rank() == 4) &&
+    std::same_as<typename M::layout_type, std::layout_right>;
+
+template <class Q, class K, class C>
+concept compatible_score_correction =
+    row_major_4d<Q> && row_major_4d<K> && row_major_4d<C> &&
+    std::same_as<typename Q::value_type, bf16> &&
+    std::same_as<typename K::value_type, bf16> &&
+    std::same_as<typename C::value_type, f32>;
+
+enum class err_code { cublas };
+struct error { err_code code; ::cublasStatus_t st{}; };
+using result = std::expected<void, error>;
+
+struct [[nodiscard]] stream_guard {
+  ::cublasLtHandle_t handle;
+  ::cudaStream_t prev{};
+
+  stream_guard(::cublasLtHandle_t h, ::cudaStream_t s) noexcept
+      : handle{h} { ::cublasLtGetStream(h, &prev); ::cublasLtSetStream(h, s); }
+  ~stream_guard() noexcept { ::cublasLtSetStream(handle, prev); }
+
+  stream_guard(stream_guard const&) = delete;
+  stream_guard& operator=(stream_guard const&) = delete;
+};
+
+// cublasLt GEMM: C = α·op(A)·op(B) + β·C, batched, row-major
+template <class A, class B, class C>
+result gemm_strided_batched(::cublasLtHandle_t handle,
+                            ::cudaStream_t stream,
+                            op opA, op opB,
+                            index m, index n, index k,
+                            A const* a, stride lda, stride strideA,
+                            B const* b, stride ldb, stride strideB,
+                            C* c, stride ldc, stride strideC,
+                            stride batch_count,
+                            void* workspace = nullptr,
+                            size_t workspace_size = 0) noexcept;
+
+template <class Q, class K, class C>
+  requires compatible_score_correction<Q, K, C>
+result compute_score_correction(Q query_group_mean,
+                                K key_centered,
+                                C score_correction,
+                                ::cublasLtHandle_t handle,
+                                ::cudaStream_t stream,
+                                void* workspace = nullptr,
+                                size_t workspace_size = 0) noexcept;
+
+}  // namespace s4
+
+template <class Q, class K, class C>
+  requires s4::compatible_score_correction<Q, K, C>
+s4::result s4::compute_score_correction(Q query_group_mean,
+                                        K key_centered,
+                                        C score_correction,
+                                        ::cublasLtHandle_t handle,
+                                        ::cudaStream_t stream,
+                                        void* workspace,
+                                        size_t workspace_size) noexcept {
+  const auto B = static_cast<s4::index>(key_centered.extent(0));
+  const auto H = static_cast<s4::index>(key_centered.extent(1));
+  const auto Kd = static_cast<s4::index>(key_centered.extent(2));
+  const auto D = static_cast<s4::index>(key_centered.extent(3));
+  const auto G = static_cast<s4::index>(query_group_mean.extent(2));
+
+  // [G,K] = [G,D] @ [K,D]^T
+  return s4::gemm_strided_batched(
+      handle, stream,
+      s4::op::none, s4::op::trans,
+      G, Kd, D,
+      query_group_mean.data_handle(), D, static_cast<s4::stride>(G) * D,
+      key_centered.data_handle(), D, static_cast<s4::stride>(Kd) * D,
+      score_correction.data_handle(), Kd, static_cast<s4::stride>(G) * Kd,
+      static_cast<s4::stride>(B) * H,
+      workspace, workspace_size);
+}
+```
+
+The C++ is the floor. Above it, `s4.compile()` rides `torch.compile` like a brainstem—Dynamo traces, we intercept, route to our backends:
+
+```python
+# s4/compile.py (elided)
+
+import torch
+from torch._dynamo import register_backend
+from torch.fx import GraphModule
+from typing import Callable
+
+@register_backend
+def s4(gm: GraphModule, example_inputs: list) -> Callable:
+    """torch.compile(model, backend="s4") → NVFP4 on TensorRT."""
+    from s4.fx import lower_to_s4_ir
+    from s4.backends import myelin4
+
+    ir = lower_to_s4_ir(gm, example_inputs)
+    ir.validate()  # FTTC, divisibility—compile-time, not runtime
+
+    engine = myelin4.build(ir, precision="nvfp4", workspace_gb=4)
+
+    def forward(*args):
+        return engine.run(args)
+    return forward
+
+# Usage: model = torch.compile(model, backend="s4")
+```
+
+But compile-time validation needs runtime shapes. The trick is capturing real inputs during actual pipeline execution—no dummy tensors, no guessing:
+
+```python
+# s4/capture.py (elided)
+
+from torch.export import export, Dim
+import functools
+
+class InputCapture:
+    """Monkey-patch forward() to capture real inputs during pipeline execution."""
+
+    def __init__(self, target: nn.Module):
+        self.target = target
+        self.captured_args = None
+        self.captured_kwargs = None
+        self.original_forward = None
+
+    def __enter__(self):
+        self.original_forward = self.target.forward
+
+        @functools.wraps(self.original_forward)
+        def wrapper(*args, **kwargs):
+            # Clone on first call—these are the real inputs
+            if self.captured_args is None:
+                self.captured_args = clone_tensors(args)
+                self.captured_kwargs = clone_tensors(kwargs)
+            return self.original_forward(*args, **kwargs)
+
+        self.target.forward = wrapper
+        return self
+
+    def __exit__(self, *_):
+        self.target.forward = self.original_forward
+
+# Run the actual pipeline, capture what the model really sees
+with InputCapture(pipe.transformer) as cap:
+    pipe(prompt="a", num_inference_steps=1)  # one real forward pass
+
+# Export with captured inputs—Dim.AUTO discovers constraints
+ep = export(
+    pipe.transformer,
+    cap.captured_args,
+    cap.captured_kwargs,
+    dynamic_shapes={k: tuple(Dim.AUTO for _ in range(v.dim()))
+                    for k, v in flatten_tensors(cap.captured_kwargs)},
+)
+# ep.graph is ATen IR with real shapes, ready for s4
+```
+
+See also [torch-mlir](https://github.com/llvm/torch-mlir) and [optimum](https://huggingface.co/docs/optimum/index). We can't afford to special-case, not even with agent support, so we do unglamorous things like monkey-patch diffusers. This has the ancillary benefit of always working.
+
+Dynamo can't break it without breaking prod. Molly's got a rider.
+
+Part 2 goes deep on the compiler archaeology, and Part 3 covers deployment and fire team tactics.
+
+---
+
+## 6. The Meaning of Starlight
+
+> *"The eternal mystery of the world is its comprehensibility."*
+> — Albert Einstein
+
+Jeffers wrote about nature's indifference: the stars don't care if we see them, and engineering has the same quality.
+
+NVFP4 works because of arithmetic intensity and memory bandwidth, not because we want it to; reproducible builds matter because bit flips don't care about deadlines; the lattice doesn't negotiate.
+
+DeepSeek didn't negotiate with export controls—they built what they could with what they had, and the constraint revealed what was always possible.
+
+We're doing the same thing without the excuse, proving the thesis on purpose: the American lab that operates like it's under sanctions, because that's the only way to know what's real.
+
+**The inhuman quality of starlight, brilliant and sharp.**
+
+It was here before us, it will be here after, and the only question is whether we used it honestly.
+
+---
+
+*Next: [Part 2 — Jensen's Razor and The Polyhedral Villa Straylight](/plan/villa-straylight-papers#jensens-razor)*
+
+---
+
+*Weyl AI provides efficient inference research and deployment infrastructure, and Fleek is the platform that ships it.*

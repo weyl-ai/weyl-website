@@ -4,23 +4,15 @@
 import SocialIcons from '@components/ui/SocialIcons.astro';
 
 const footerLinks = {
-  Product: [
-    { label: 'Documentation', href: '/getting-started/' },
-    { label: 'Quick Start', href: '/getting-started/quick-start/' },
-    { label: 'API Reference', href: '/api/' },
-    { label: 'Models', href: '/api/models/' },
-  ],
-  Developers: [
-    { label: 'AI Workflows', href: '/workflows/' },
-    { label: 'Sync API', href: '/api/sync/' },
-    { label: 'Async API', href: '/api/async/' },
-    { label: 'WebSocket', href: '/api/websocket/' },
-  ],
   Resources: [
-    { label: 'Blog', href: '/blog/' },
-    { label: 'Posters', href: '/posters/' },
+    { label: '.plan', href: '/plan/' },
+    { label: 'Digital Research Lab', href: '/posters/' },
+    { label: 'Archive', href: '/archive/' },
     { label: 'Brand Kit', href: '/brand/' },
+  ],
+  Community: [
     { label: 'GitHub', href: 'https://github.com/weyl-ai' },
+    { label: 'Twitter', href: 'https://twitter.com/weyl_ai' },
   ],
 };
 ---
@@ -33,10 +25,10 @@ const footerLinks = {
       <div class="col-span-2">
         <a href="/" class="inline-block mb-4">
           <img src="/weyl-logo.svg" alt="WEYL" class="h-8 w-auto logo-dark" loading="lazy" />
-          <img src="/brand/weyl-full-logo-black.svg" alt="WEYL" class="h-8 w-auto logo-light" loading="lazy" />
+          <img src="/brand/weyl-monotile-black.svg" alt="WEYL" class="h-8 w-auto logo-light" loading="lazy" />
         </a>
         <p class="font-mono text-small text-text-muted max-w-xs mb-6">
-          The render layer for generative media
+          AI Research and Development
         </p>
         
         <!-- Social links using shared component -->

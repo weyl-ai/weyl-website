@@ -4,6 +4,8 @@ import BaseHead from '@/layouts/BaseHead.astro';
 import JsonLd from '@components/seo/JsonLd.astro';
 import LandingNav from '@components/landing/LandingNav.astro';
 import LandingFooter from '@components/landing/LandingFooter.astro';
+import ReadingTime from '@components/content/ReadingTime.astro';
+import LastUpdated from '@components/content/LastUpdated.astro';
 import { techArticleSchema } from '@lib/seo/schema';
 
 // Import global styles
@@ -19,16 +21,18 @@ interface Props {
   author: string;
   tags?: string[];
   image?: { src: string; alt: string } | undefined;
+  readingTime?: number;
 }
 
-const { 
-  title, 
-  description, 
-  pubDate, 
+const {
+  title,
+  description,
+  pubDate,
   updatedDate,
   author,
   tags = [],
-  image 
+  image,
+  readingTime
 } = Astro.props;
 
 // Use TechArticle schema for technical blog posts
@@ -45,9 +49,9 @@ const schema = techArticleSchema({
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
-    <BaseHead 
+    <BaseHead
       title={title}
       description={description}
       image={image?.src || '/og-blog.png'}
@@ -56,24 +60,34 @@ const schema = techArticleSchema({
       modifiedTime={updatedDate?.toISOString()}
     />
     <JsonLd schema={schema} />
+    <style is:global>
+      /* Force light theme logo display */
+      [data-theme="light"] .logo-dark {
+        display: none !important;
+      }
+
+      [data-theme="light"] .logo-light {
+        display: block !important;
+      }
+    </style>
   </head>
-  <body class="bg-bg-primary min-h-screen">
+  <body class="high-modernism-body">
     <LandingNav />
-    <article class="max-w-3xl mx-auto px-6 py-24 pt-32">
+    <article class="high-modernism-article">
       <header class="mb-12">
-        <a 
-          href="/blog" 
+        <a
+          href="/plan"
           class="font-mono text-small text-text-muted hover:text-brand-primary mb-6 inline-block transition-colors"
-          aria-label="Back to blog"
+          aria-label="Back to .plan"
         >
-          ← Back to blog
+          ← Back to .plan
         </a>
         
         <h1 class="font-display text-hero font-semibold tracking-wide text-text-primary mb-6">
           {title}
         </h1>
         
-        <div class="flex gap-4 text-caption text-text-muted mb-4">
+        <div class="flex gap-4 text-caption text-text-muted mb-4 flex-wrap items-center">
           <time datetime={pubDate.toISOString()}>
             {pubDate.toLocaleDateString('en-US', {
               year: 'numeric',
@@ -83,6 +97,18 @@ const schema = techArticleSchema({
           </time>
           <span aria-hidden="true">•</span>
           <span>{author}</span>
+          {readingTime && (
+            <>
+              <span aria-hidden="true">•</span>
+              <ReadingTime minutes={readingTime} />
+            </>
+          )}
+          {updatedDate && (
+            <>
+              <span aria-hidden="true">•</span>
+              <LastUpdated date={updatedDate} />
+            </>
+          )}
         </div>
         
         {tags.length > 0 && (
@@ -105,8 +131,52 @@ const schema = techArticleSchema({
 </html>
 
 <style is:global>
+  /* High Modernism Palette */
+  :root {
+    --hm-ground: #f4f1eb;
+    --hm-aged: #e8e4d9;
+    --hm-patina: #c9b896;
+    --hm-executive: #1a1a1a;
+    --hm-administration: #1a5276;
+    --hm-priority: #c41e3a;
+    --hm-operations: #2d5a27;
+    --hm-heritage: #8b7355;
+    --hm-gilt: #d4a017;
+  }
+
+  .high-modernism-body {
+    background: var(--hm-ground);
+    color: var(--hm-executive);
+    font-family: 'Helvetica Neue', 'Univers', 'Arial', 'Liberation Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .high-modernism-article {
+    max-width: 90rem;
+    margin: 0 auto;
+    padding: 6rem 3rem 4rem;
+  }
+
+  .high-modernism-article header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--hm-executive);
+  }
+
+  .high-modernism-article h1 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--hm-executive);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
   .prose {
-    color: var(--color-text-secondary);
+    color: var(--hm-executive);
   }
   
   .prose h1,
@@ -115,21 +185,23 @@ const schema = techArticleSchema({
   .prose h4,
   .prose h5,
   .prose h6 {
-    color: var(--color-text-primary);
-    font-family: var(--font-display);
-    letter-spacing: 0.025em;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: var(--hm-executive);
+    font-weight: 700;
   }
-  
+
   .prose h2 {
-    font-size: var(--text-headline);
+    font-size: 28px;
     margin-top: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
   }
-  
+
   .prose h3 {
-    font-size: var(--text-subhead);
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
+    font-size: 22px;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.005em;
   }
   
   .prose p {
@@ -137,31 +209,35 @@ const schema = techArticleSchema({
   }
   
   .prose a {
-    color: var(--color-brand-primary);
-    text-decoration: underline;
+    color: var(--hm-administration);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hm-administration);
+    transition: color 0.2s ease;
   }
-  
+
   .prose a:hover {
-    color: var(--color-brand-hover);
+    color: var(--hm-priority);
+    border-bottom-color: var(--hm-priority);
   }
-  
+
   .prose code {
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-sm);
-    padding: 0.125rem 0.375rem;
-    font-size: 0.875em;
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    background-color: var(--hm-aged);
+    color: var(--hm-executive);
+    border: 1px solid var(--hm-patina);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.9em;
   }
-  
+
   .prose pre {
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-    padding: 1rem;
+    background-color: var(--hm-aged);
+    border: 1px solid var(--hm-patina);
+    padding: 1.5rem;
     overflow-x: auto;
-    margin: 1.5rem 0;
+    margin: 2rem 0;
+    font-size: 14px;
   }
-  
+
   .prose pre code {
     background: none;
     border: none;
@@ -179,43 +255,59 @@ const schema = techArticleSchema({
   }
   
   .prose blockquote {
-    border-left: 4px solid var(--color-brand-primary);
-    padding-left: 1rem;
-    margin: 1.5rem 0;
-    color: var(--color-text-muted);
+    font-family: 'Georgia', 'Charter', 'Cambria', serif;
+    border-left: 4px solid var(--hm-heritage);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    color: var(--hm-heritage);
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  .prose strong {
+    color: var(--hm-executive);
+    font-weight: 700;
+  }
+
+  .prose em {
+    color: var(--hm-heritage);
     font-style: italic;
   }
-  
+
   .prose table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1.5rem 0;
+    margin: 2rem 0;
   }
-  
+
   .prose th,
   .prose td {
-    border: 1px solid var(--color-border-default);
-    padding: 0.75rem;
+    border: 1px solid var(--hm-patina);
+    padding: 0.75rem 1rem;
     text-align: left;
   }
-  
+
   .prose th {
-    background-color: var(--color-bg-surface);
-    font-weight: 600;
+    background-color: var(--hm-aged);
+    color: var(--hm-executive);
+    font-weight: 700;
+    letter-spacing: 0.02em;
   }
-  
+
   .prose hr {
     border: none;
-    border-top: 1px solid var(--color-border-default);
+    border-top: 2px solid var(--hm-patina);
     margin: 3rem 0;
   }
-  
+
   .prose img {
     width: 100%;
     height: auto;
-    border-radius: var(--radius-md);
-    margin: 1.5rem 0;
-    border: 1px solid var(--color-border-default);
+    margin: 2rem 0;
+    padding: 2rem;
+    background: #1a1f24;
+    border: 1px solid var(--hm-patina);
+    border-radius: 4px;
   }
 </style>
 

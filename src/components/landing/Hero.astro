@@ -1,46 +1,27 @@
 ---
 // src/components/landing/Hero.astro
-import Button from '@components/ui/Button.astro';
 ---
 
 <section class="relative min-h-screen flex items-center justify-center bg-bg-primary pt-16">
   <!-- Grid background -->
   <div class="absolute inset-0 bg-[linear-gradient(rgba(84,174,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(84,174,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
-  
+
   <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
     <div class="flex justify-center mb-12">
-      <img 
-        src="/weyl-logo.svg" 
-        alt="WEYL" 
+      <img
+        src="/weyl-logo.svg"
+        alt="WEYL"
         class="h-24 w-auto"
       />
     </div>
-    
-    <p class="font-mono text-subhead text-text-secondary mb-6">
+
+    <p class="font-mono text-subhead text-text-secondary mb-4">
       The render layer for generative media
     </p>
-    
-    <p class="font-mono text-body text-text-muted max-w-2xl mx-auto mb-12">
-      Inference infrastructure purpose-built for diffusion models on Blackwell silicon. 
-      Sub-100ms latency. NVFP4-native. Cost structures nobody else can match.
+
+    <p class="font-mono text-body text-text-muted">
+      AI Research and Development
     </p>
-    
-    <div class="flex flex-wrap justify-center gap-4">
-      <Button href="/getting-started/" variant="primary">
-        Get Started
-      </Button>
-      <Button href="https://github.com/weyl-ai" variant="outline">
-        View on GitHub
-      </Button>
-    </div>
-    
-    <div class="mt-16 font-mono text-caption text-text-subtle flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-0">
-      <span><span class="text-semantic-success">█</span> OPERATIONAL</span>
-      <span class="hidden sm:inline mx-4">|</span>
-      <span>latency: <span class="text-text-muted">47ms p99</span></span>
-      <span class="hidden sm:inline mx-4">|</span>
-      <span><span class="text-brand-primary">1,071 TFLOPS</span> sustained</span>
-    </div>
   </div>
 </section>
 
