@@ -9,15 +9,35 @@
   <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
     <div class="flex justify-center mb-8">
       <img
-        src="/weyl-logo.svg"
+        src="/brand/weyl-monotile-blue.svg"
         alt="WEYL"
-        class="h-24 w-auto"
+        class="h-24 w-auto logo-dark"
+      />
+      <img
+        src="/brand/weyl-monotile-black.svg"
+        alt="WEYL"
+        class="h-24 w-auto logo-light"
       />
     </div>
 
     <p class="font-mono text-body text-text-muted">
-      AI Research and Development
+      Weyl AI Research and Development
     </p>
   </div>
 </section>
+
+<style>
+  /* Show/hide logos based on theme */
+  .logo-light {
+    display: none !important;
+  }
+
+  :global([data-theme="light"]) .logo-dark {
+    display: none !important;
+  }
+
+  :global([data-theme="light"]) .logo-light {
+    display: block !important;
+  }
+</style>
 

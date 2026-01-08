@@ -2,7 +2,6 @@
 // src/layouts/Landing.astro
 import BaseHead from './BaseHead.astro';
 import JsonLd from '@components/seo/JsonLd.astro';
-import CalendlyBadge from '@components/ui/CalendlyBadge.astro';
 import LandingNav from '@components/landing/LandingNav.astro';
 import LandingFooter from '@components/landing/LandingFooter.astro';
 import SpeedInsights from '@/components/analytics/SpeedInsights.astro';
@@ -16,14 +15,12 @@ import '@/styles/typography.css';
 interface Props {
   title?: string;
   description?: string;
-  hideCalendly?: boolean;
   ogImage?: string;
 }
 
 const {
   title = 'Weyl',
   description = 'The render layer for generative media. Inference infrastructure for diffusion models with sub-100ms latency.',
-  hideCalendly = false,
   ogImage = '/og-default.png',
 } = Astro.props;
 ---
@@ -39,7 +36,6 @@ const {
     <LandingNav />
     <slot />
     <LandingFooter />
-    {!hideCalendly && <CalendlyBadge />}
     <SpeedInsights />
   </body>
 </html>
