@@ -3,6 +3,7 @@
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import Docs from '@/layouts/Docs.astro';
+import DocsHypermodern from '@/layouts/DocsHypermodern.astro';
 
 export const prerender = true;
 
@@ -20,12 +21,19 @@ interface Props {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
+
+// Determine layout based on language type
+// Functional languages use High Modernism (light, beige aesthetic)
+// Non-functional languages use Hypermodern (dark, cyber aesthetic)
+const functionalLanguages = ['nix', 'languages/haskell'];
+const isFunctional = functionalLanguages.some(lang => entry.slug.startsWith(lang));
+const Layout = isFunctional ? Docs : DocsHypermodern;
 ---
 
-<Docs
+<Layout
   title={entry.data.title}
   description={entry.data.description}
   category={entry.data.category}
 >
   <Content />
-</Docs>
+</Layout>

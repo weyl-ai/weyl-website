@@ -1,0 +1,258 @@
+---
+// src/layouts/DocsHypermodern.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import JsonLd from '@components/seo/JsonLd.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+import { techArticleSchema } from '@lib/seo/schema';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  category?: string;
+}
+
+const {
+  title,
+  description,
+  category
+} = Astro.props;
+
+// Use TechArticle schema for documentation
+const schema = techArticleSchema({
+  title,
+  description: description || title,
+  datePublished: new Date().toISOString(),
+  author: 'Weyl AI',
+  url: Astro.url.href,
+  keywords: category ? [category] : [],
+});
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <BaseHead
+      title={title}
+      description={description || title}
+      image="/og-docs.png"
+      type="article"
+    />
+    <JsonLd schema={schema} />
+  </head>
+  <body class="hypermodern-body">
+    <LandingNav />
+    <article class="hypermodern-article">
+      <header class="mb-12">
+        <a
+          href="/std"
+          class="font-mono text-small text-text-muted hover:text-brand-primary mb-6 inline-block transition-colors"
+          aria-label="Back to Weyl Standard"
+        >
+          ← Back to Weyl Standard
+        </a>
+
+        {category && (
+          <div class="mb-4">
+            <span class="px-2 py-1 bg-bg-surface border border-border text-text-muted text-caption rounded-sm uppercase tracking-wider">
+              {category}
+            </span>
+          </div>
+        )}
+
+        <h1 class="font-display text-hero font-semibold tracking-wide text-text-primary mb-6">
+          {title}
+        </h1>
+
+        {description && (
+          <p class="text-body text-text-secondary font-mono leading-relaxed">
+            {description}
+          </p>
+        )}
+      </header>
+
+      <div class="prose prose-invert max-w-none font-mono text-body text-text-secondary">
+        <slot />
+      </div>
+    </article>
+    <LandingFooter />
+  </body>
+</html>
+
+<style is:global>
+  /* Hypermodern Aesthetic - Dark, sleek, cyber */
+  .hypermodern-body {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .hypermodern-article {
+    max-width: 90rem;
+    margin: 0 auto;
+    padding: 6rem 3rem 4rem;
+  }
+
+  .hypermodern-article header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--color-brand-primary);
+  }
+
+  .hypermodern-article h1 {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hypermodern-article .prose {
+    color: var(--color-text-secondary);
+  }
+
+  .hypermodern-article .prose h1,
+  .hypermodern-article .prose h2,
+  .hypermodern-article .prose h3,
+  .hypermodern-article .prose h4,
+  .hypermodern-article .prose h5,
+  .hypermodern-article .prose h6 {
+    font-family: var(--font-display);
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .hypermodern-article .prose h2 {
+    font-size: 28px;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.5rem;
+  }
+
+  .hypermodern-article .prose h3 {
+    font-size: 22px;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.005em;
+    color: var(--color-brand-primary);
+  }
+
+  .hypermodern-article .prose p {
+    margin-bottom: 1.5rem;
+  }
+
+  .hypermodern-article .prose a {
+    color: var(--color-brand-primary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-brand-primary);
+    transition: color 0.2s ease;
+  }
+
+  .hypermodern-article .prose a:hover {
+    color: var(--color-brand-hover);
+    border-bottom-color: var(--color-brand-hover);
+  }
+
+  .hypermodern-article .prose code {
+    font-family: var(--font-mono);
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.9em;
+    border-radius: 3px;
+  }
+
+  .hypermodern-article .prose pre {
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 2rem 0;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  .hypermodern-article .prose pre code {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .hypermodern-article .prose ul,
+  .hypermodern-article .prose ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hypermodern-article .prose li {
+    margin-bottom: 0.5rem;
+  }
+
+  .hypermodern-article .prose blockquote {
+    border-left: 4px solid var(--color-brand-primary);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  .hypermodern-article .prose strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .hypermodern-article .prose em {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  .hypermodern-article .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+  }
+
+  .hypermodern-article .prose th,
+  .hypermodern-article .prose td {
+    border: 1px solid var(--color-border);
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+
+  .hypermodern-article .prose th {
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .hypermodern-article .prose hr {
+    border: none;
+    border-top: 2px solid var(--color-border);
+    margin: 3rem 0;
+  }
+
+  .hypermodern-article .prose img {
+    width: 100%;
+    height: auto;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+  }
+</style>
