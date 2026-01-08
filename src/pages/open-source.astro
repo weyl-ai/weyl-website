@@ -1,0 +1,266 @@
+---
+// src/pages/open-source.astro
+import BaseHead from '@/layouts/BaseHead.astro';
+import LandingNav from '@components/landing/LandingNav.astro';
+import LandingFooter from '@components/landing/LandingFooter.astro';
+import SpeedInsights from '@/components/analytics/SpeedInsights.astro';
+
+// Import global styles
+import '@/styles/tokens.css';
+import '@/styles/global.css';
+import '@/styles/typography.css';
+
+const title = 'Open Source Projects';
+const description = 'Weyl AI Open Source — public contributions to the computational infrastructure of modern software development.';
+const ogImage = '/og-default.png';
+
+// Open source projects data
+const projects = [
+  {
+    category: 'DEVELOPMENT TOOLS',
+    name: 'hacker-flake',
+    description: 'A Nix flake providing development environments for C++ compilation and debugging. Offers streamlined tooling with compiler flags optimized for competitive programming and low-level systems work, including integrated debugging with pwndbg and memory analysis capabilities.',
+    status: 'ACTIVE',
+    license: 'MIT',
+    repository: 'https://github.com/weyl-ai/hacker-flake',
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <BaseHead title={title} description={description} image={ogImage} />
+    <style is:global>
+      /* Force light theme logo display */
+      [data-theme="light"] .logo-dark {
+        display: none !important;
+      }
+
+      [data-theme="light"] .logo-light {
+        display: block !important;
+      }
+    </style>
+    <style>
+      /* High modernism styling for open source page */
+      body {
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        line-height: 1.6;
+      }
+
+      .page-header {
+        border-bottom: 2px solid var(--color-border-default);
+        padding-bottom: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .page-title {
+        font-family: var(--font-serif);
+        font-size: 2.5rem;
+        font-weight: normal;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.5rem;
+      }
+
+      .page-subtitle {
+        font-size: 0.875rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--color-heritage);
+      }
+
+      .page-intro {
+        max-width: 65ch;
+        margin-bottom: 4rem;
+        line-height: 1.8;
+      }
+
+      .project-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        margin-bottom: 2rem;
+        padding: 2rem;
+        transition: box-shadow 0.2s ease;
+      }
+
+      .project-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .project-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--color-bg-elevated);
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .project-category {
+        color: var(--color-administration);
+        font-weight: 600;
+      }
+
+      .project-badges {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .status-badge {
+        padding: 0.25rem 0.5rem;
+        background: var(--color-text-primary);
+        color: var(--color-bg-surface);
+        font-weight: 600;
+      }
+
+      .project-name {
+        font-family: var(--font-serif);
+        font-size: 1.5rem;
+        font-weight: normal;
+        margin-bottom: 1rem;
+        color: var(--color-text-primary);
+      }
+
+      .project-description {
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        color: var(--color-text-secondary);
+      }
+
+      .project-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-bg-elevated);
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+
+      .project-license {
+        color: var(--color-heritage);
+        text-transform: uppercase;
+      }
+
+      .repository-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        border: 1px solid var(--color-border-default);
+        color: var(--color-text-primary);
+        text-decoration: none;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        transition: all 0.2s ease;
+      }
+
+      .repository-link:hover {
+        background: var(--color-text-primary);
+        color: var(--color-bg-surface);
+        border-color: var(--color-text-primary);
+      }
+
+      .github-icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .monotile-icon {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        opacity: 0.15;
+      }
+
+      @media (max-width: 768px) {
+        .page-title {
+          font-size: 2rem;
+        }
+
+        .project-meta {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .project-footer {
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <LandingNav />
+
+    <!-- Watermark monotile -->
+    <svg class="monotile-icon" viewBox="0 0 172 118" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M31.4798 31.5351V67.9491L0 86.1561L18.1751 117.691H90.8755L109.051 86.1561L140.53 104.363L172.01 86.1561L153.835 54.621H117.485V18.207L86.0051 0L67.83 31.5351H31.4798Z" fill="currentColor"/>
+    </svg>
+
+    <!-- Main content -->
+    <main class="max-w-5xl mx-auto px-6 py-24 pt-32">
+      <!-- Header -->
+      <header class="page-header">
+        <h1 class="page-title">Open Source Projects</h1>
+        <p class="page-subtitle">Department of Public Works</p>
+      </header>
+
+      <!-- Introduction -->
+      <div class="page-intro">
+        Public contributions to the computational infrastructure of modern software development.
+        All projects are released under permissive licenses and maintained in accordance with community standards.
+      </div>
+
+      <!-- Project list -->
+      <section>
+        {projects.map((project) => (
+          <article class="project-card">
+            <div class="project-meta">
+              <div>
+                <span class="project-category">{project.category}</span>
+              </div>
+              <div class="project-badges">
+                <span class="status-badge">{project.status}</span>
+              </div>
+            </div>
+
+            <h2 class="project-name">{project.name}</h2>
+
+            <p class="project-description">{project.description}</p>
+
+            <div class="project-footer">
+              <span class="project-license">License: {project.license}</span>
+              <a href={project.repository} target="_blank" rel="noopener noreferrer" class="repository-link">
+                <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                View Repository
+              </a>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <!-- Footer note -->
+      <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--color-border-default); font-size: 0.75rem; color: var(--color-text-muted); text-align: center; letter-spacing: 0.05em;">
+        All projects are maintained by Weyl AI and the open source community. <br>
+        Contributions are welcome in accordance with each project's guidelines.
+      </footer>
+    </main>
+
+    <LandingFooter />
+    <SpeedInsights />
+  </body>
+</html>

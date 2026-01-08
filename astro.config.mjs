@@ -177,6 +177,7 @@ export default defineConfig({
         ThemeSelect: './src/components/overrides/ThemeSelect.astro',
         SocialIcons: './src/components/overrides/SocialIcons.astro',
         Head: './src/components/overrides/Head.astro',
+        Header: './src/components/overrides/Header.astro',
       },
       expressiveCode: {
         themes: ['github-dark', 'github-light'],
@@ -207,6 +208,13 @@ export default defineConfig({
         '@components': '/src/components',
         '@lib': '/src/lib',
       },
+    },
+    server: {
+      host: true,
+      allowedHosts: [
+        'ultraviolence.stonecat-alpha.ts.net',
+        '.ts.net', // Allow all Tailscale hostnames
+      ],
     },
   },
 });
