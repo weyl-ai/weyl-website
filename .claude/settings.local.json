@@ -18,7 +18,8 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "WebFetch(domain:www.weyl.ai)"
     ]
   }
 }
