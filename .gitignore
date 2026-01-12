@@ -44,3 +44,5 @@ Thumbs.db
 .font-build/
 
 .vercel
+
+.direnv
