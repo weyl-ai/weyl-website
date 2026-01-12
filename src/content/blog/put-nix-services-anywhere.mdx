@@ -6,6 +6,10 @@ author: "baileylu"
 tags: ["Nix", "Rust", "Container", "NixOS"]
 ---
 
+**TL;DR:** Modular services give Nix a portable way to describe long-running processes once and reuse them everywhere. `Nimi` is a tiny Rust process manager that runs those definitions outside NixOS. Both are early and evolving, but the promise is one service definition that you can bring anywhere.
+
+---
+
 Currently, when looking to configure a long-running process with [Nix](https://nixos.org/), you have an almost endless amount of options to choose from.
 
 Each of them require rewriting the same service definition over and over again if you want to run it in multiple places. Some of this list you may have seen includes:
@@ -27,7 +31,8 @@ Luckily, as of Nix `v25.11`, we now have a brand new generic specification which
 
 Modular services, in their current version, represent the culmination of a couple of years of bikeshedding in PR comments. Starting with [this RFC](https://github.com/NixOS/rfcs/pull/163), where discussion began on an implementation of a "Portable Service Layer", which proposed using a generator function primitive `createManagedProcess` to produce some kind of config file which could be translated into configuration for other process managers.
 
-After a period of discussion and the original maintainer seemingly giving up, this idea eventually evolved into [this PR](https://github.com/NixOS/nixpkgs/pull/372170), finally introducing an abstraction for writing portable Nix services using a neat trick with the module type [`types.attrsOf`](https://noogle.dev/f/lib/types/attrsOf) [`types.submodule <services submodule def>`](https://noogle.dev/f/lib/types/submodule) in order to make modules extensible.
+After a period of discussion and the original maintainer seemingly giving up, this idea eventually evolved into [this PR](https://github.com/NixOS/nixpkgs/pull/372170), finally introducing an abstraction for writing portable Nix services. The key trick uses the module types [`types.attrsOf`](https://noogle.dev/f/lib/types/attrsOf) and [`types.submodule <services submodule def>`](https://noogle.dev/f/lib/types/submodule) to make the service definitions extensible.
+In practice, this means a service definition can be evaluated inside any module system without rewriting it.
 
 > `types` refers to [`lib.types`](https://noogle.dev/q?term=lib.types), from `nixpkgs`'s `lib`
 
@@ -114,6 +119,8 @@ Having a generic way to define processes is all well and good, but if you can't 
 
 `Nimi` is a **standalone minimal process manager executable** which is written in Rust and designed from the ground up to parse and run these modular services bindings directly, using its own custom module system to host both services configuration and configuration of the actual `Nimi` application itself. Unlike ad-hoc wrappers or one-off `systemd` glue, it consumes the modular services spec directly so you do not maintain parallel adapters.
 
+Because the modular services specification is still experimental, `Nimi` should also be considered experimental.
+
 `Nimi` configurations are defined as a simple configuration wrapper around the binary itself for ultimate portability, meaning you can run a whole host of different things from the same `Nimi` configuration and also benefit from a lot of future efforts from `nixpkgs` maintainers to introduce new modular services definitions instead of manually creating adapters to different things you might configure with Nix (i.e. if you've ever wanted to run a service that only exists in `NixOS` at the `home-manager` level).
 
 Some things you may want to use `Nimi` for are:
@@ -182,7 +189,7 @@ What you actually get out of this depends on the host module system, have a look
 
 If you're tired of maintaining parallel service definitions across `NixOS`, `home-manager`, and your dev environments, give `Nimi` a spin. Start with something simple - maybe that Postgres instance you spin up for local development, and see how it feels to have one definition that works everywhere. 
 
-We'd love to hear what you build with it.
+We'd love to hear what you build with it. Since the modular services spec is still experimental, expect `Nimi` to evolve alongside it. If you're ready to try it, the quickest path is the [Nimi docs](https://weyl-ai.github.io/nimi/).
 
 ---
 
