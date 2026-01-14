@@ -27,14 +27,20 @@ Add weyl-std to your flake inputs:
 
       # weyl-std configuration
       weyl-std = {
-        nixpkgs.cuda.enable = true;
         formatter.enable = true;
         devshell.enable = true;
       };
 
-      perSystem = { pkgs, ... }: {
-        packages.default = pkgs.hello;
-      };
+      perSystem = { config, pkgs, ... }:
+        let
+          P = config.weyl.prelude;
+        in {
+          packages.default = P.stdenv.default {
+            pname = "my-app";
+            version = "1.0";
+            src = ./.;
+          };
+        };
     };
 }
 ```
@@ -49,71 +55,80 @@ Import everything at once:
 imports = [ weyl-std.flakeModules.default ];
 ```
 
-Includes: formatter, docs, nixpkgs config, stdenvs, devshell.
+Includes: formatter, docs, nixpkgs config, overlays, devshell, prelude.
 
-### À La Carte
+### A La Carte
 
 Pick what you need:
 
 ```nix
 imports = [
   weyl-std.flakeModules.formatter  # treefmt-nix with opinionated defaults
-  weyl-std.flakeModules.nixpkgs    # CUDA-enabled nixpkgs config
-  weyl-std.flakeModules.std        # stdenvs + overlays
+  weyl-std.flakeModules.nixpkgs    # nixpkgs config
+  weyl-std.flakeModules.std        # overlays (includes prelude + nvidia-sdk)
+  weyl-std.flakeModules.prelude    # prelude flake-module only
   weyl-std.flakeModules.devshell   # Development shell
   weyl-std.flakeModules.docs       # Documentation generation
 ];
 ```
 
-## Using Overlays
+## The Weyl Prelude
 
-Get access to weyl-std packages and stdenvs:
+Access the prelude via `config.weyl.prelude`:
 
 ```nix
-{
-  perSystem = { system, ... }: {
-    _module.args.pkgs = import nixpkgs {
-      inherit system;
-      overlays = [ weyl-std.overlays.default ];
-      config = {
-        allowUnfree = true;
-        cudaSupport = true;
-      };
+perSystem = { config, ... }:
+  let
+    P = config.weyl.prelude;
+  in {
+    # Functional library
+    example = P.map (x: x * 2) [ 1 2 3 ];  # [ 2 4 6 ]
+
+    # Stdenvs
+    packages.my-app = P.stdenv.default {
+      pname = "my-app";
+      version = "1.0";
+      src = ./.;
+    };
+
+    # Language toolchains
+    packages.py-app = P.python.app {
+      pname = "py-app";
+      version = "1.0";
+      src = ./.;
     };
   };
-}
 ```
-
-Now you have:
-- `pkgs.weyl-stdenv` — clang + C++23 + glibc
-- `pkgs.weyl-stdenv-cuda` — CUDA-enabled builds
-- `pkgs.weyl-cross.*` — Cross-compilation targets
-- `pkgs.weyl.*` — weyl-std packages
 
 ## Using Stdenvs
 
 ### Basic Build
 
 ```nix
-perSystem = { pkgs, ... }: {
-  packages.my-app = pkgs.weyl-stdenv.mkDerivation {
-    name = "my-app";
-    src = ./.;
-    buildPhase = ''
-      $CXX -o app src/main.cpp
-      install -D app $out/bin/app
-    '';
+perSystem = { config, ... }:
+  let
+    P = config.weyl.prelude;
+  in {
+    packages.my-app = P.stdenv.default {
+      pname = "my-app";
+      version = "1.0";
+      src = ./.;
+      build-phase = ''
+        $CXX -o app src/main.cpp
+        install -D app $out/bin/app
+      '';
+    };
   };
-}
 ```
 
-### CUDA Build
+### NVIDIA Build
 
 ```nix
-packages.cuda-kernel = pkgs.weyl-stdenv-cuda.mkDerivation {
-  name = "cuda-kernel";
+packages.nvidia-kernel = P.stdenv.nvidia {
+  pname = "nvidia-kernel";
+  version = "1.0";
   src = ./.;
-  buildPhase = ''
+  build-phase = ''
     $CXX -o kernel src/kernel.cu
     install -D kernel $out/bin/kernel
   '';
@@ -123,8 +138,9 @@ packages.cuda-kernel = pkgs.weyl-stdenv-cuda.mkDerivation {
 ### Static Binary
 
 ```nix
-packages.static-tool = pkgs.weyl-stdenv-musl-static.mkDerivation {
-  name = "static-tool";
+packages.static-tool = P.stdenv.portable {
+  pname = "static-tool";
+  version = "1.0";
   src = ./.;
   # Result: single static binary, runs anywhere
 };
@@ -135,12 +151,12 @@ packages.static-tool = pkgs.weyl-stdenv-musl-static.mkDerivation {
 Build for ARM from x86_64:
 
 ```nix
-packages.arm-binary = pkgs.weyl-cross.aarch64.mkDerivation {
+packages.arm-binary = P.cross.aarch64 {
   name = "arm-app";
   src = ./.;
 };
 
-packages.grace-hopper = pkgs.weyl-cross.grace.mkDerivation {
+packages.grace-hopper = P.cross.grace {
   name = "grace-app";
   src = ./.;
   # Targets aarch64 + Hopper GPU
@@ -149,13 +165,13 @@ packages.grace-hopper = pkgs.weyl-cross.grace.mkDerivation {
 
 ## Configuration Options
 
-### CUDA Support
+### Devshell
 
 ```nix
-weyl-std.nixpkgs.cuda = {
+weyl-std.devshell = {
   enable = true;
-  capabilities = [ "8.9" "9.0" ];  # Ada, Blackwell
-  forwardCompat = false;
+  nvidia.enable = true;  # Include NVIDIA SDK
+  extra-packages = pkgs: [ pkgs.ripgrep ];
 };
 ```
 
@@ -164,104 +180,50 @@ weyl-std.nixpkgs.cuda = {
 ```nix
 weyl-std.formatter = {
   enable = true;
-  indentWidth = 2;
-  lineLength = 100;
-  enableCheck = true;  # Add to flake checks
+  line-length = 100;
+  indent-width = 2;
 };
 ```
 
-### Development Shell
+## Direct Overlay Access
+
+If you need direct access via pkgs:
 
 ```nix
-weyl-std.devshell = {
-  enable = true;
-  cuda.enable = true;
-  extraPackages = pkgs: [ pkgs.ripgrep pkgs.fd ];
-  extraShellHook = ''
-    echo "Custom shell initialization"
-  '';
-};
-```
-
-### Documentation
-
-```nix
-weyl-std.docs = {
-  enable = true;
-  title = "My Project";
-  description = "Comprehensive documentation";
-  theme = "ono-sendai";  # or "maas" for light mode
-  modules = [ ./nix/my-module.nix ];  # Extract options via NDG
-};
-```
-
-## Using the Debuggable Universe
-
-Rebuild dependencies with debug symbols:
-
-```nix
-let
-  # Regular nixpkgs
-  pkgs = import nixpkgs {
-    inherit system;
-    overlays = [ weyl-std.overlays.default ];
-  };
-
-  # Everything with RelWithDebInfo
-  weyl-pkgs = import nixpkgs {
-    inherit system;
-    overlays = [ weyl-std.overlays.posture ];
-  };
-in
-{
-  devShells.debug = pkgs.mkShell {
-    packages = [
-      weyl-pkgs.ffmpeg    # ffmpeg with full debug symbols
-      weyl-pkgs.opencv    # opencv with full debug symbols
-      weyl-pkgs.boost     # boost with full debug symbols
-    ];
-  };
-}
-```
-
-## Library Functions
-
-Access utility functions:
-
-```nix
-let
-  inherit (weyl-std.lib) mkCudaPackage mkStaticBinary;
-in
-{
-  packages.cuda-app = mkCudaPackage {
-    name = "cuda-app";
+perSystem = { pkgs, ... }: {
+  # Via overlay (pkgs must have weyl-std overlay applied)
+  packages.my-app = pkgs.weyl.stdenv.default {
+    pname = "my-app";
+    version = "1.0";
     src = ./.;
-    cudaCapabilities = [ "8.9" ];
   };
-}
+};
 ```
 
-## Templates
+The overlay provides:
 
-Bootstrap new projects:
+- `pkgs.weyl.prelude` — Functional library
+- `pkgs.weyl.stdenv.*` — Build environments
+- `pkgs.weyl.cross.*` — Cross-compilation targets
+- `pkgs.weyl.platform` — Platform detection
+- `pkgs.weyl.gpu` — GPU architectures
+- `pkgs.weyl.the-law` — Build flags
 
-```bash
-# Standard project
-nix flake init -t github:weyl-ai/weyl-std
+## What's in the Prelude
 
-# CUDA/ML project
-nix flake init -t github:weyl-ai/weyl-std#cuda
-
-# Minimal (just nixpkgs config)
-nix flake init -t github:weyl-ai/weyl-std#minimal
-```
-
-## Philosophy
-
-Weyl Standard follows these principles:
-
-- **Explicit over implicit** — No magic, clear dependencies
-- **Reproducible** — Pinned inputs, deterministic builds
-- **Composable** — Use what you need, ignore the rest
-- **Type-safe** — Module system catches configuration errors
-- **Debuggable** — Full symbols, frame pointers, no stripping
+| Category | Examples |
+|----------|----------|
+| Fundamentals | `id`, `const`, `compose`, `pipe`, `fix` |
+| Lists | `map`, `filter`, `fold`, `zip`, `sort` |
+| Attrs | `map-attrs`, `filter-attrs`, `merge`, `keys` |
+| Strings | `split`, `join`, `trim`, `replace` |
+| Maybe | `maybe`, `from-maybe`, `cat-maybes` |
+| Either | `left`, `right`, `either`, `from-right` |
+| Comparison | `eq`, `lt`, `min`, `max`, `clamp` |
+| Arithmetic | `add`, `sub`, `mul`, `div`, `sum` |
+| Types | `is-list`, `is-string`, `typeof` |
+| Platform | `platform.current`, `platform.is-linux` |
+| GPU | `gpu.sm_120`, `gpu.supports-fp8` |
+| Stdenv | `stdenv.default`, `stdenv.portable` |
+| Cross | `cross.grace`, `cross.jetson` |
+| Languages | `python.build`, `rust.build`, `cpp.bin` |
