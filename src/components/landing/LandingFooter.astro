@@ -9,10 +9,14 @@ const footerLinks = {
     { label: 'Digital Research Lab', href: '/posters/' },
     { label: 'Archive', href: '/archive/' },
     { label: 'Brand Kit', href: '/brand/' },
+    { label: 'Fleek', href: 'https://fleek.sh' },
   ],
   Community: [
     { label: 'GitHub', href: 'https://github.com/weyl-ai' },
     { label: 'Twitter', href: 'https://twitter.com/weyl_ai' },
+    { label: 'Discord', href: 'https://discord.gg/zYZ4MMZG' },
+    { label: 'YouTube', href: 'https://www.youtube.com/@weyl-ai' },
+    { label: 'Email', href: 'mailto:info@weyl.ai' },
   ],
 };
 ---
@@ -23,12 +27,22 @@ const footerLinks = {
     <div class="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
       <!-- Logo and tagline -->
       <div class="col-span-2">
-        <a href="/" class="inline-block mb-4">
-          <img src="/brand/weyl-monotile-blue.svg" alt="WEYL" class="h-8 w-auto logo-dark" loading="lazy" />
-          <img src="/brand/weyl-monotile-black.svg" alt="WEYL" class="h-8 w-auto logo-light" loading="lazy" />
-        </a>
-        <p class="font-mono text-small text-text-muted max-w-xs mb-6">
+        <div class="flex items-center gap-3 mb-4">
+          <a href="/">
+            <img src="/brand/weyl-monotile-blue.svg" alt="WEYL" class="h-8 w-auto logo-dark" loading="lazy" />
+            <img src="/brand/weyl-monotile-black.svg" alt="WEYL" class="h-8 w-auto logo-light" loading="lazy" />
+          </a>
+          <span class="text-text-muted/30">·</span>
+          <a href="https://fleek.sh" target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity" title="Fleek">
+            <img src="/brand/fleek-bolt.svg" alt="Fleek" class="h-10 w-auto fleek-dark" loading="lazy" />
+            <img src="/brand/fleek-bolt-dark.svg" alt="Fleek" class="h-10 w-auto fleek-light" loading="lazy" />
+          </a>
+        </div>
+        <p class="font-mono text-small text-text-muted max-w-xs mb-1">
           Weyl AI Research and Development
+        </p>
+        <p class="font-mono text-micro text-text-muted/60 mb-6">
+          A <a href="https://fleek.sh" target="_blank" rel="noopener noreferrer" class="hover:text-brand-primary transition-colors">Fleek</a> research lab
         </p>
         
         <!-- Social links using shared component -->
@@ -75,15 +89,18 @@ const footerLinks = {
 
 <style>
   /* Show/hide logos based on theme */
-  .logo-light {
+  .logo-light,
+  .fleek-light {
     display: none !important;
   }
 
-  :global([data-theme="light"]) .logo-dark {
+  :global([data-theme="light"]) .logo-dark,
+  :global([data-theme="light"]) .fleek-dark {
     display: none !important;
   }
 
-  :global([data-theme="light"]) .logo-light {
+  :global([data-theme="light"]) .logo-light,
+  :global([data-theme="light"]) .fleek-light {
     display: block !important;
   }
 </style>
