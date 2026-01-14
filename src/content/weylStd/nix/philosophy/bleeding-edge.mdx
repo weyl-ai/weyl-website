@@ -1,0 +1,83 @@
+---
+title: "The Bleeding Edge"
+description: "We do not use what is approved"
+category: "philosophy"
+order: 1
+---
+
+# The Bleeding Edge
+
+<div style={{display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", alignItems: "flex-end", margin: "2rem 0"}}>
+  <img src="https://media.weyl.ai/outlawed.png" alt="Outlawed" style={{height: "200px", width: "auto"}} />
+  <img src="https://media.weyl.ai/brand-new.png" alt="Brand New" style={{height: "200px", width: "auto"}} />
+  <img src="https://media.weyl.ai/2026-01-13_23-22-10.png" alt="Conklin" style={{height: "200px", width: "auto"}} />
+</div>
+
+## The Rule
+
+**We do not use what is approved. We use what we can hack, bypass, upgrade, workaround, and reverse engineer.**
+
+This is non-negotiable. Within the letter of the law and keeping our word to our partners and customers, we are allergic to what is publicly available. By the time something is "stable" and "recommended," it is already obsolete.
+
+## What This Means
+
+| Approved | Weyl |
+|----------|------|
+| C++20 | C++23 |
+| CUDA 12 | CUDA 13 |
+| Hopper (sm_90) | Blackwell (sm_120) |
+| FP8 | NVFP4 |
+| GCC 13 | GCC 15 |
+| Clang 17 | Clang 21 |
+| "Wait for the stable release" | "Build from main" |
+
+## Why
+
+1. **The future is already here.** It's just not evenly distributed. We distribute it.
+
+2. **Lead time is everything.** By the time your competitors adopt what's "stable," you should be two generations ahead.
+
+3. **Bugs are features.** Early access means early discovery. We find the edge cases before they find us in production.
+
+4. **The docs lie.** The only truth is the source. If you're not reading compiler commits, you're not paying attention.
+
+5. **Stability is stagnation.** "Battle-tested" means "old." We test our own battles.
+
+## The Covenant
+
+This aggression toward the approved is bounded by absolute integrity.
+
+There is no tension here. We push every technical boundary while honoring every commitment. The same discipline that drives us to the bleeding edge demands that we keep our word. Integrity is not a constraint on what we do — it is the foundation that makes it possible.
+
+- **Our word is law.** Commitments to partners and customers are sacred. Period. No exceptions. No "we had to move fast." If we said it, we do it.
+- **We honor agreements.** Licenses, contracts, NDAs. The letter and the spirit. Hacking means finding what's possible within the rules, not breaking them.
+- **We ship.** Bleeding edge is not an excuse for not delivering. If anything, it demands more rigor, not less.
+- **We document.** What we learn, we share. The frontier expands for everyone.
+
+The moment integrity becomes negotiable, everything else falls apart. You cannot operate at the edge if people cannot trust you.
+
+## In Practice
+
+```nix
+# Wrong: Using what's "recommended"
+pkgs.cudaPackages_12  # Outlawed
+pkgs.gcc13            # Outlawed  
+"sm_90"               # Outlawed
+
+# Right: Using what's next
+pkgs.cuda-packages_13  # Yes
+pkgs.gcc15             # Yes
+"sm_120"               # Yes
+```
+
+The `nvidia-sdk` in weyl-std is `cuda-packages_13`. No fallbacks. No "or use 12 if 13 isn't available." If it's not available, we make it available.
+
+## The Test
+
+Before merging any dependency choice, ask:
+
+1. Is there a newer version that exists but isn't "officially supported" yet?
+2. Can we make it work anyway?
+3. What do we learn by being first?
+
+If you're comfortable with your toolchain choices, you're behind.
