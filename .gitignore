@@ -46,3 +46,7 @@ Thumbs.db
 .vercel
 
 .direnv
+.nixd.json
+.nil.toml
+.devshell
+result
