@@ -1,0 +1,28 @@
+/* TEAM */
+Company: Weyl AI Labs
+Site: https://weyl.ai
+Location: San Juan, PR
+Contact: info@weyl.ai
+Twitter: @weyl_ai
+GitHub: github.com/weyl-ai
+
+/* THANKS */
+Fleek - Parent company and research lab
+Black Forest Labs - FLUX models
+NVIDIA - Blackwell architecture
+Nix Community - Infrastructure tooling
+
+/* SITE */
+Last update: 2026-01-20
+Language: English
+Standards: HTML5, CSS3, TypeScript
+Framework: Astro
+Hosting: Vercel
+CDN: Vercel Edge Network
+
+/* AI */
+LLM Optimization: Yes
+llms.txt: https://weyl.ai/llms.txt
+llms-full.txt: https://weyl.ai/llms-full.txt
+agents.md: https://weyl.ai/agents.md
+OpenAPI: https://weyl.ai/openapi.json

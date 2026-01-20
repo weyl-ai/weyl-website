@@ -1,105 +1,96 @@
+// src/pages/llms.txt.ts
+// Standard llms.txt file for LLM discovery
+// Spec: https://llmstxt.org/
+
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async () => {
-  const baseUrl = 'https://weyl.ai';
+  const content = `# Weyl
 
-  // Build structured sections based on sidebar organization
-  const sections = {
-    'Getting Started': [
-      { slug: 'getting-started', title: 'Introduction', desc: 'Get started with Weyl inference infrastructure' },
-      { slug: 'getting-started/quick-start', title: 'Quick Start', desc: 'Get up and running in 5 minutes' },
-      { slug: 'getting-started/auth', title: 'Authentication', desc: 'Set up your API keys' },
-    ],
-    'AI Workflows': [
-      { slug: 'workflows', title: 'AI Workflows Overview', desc: 'Generate images in Cursor, Claude, v0, Lovable, and Bolt' },
-      { slug: 'workflows/cursor', title: 'Cursor IDE', desc: 'AI image generation in Cursor IDE for vibe coding' },
-      { slug: 'workflows/claude', title: 'Claude Projects', desc: 'Claude Projects and MCP integration for image generation' },
-      { slug: 'workflows/v0', title: 'v0.dev', desc: 'Add AI image generation to v0.dev components' },
-      { slug: 'workflows/lovable', title: 'Lovable', desc: 'Full-stack apps with AI image generation on Lovable.dev' },
-      { slug: 'workflows/bolt', title: 'Bolt.new', desc: 'Rapid prototyping with AI images in Bolt.new' },
-    ],
-    'API Overview': [
-      { slug: 'api', title: 'API Overview', desc: 'Generative media at the speed of thought' },
-      { slug: 'api/concepts', title: 'Core Concepts', desc: 'Understanding model families, backends, and formats' },
-      { slug: 'api/authentication', title: 'API Authentication', desc: 'Authentication methods and best practices' },
-    ],
-    'Sync Tier': [
-      { slug: 'api/sync', title: 'Sync Overview', desc: 'Real-time generation with dedicated capacity' },
-      { slug: 'api/sync/video', title: 'Video Generation', desc: 'Sync video generation endpoints' },
-      { slug: 'api/sync/image', title: 'Image Generation', desc: 'Sync image generation endpoints' },
-      { slug: 'api/sync/capacity', title: 'Capacity Management', desc: 'Check capacity and handle 503 responses' },
-    ],
-    'Async Tier': [
-      { slug: 'api/async', title: 'Async Overview', desc: 'Queue-backed generation for cost optimization' },
-      { slug: 'api/async/queue', title: 'Queue Submission', desc: 'Submit jobs to the async queue' },
-      { slug: 'api/async/jobs', title: 'Job Management', desc: 'Poll, cancel, and manage async jobs' },
-      { slug: 'api/async/sse', title: 'Server-Sent Events', desc: 'Real-time job updates via SSE' },
-    ],
-    'Models': [
-      { slug: 'api/models', title: 'Models Overview', desc: 'Available models and capabilities' },
-      { slug: 'api/models/flux', title: 'FLUX Models', desc: 'Black Forest Labs FLUX.1 and FLUX.2' },
-      { slug: 'api/models/zimage', title: 'Z-Image Turbo', desc: 'Alibaba Tongyi Z-Image models' },
-      { slug: 'api/models/wan', title: 'WAN Video', desc: 'WAN 2.2 video generation' },
-      { slug: 'api/models/formats', title: 'Format Reference', desc: 'Available dimensions and aspect ratios' },
-      { slug: 'api/models/backends', title: 'Backend Comparison', desc: 'nunchaku, torch, and tensorrt backends' },
-    ],
-    'Advanced': [
-      { slug: 'api/advanced/samplers', title: 'Samplers', desc: 'Sampling methods and configuration' },
-      { slug: 'api/advanced/schedulers', title: 'Schedulers', desc: 'Noise scheduling strategies' },
-      { slug: 'api/advanced/guidance', title: 'Guidance Tuning', desc: 'CFG and guidance scale optimization' },
-      { slug: 'api/advanced/loras', title: 'LoRA Adapters', desc: 'Using LoRA for style and concept injection' },
-      { slug: 'api/advanced/detail', title: 'Detail Enhancement', desc: 'Techniques for improving output quality' },
-    ],
-    'WebSocket': [
-      { slug: 'api/websocket', title: 'WebSocket Overview', desc: 'Real-time bidirectional communication' },
-      { slug: 'api/websocket/sync', title: 'Sync WebSocket', desc: 'Streaming sync tier generation' },
-      { slug: 'api/websocket/async', title: 'Async WebSocket', desc: 'Job updates via WebSocket' },
-      { slug: 'api/websocket/protocol', title: 'Protocol Reference', desc: 'WebSocket message format and events' },
-    ],
-    'Reference': [
-      { slug: 'api/reference/requests', title: 'Request Schemas', desc: 'Complete request body schemas' },
-      { slug: 'api/reference/responses', title: 'Response Schemas', desc: 'Response formats and CDN headers' },
-      { slug: 'api/reference/types', title: 'Type Reference', desc: 'TypeScript type definitions' },
-      { slug: 'api/reference/errors', title: 'Error Reference', desc: 'Error codes and troubleshooting' },
-    ],
-    'Infrastructure': [
-      { slug: 'api/infrastructure/uploads', title: 'Image Uploads', desc: 'Upload large images for stable URLs' },
-      { slug: 'api/infrastructure/discovery', title: 'Model Discovery', desc: 'List available models dynamically' },
-      { slug: 'api/infrastructure/aliases', title: 'Model Aliases', desc: 'HuggingFace model ID resolution' },
-    ],
-  };
+> Weyl is purpose-built inference infrastructure for generative media. Sub-100ms latency for diffusion models on NVIDIA Blackwell with FP4 precision.
 
-  // Build the llms.txt content
-  let content = `# Weyl
+Weyl AI is a Fleek research lab building next-generation AI infrastructure. We specialize in low-latency generative media APIs, Nix-based GPU compute infrastructure, and developer tooling for AI-native workflows.
 
-> Weyl is purpose-built inference infrastructure for generative media. We provide sub-100ms latency for diffusion models running on Blackwell architecture with FP4 precision.
+## What We Do
 
-Key capabilities:
-- **Low Latency**: Sub-100ms p99 latency with optimized CUDA kernels
-- **Cost Optimized**: FP4 quantization delivers 4x throughput improvement
-- **Dual Tiers**: Sync for real-time, Async for cost optimization
-- **Advanced Models**: FLUX.2, FLUX.1, Z-Image Turbo, WAN Video
+- **Inference API**: Real-time image and video generation with FLUX.2, FLUX.1, Z-Image Turbo, WAN Video
+- **AI Workflows**: Native integration with Cursor, Claude, v0, Lovable, and Bolt.new
+- **Open Source**: nix2gpu, nimi, hacker-flake - infrastructure for modern GPU compute
+- **Research**: Papers on distributed systems and AI infrastructure
 
+## Quick Links
+
+- Homepage: https://weyl.ai
+- API Documentation: https://weyl.ai/api/
+- Request Access: https://weyl.ai/request-access/
+- Blog: https://weyl.ai/plan/
+- Open Source: https://weyl.ai/open-source/
+- Weyl Standard: https://weyl.ai/std/
+
+## For AI Agents
+
+- Full Content: https://weyl.ai/llms-full.txt
+- Agent Instructions: https://weyl.ai/agents.md
+- Structured Index: https://weyl.ai/docs.json
+- AI Sitemap: https://weyl.ai/ai-sitemap.xml
+- OpenAPI Spec: https://weyl.ai/openapi.json
+
+## Documentation
+
+### Getting Started
+- [Introduction](https://weyl.ai/getting-started/): Get started with Weyl inference infrastructure
+- [Quick Start](https://weyl.ai/getting-started/quick-start/): Get up and running in 5 minutes
+- [Authentication](https://weyl.ai/getting-started/auth/): Set up your API keys
+
+### AI Workflows
+- [Overview](https://weyl.ai/workflows/): Generate images in Cursor, Claude, v0, Lovable, and Bolt
+- [Cursor IDE](https://weyl.ai/workflows/cursor/): AI image generation for vibe coding
+- [Claude Projects](https://weyl.ai/workflows/claude/): MCP integration for image generation
+- [v0.dev](https://weyl.ai/workflows/v0/): AI image generation in v0 components
+- [Lovable](https://weyl.ai/workflows/lovable/): Full-stack apps with AI images
+- [Bolt.new](https://weyl.ai/workflows/bolt/): Rapid prototyping with AI images
+
+### API Reference
+- [API Overview](https://weyl.ai/api/): Generative media at the speed of thought
+- [Core Concepts](https://weyl.ai/api/concepts/): Model families, backends, and formats
+- [Sync Tier](https://weyl.ai/api/sync/): Real-time generation with dedicated capacity
+- [Async Tier](https://weyl.ai/api/async/): Queue-backed generation for cost optimization
+- [Models](https://weyl.ai/api/models/): FLUX, Z-Image, WAN and capabilities
+- [WebSocket](https://weyl.ai/api/websocket/): Real-time bidirectional communication
+
+### Weyl Standard
+- [Overview](https://weyl.ai/std/): Engineering standards and best practices
+- [Nix Guides](https://weyl.ai/std/nix/guides/): Comprehensive Nix tutorials
+- [Languages](https://weyl.ai/std/languages/): TypeScript, Python, Rust, Haskell, Bash, C++
+
+### Open Source Projects
+- [nix2gpu](https://github.com/fleek-sh/nix2gpu): Nix containers for GPU markets (vast.ai, runpod)
+- [nimi](https://github.com/weyl-ai/nimi): Lightweight PID 1 process manager for containers
+- [hacker-flake](https://github.com/weyl-ai/hacker-flake): Nix development environments for C++
+
+### Research Papers
+- [Hallway Hypothesis](https://weyl.ai/papers/hallway-hypothesis.pdf)
+- [Landauer Hypothesis](https://weyl.ai/papers/landauer-hypothesis.pdf)
+- [Lattice Hypothesis](https://weyl.ai/papers/lattice-hypothesis.pdf)
+
+## Optional
+
+For expanded content including full page text, see: https://weyl.ai/llms-full.txt
+
+## Contact
+
+- GitHub: https://github.com/weyl-ai
+- Twitter: https://twitter.com/weyl_ai
+- Discord: https://discord.gg/weyl
+- Email: info@weyl.ai
 `;
-
-  // Add each section
-  for (const [sectionTitle, items] of Object.entries(sections)) {
-    content += `## ${sectionTitle}\n\n`;
-    for (const item of items) {
-      const url = `${baseUrl}/${item.slug}/`;
-      content += `- [${item.title}](${url}): ${item.desc}\n`;
-    }
-    content += '\n';
-  }
 
   return new Response(content, {
     status: 200,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
+      'X-Robots-Tag': 'noindex',
     },
   });
 };
-
-
-

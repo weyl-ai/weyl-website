@@ -18,6 +18,14 @@ const ogImage = '/og-default.png';
 const projects = [
   {
     category: 'INFRASTRUCTURE',
+    name: 'nix2gpu',
+    description: 'A Nix module system that generates containers for GPU markets like vast.ai and runpod.io. Provides reproducible environments with CUDA 12.8, Tailscale networking, and modern shell tooling. Turn heterogeneous GPUs into coherent compute clusters with deterministic builds.',
+    status: 'ACTIVE',
+    license: 'MIT',
+    repository: 'https://github.com/fleek-sh/nix2gpu',
+  },
+  {
+    category: 'INFRASTRUCTURE',
     name: 'nimi',
     description: 'A lightweight process manager designed as Tini-like PID 1 for containers and NixOS modular services. Reads JSON configuration, launches services with clean environments, streams logs to console, and handles shutdown and restart policies consistently. Written in Rust and Nix for minimal containerized environments.',
     status: 'EXPERIMENTAL',

@@ -1,0 +1,22 @@
+# Weyl AI - LLM Information
+
+This site provides documentation and API access for Weyl inference infrastructure.
+
+## Quick Links
+
+- Full Documentation: https://weyl.ai/llms-full.txt
+- Agent Instructions: https://weyl.ai/agents.md
+- API Specification: https://weyl.ai/openapi.json
+- Structured Index: https://weyl.ai/docs.json
+
+## What is Weyl?
+
+Weyl provides purpose-built inference infrastructure for generative media:
+- Sub-100ms latency image generation
+- FLUX.2, FLUX.1, Z-Image Turbo, WAN Video models
+- Sync and Async API tiers
+- Integration with Cursor, Claude, v0, Lovable, Bolt
+
+## For AI Agents
+
+See https://weyl.ai/agents.md for detailed agent instructions.

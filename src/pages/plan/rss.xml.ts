@@ -34,8 +34,8 @@ export const GET: APIRoute = async () => {
     <atom:link href="https://weyl.ai/plan/rss.xml" rel="self" type="application/rss+xml" />
     <language>en-us</language>
     <copyright>Copyright 2024 Weyl AI Labs</copyright>
-    <managingEditor>hello@weyl.ai (Weyl Team)</managingEditor>
-    <webMaster>hello@weyl.ai (Weyl Team)</webMaster>
+    <managingEditor>info@weyl.ai (Weyl Team)</managingEditor>
+    <webMaster>info@weyl.ai (Weyl Team)</webMaster>
     <generator>Astro RSS</generator>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <ttl>60</ttl>${items}
