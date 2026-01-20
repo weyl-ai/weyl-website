@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Weyl AI",
+  "name_for_model": "weyl",
+  "description_for_human": "Generate images and videos using Weyl's inference infrastructure. Sub-100ms latency with FLUX, Z-Image, and WAN models.",
+  "description_for_model": "Weyl is an inference infrastructure API for generative media. Use this plugin to generate images from text prompts using models like FLUX.2, FLUX.1, Z-Image Turbo. Also supports video generation with WAN 2.2. The API provides sub-100ms latency for real-time applications. Key endpoints: POST /v1/sync/image for image generation, POST /v1/sync/video for video generation, GET /v1/models for available models.",
+  "auth": {
+    "type": "user_http",
+    "authorization_type": "bearer"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://weyl.ai/openapi.json"
+  },
+  "logo_url": "https://weyl.ai/brand/weyl-monotile-blue.svg",
+  "contact_email": "support@weyl.ai",
+  "legal_info_url": "https://weyl.ai/legal/terms"
+}

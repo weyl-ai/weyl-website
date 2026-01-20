@@ -130,7 +130,7 @@ If a channel with the same name exists, Slack will return an error. You can eith
 ## Alternative: Email Fallback
 
 For users who don't use Slack, you can provide an email alternative:
-- The form page includes a link to `support@weyl.ai`
+- The form page includes a link to `info@weyl.ai`
 - You can manually create channels for email requests
 - Or provide API keys via email if preferred
 

@@ -1,0 +1,12 @@
+# Weyl AI Security Policy
+# https://weyl.ai/.well-known/security.txt
+
+Contact: mailto:security@weyl.ai
+Contact: https://github.com/weyl-ai/weyl-website/security/advisories
+Expires: 2027-01-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://weyl.ai/.well-known/security.txt
+Policy: https://weyl.ai/security-policy
+
+# We appreciate responsible disclosure of security vulnerabilities.
+# Please report any security issues to security@weyl.ai

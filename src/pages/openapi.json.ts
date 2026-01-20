@@ -20,7 +20,7 @@ export const GET: APIRoute = async () => {
         version: '1.0.0',
         description: 'Inference infrastructure for generative media',
         contact: {
-          email: 'hello@weyl.ai',
+          email: 'info@weyl.ai',
           url: 'https://weyl.ai',
         },
       },
