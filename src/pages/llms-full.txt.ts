@@ -261,7 +261,7 @@ function formatCategoryName(category: string): string {
 function stripMdxToText(body: string): string {
   if (!body) return '';
   
-  return body
+  let result = body
     // Remove import statements
     .replace(/^import\s+.*$/gm, '')
     // Remove export statements
@@ -269,8 +269,6 @@ function stripMdxToText(body: string): string {
     // Remove JSX components (simplified)
     .replace(/<[A-Z][^>]*>[\s\S]*?<\/[A-Z][^>]*>/g, '')
     .replace(/<[A-Z][^>]*\/>/g, '')
-    // Remove HTML comments
-    .replace(/<!--[\s\S]*?-->/g, '')
     // Remove frontmatter (if any remaining)
     .replace(/^---[\s\S]*?---/m, '')
     // Remove code block language specifiers but keep content
@@ -278,4 +276,14 @@ function stripMdxToText(body: string): string {
     // Clean up extra whitespace
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // Remove HTML comments iteratively to handle nested/malformed comments
+  const commentPattern = /<!--[\s\S]*?-->/g;
+  let previous = '';
+  while (previous !== result) {
+    previous = result;
+    result = result.replace(commentPattern, '');
+  }
+
+  return result;
 }
