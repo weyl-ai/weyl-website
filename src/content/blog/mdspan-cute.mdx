@@ -1,0 +1,81 @@
+---
+title: "mdspan-cute: Zero-Overhead Bridge to CUTLASS"
+description: "C++23 std::mdspan meets CUTLASS cute layouts. One header. Zero cost. 26 theorems. 0 sorry."
+pubDate: 2026-01-23
+author: "Weyl Team"
+tags: ["CUDA", "C++", "mdspan", "CUTLASS", "Lean", "formal methods"]
+---
+
+**TL;DR**: C++23 `std::mdspan` meets CUTLASS cute layouts. One header. Zero cost.
+
+```cpp
+tile[row, col] = value;  // swizzled, composed, zero-cost
+```
+
+---
+
+## The Problem
+
+You want mdspan's clean syntax. You need cute's swizzled layouts for bank conflict avoidance. Currently you can't have both.
+
+## The Solution
+
+```cpp
+#include <mdspan_cute.h>
+
+// Your cute layout (swizzled for shared memory)
+auto layout = composition(Swizzle<3,3,3>{}, base_layout);
+
+// Wrap it in mdspan
+std::mdspan<float, std::extents<int, 64, 64>,
+            mdspan_cute::layout_cute<decltype(layout)>> tile(ptr, layout);
+
+// Use C++23 subscript syntax
+tile[i, j] = tile[j, i];  // swizzle applied transparently
+```
+
+## Why This Works
+
+The cute layout algebra and mdspan layout policy are the same mathematical object: a function from coordinates to memory offsets.
+
+NVIDIA designed both. We just wired up the header files.
+
+## The Lambda Hierarchy
+
+```
+    Lean 4          ← prove once
+      ↓
+    extract         ← generate properties
+      ↓
+    C++ / CUDA      ← test everywhere
+```
+
+Theorems at the top. Runtime at the bottom. The proofs flow down.
+
+## Stochastic Omega
+
+This project was built with agent-assisted development. Not "AI-generated code" - *assisted learning at machine speed*.
+
+The `art/` directory contains 23 SVG visualizations of the layout algebra. We made them to teach ourselves. The Galois connections, the ceiling division pitfalls, the FTTC, the holes created by indivisible splits - we drew pictures until we understood.
+
+The difference isn't that the machine knows things we don't. The difference is iteration speed. Read the nvfuser docs, formalize a theorem, draw a diagram, find the gap in understanding, repeat. A loop that used to take weeks now takes hours.
+
+We're still doing the learning. We can just do it fast now.
+
+## Verification
+
+The layout algebra is formalized in Lean 4. 26 theorems, 0 `sorry`. Properties extracted to RapidCheck tests.
+
+When our implementation disagrees with the spec, we have a bug. When nvfuser disagrees with the spec, they have a bug.
+
+We don't wonder if this is correct. We know.
+
+## Links
+
+- **Code**: [github.com/weyl-ai/mdspan-cute](https://github.com/weyl-ai/mdspan-cute)
+- **Proofs**: `src/lean4-proof/VillaStraylight.lean`
+- **Thanks**: Cris Cecka (CuTe), Andrew Kerr (CUTLASS), the Kokkos team (mdspan)
+
+---
+
+*// straylight // correct by construction // the result is saved //*
